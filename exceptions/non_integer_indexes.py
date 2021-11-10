@@ -1,0 +1,2 @@
+class NonIntegerIndexes(Exception):
+    pass

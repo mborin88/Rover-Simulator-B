@@ -1,0 +1,2 @@
+class IndexesOutOfRange(Exception):
+    pass
