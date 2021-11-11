@@ -21,7 +21,7 @@ dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 100         #432000      # Maximum iteration.
+steps = 2000         #432000      # Maximum iteration.
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
 
@@ -45,6 +45,9 @@ K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 # 2 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
 
+# Log control 0 = don't Log 1 = Log info after in a .txt file
+log_raw_control = 1
+log_summary_control = 1
 
 def main():
     """
@@ -132,6 +135,7 @@ def main():
         print('-' * 50)
         print('Rover ID: {}'.format(str(k + 1)))
         print('Distance marched in northing: {} (m)'.format(str(round(logger.y_pose[-1] - logger.y_pose[0]))))
+        print('Average speed in northing: {} (m/s)'.format(str(round(sum(logger.velocity) / len(logger.velocity), 2))))
         if logger.termination_time is None:
             print('Task not completed.')
         else:
@@ -166,6 +170,82 @@ def main():
     # Print simulation running time.
     print('')
     print('Simulation running time: {} (s)'.format(str(round(end - start, 1))))
+
+    #Log Summary Information
+    if(log_summary_control):
+        log_summary_file_name = 'SSS Summary Data, F-{} BW-{} SF-{} CR-{} TPW-{} Rovers-{} CTRL-{}'\
+            .format(str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy))
+        log_summary_file = open('logs/'+log_summary_file_name+'.txt', 'w')
+        log_summary_file.write(log_summary_file_name+ '\n')
+        log_summary_file.write('\n')
+        log_summary_file.write('=' * 50)
+        log_summary_file.write('\nTime elapse: {} (s)'.format(str(round(world.time, 1))))
+        log_summary_file.write('\n')
+        log_summary_file.write('=' * 50)
+        log_summary_file.write('\nMotion information: ')
+        for k in range(N):
+            logger = world.rovers[k].pose_logger
+            log_summary_file.write('\n')
+            log_summary_file.write('-' * 50)
+            log_summary_file.write('\nRover ID: {}'.format(str(k + 1)))
+            log_summary_file.write('\nDistance marched in northing: {} (m)'.format(str(round(logger.y_pose[-1] - logger.y_pose[0]))))
+            log_summary_file.write('\nAverage speed in northing: {} (m/s)'.format(str(round(sum(logger.velocity) / len(logger.velocity), 2))))
+            if logger.termination_time is None:
+                log_summary_file.write('\nTask not completed.')
+            else:
+                log_summary_file.write('\nTime to Complete the Task: {} (s)'.format(str(round(logger.termination_time, 1))))
+        log_summary_file.write('\n')
+        log_summary_file.write('=' * 50)
+        log_summary_file.write('\nCommunication performance: ')
+        for j in range(N):
+            transceiver = world.rovers[j].radio
+            log_summary_file.write('\n')
+            log_summary_file.write('-' * 50)
+            log_summary_file.write('\nRover ID: {}'.format(str(j + 1)))
+            log_summary_file.write('\nSwarm Size: {}'.format(str(transceiver.total_radios)))
+            if transceiver is None:
+                log_summary_file.write('\nNo radio settings.')
+            else:
+                log_summary_file.write('\nBandwidth: {} (KHz)'.format(str(transceiver.bw)))
+                log_summary_file.write('\nSpreading Factor: {}'.format(str(transceiver.sf)))
+                log_summary_file.write('\nCoding Rate: {}/{}'.format(str(4), str(int(4 / transceiver.cr))))
+                log_summary_file.write('\nSensitivity: {} (dBm)'.format(str(transceiver.sensitivity)))
+                log_summary_file.write('\nTransmission Power: {} (dBm)'.format(str(transceiver.tx_pw)))
+                log_summary_file.write('\nAntenna Gain: {} (dBi)'.format(str(transceiver.ant_gain)))
+                log_summary_file.write('\nPayload Length: {} (byte)'.format(str(transceiver.pl)))
+                log_summary_file.write('\nDuty Cycle: {}%'.format(str(round(transceiver.actual_dc() * 100, 1))))
+                log_summary_file.write('\nAirtime: {} (sec)'.format(str(round(transceiver.airtime(), 4))))
+                log_summary_file.write('\nSilent time: {} (sec)'.format(str(round(transceiver.actual_silent_time(), 1))))
+                log_summary_file.write('\nTransmitted Packets: {}'.format(str(transceiver.num_tx)))
+                log_summary_file.write('\nReceived Packets: {}'.format(str(transceiver.num_rx)))
+                log_summary_file.write('\nDiscarded Packets: {}'.format(str(transceiver.num_disc)))
+                log_summary_file.write('\nPacket Loss Ratio: {}%'.format(str(round(transceiver.num_disc
+                                                                / (transceiver.num_rx + transceiver.num_disc) * 100, 2))))
+        log_summary_file.write('\n')                                                        
+        log_summary_file.write('=' * 50)
+
+        # Log simulation running time.
+        log_summary_file.write('\n')
+        log_summary_file.write('\nSimulation running time: {} (s)'.format(str(round(end - start, 1))))
+        log_summary_file.close()
+    
+    #Log time, x position, y position and velocity into file
+    if(log_raw_control):
+        log_raw_file_name = 'SSS Raw Data, F-{} BW-{} SF-{} CR-{} TPW-{} Rovers-{} CTRL-{}'\
+            .format(str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy))
+        log_raw_file = open('logs/'+log_raw_file_name+'.txt', 'w')
+        log_raw_file.write(log_raw_file_name+ '\n')
+        log_raw_file.write("\t\t Rover\n")
+        log_raw_file.write("Time\t")
+        for j  in range(N):
+            log_raw_file.write(str(j) + 'x\t' + str(j) + 'y\t' + str(j) + 'v\t-\t ')
+        for n in range(step):
+            log_raw_file.write('\n' + str(round(n*t_sampling, 2)) +'\t')
+            for j in range(N):
+                data = str(world.rovers[j].pose_logger.x_pose[j]) + ',' + str(world.rovers[j].pose_logger.y_pose[n]) \
+                    + ',' + str(world.rovers[j].pose_logger.velocity[n]) + '-'
+                log_raw_file.write(data)
+        log_raw_file.close()
 
     # Plot rovers' trajectories.
     x, y = np.linspace(x_min, x_max, map_terrain.n_cols), \

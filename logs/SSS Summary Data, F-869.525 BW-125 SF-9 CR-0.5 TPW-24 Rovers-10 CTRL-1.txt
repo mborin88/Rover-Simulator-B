@@ -1,0 +1,231 @@
+SSS Summary Data, F-869.525 BW-125 SF-9 CR-0.5 TPW-24 Rovers-10 CTRL-1
+
+==================================================
+Time elapse: 500.0 (s)
+==================================================
+Motion information: 
+--------------------------------------------------
+Rover ID: 1
+Distance marched in northing: 190 (m)
+Average speed in northing: 0.5 (m/s)
+Task not completed.
+--------------------------------------------------
+Rover ID: 2
+Distance marched in northing: 192 (m)
+Average speed in northing: 0.5 (m/s)
+Task not completed.
+--------------------------------------------------
+Rover ID: 3
+Distance marched in northing: 194 (m)
+Average speed in northing: 0.5 (m/s)
+Task not completed.
+--------------------------------------------------
+Rover ID: 4
+Distance marched in northing: 206 (m)
+Average speed in northing: 0.5 (m/s)
+Task not completed.
+--------------------------------------------------
+Rover ID: 5
+Distance marched in northing: 201 (m)
+Average speed in northing: 0.5 (m/s)
+Task not completed.
+--------------------------------------------------
+Rover ID: 6
+Distance marched in northing: 201 (m)
+Average speed in northing: 0.5 (m/s)
+Task not completed.
+--------------------------------------------------
+Rover ID: 7
+Distance marched in northing: 201 (m)
+Average speed in northing: 0.5 (m/s)
+Task not completed.
+--------------------------------------------------
+Rover ID: 8
+Distance marched in northing: 189 (m)
+Average speed in northing: 0.5 (m/s)
+Task not completed.
+--------------------------------------------------
+Rover ID: 9
+Distance marched in northing: 201 (m)
+Average speed in northing: 0.5 (m/s)
+Task not completed.
+--------------------------------------------------
+Rover ID: 10
+Distance marched in northing: 194 (m)
+Average speed in northing: 0.5 (m/s)
+Task not completed.
+==================================================
+Communication performance: 
+--------------------------------------------------
+Rover ID: 1
+Swarm Size: 10
+Bandwidth: 125 (KHz)
+Spreading Factor: 9
+Coding Rate: 4/8
+Sensitivity: -129.5 (dBm)
+Transmission Power: 24 (dBm)
+Antenna Gain: 3 (dBi)
+Payload Length: 4 (byte)
+Duty Cycle: 1.6%
+Airtime: 0.0829 (sec)
+Silent time: 5.0 (sec)
+Transmitted Packets: 100
+Received Packets: 0
+Discarded Packets: 900
+Packet Loss Ratio: 100.0%
+--------------------------------------------------
+Rover ID: 2
+Swarm Size: 10
+Bandwidth: 125 (KHz)
+Spreading Factor: 9
+Coding Rate: 4/8
+Sensitivity: -129.5 (dBm)
+Transmission Power: 24 (dBm)
+Antenna Gain: 3 (dBi)
+Payload Length: 4 (byte)
+Duty Cycle: 1.6%
+Airtime: 0.0829 (sec)
+Silent time: 5.0 (sec)
+Transmitted Packets: 100
+Received Packets: 690
+Discarded Packets: 210
+Packet Loss Ratio: 23.33%
+--------------------------------------------------
+Rover ID: 3
+Swarm Size: 10
+Bandwidth: 125 (KHz)
+Spreading Factor: 9
+Coding Rate: 4/8
+Sensitivity: -129.5 (dBm)
+Transmission Power: 24 (dBm)
+Antenna Gain: 3 (dBi)
+Payload Length: 4 (byte)
+Duty Cycle: 1.6%
+Airtime: 0.0829 (sec)
+Silent time: 5.0 (sec)
+Transmitted Packets: 100
+Received Packets: 457
+Discarded Packets: 443
+Packet Loss Ratio: 49.22%
+--------------------------------------------------
+Rover ID: 4
+Swarm Size: 10
+Bandwidth: 125 (KHz)
+Spreading Factor: 9
+Coding Rate: 4/8
+Sensitivity: -129.5 (dBm)
+Transmission Power: 24 (dBm)
+Antenna Gain: 3 (dBi)
+Payload Length: 4 (byte)
+Duty Cycle: 1.6%
+Airtime: 0.0829 (sec)
+Silent time: 5.0 (sec)
+Transmitted Packets: 100
+Received Packets: 727
+Discarded Packets: 173
+Packet Loss Ratio: 19.22%
+--------------------------------------------------
+Rover ID: 5
+Swarm Size: 10
+Bandwidth: 125 (KHz)
+Spreading Factor: 9
+Coding Rate: 4/8
+Sensitivity: -129.5 (dBm)
+Transmission Power: 24 (dBm)
+Antenna Gain: 3 (dBi)
+Payload Length: 4 (byte)
+Duty Cycle: 1.6%
+Airtime: 0.0829 (sec)
+Silent time: 5.0 (sec)
+Transmitted Packets: 100
+Received Packets: 716
+Discarded Packets: 184
+Packet Loss Ratio: 20.44%
+--------------------------------------------------
+Rover ID: 6
+Swarm Size: 10
+Bandwidth: 125 (KHz)
+Spreading Factor: 9
+Coding Rate: 4/8
+Sensitivity: -129.5 (dBm)
+Transmission Power: 24 (dBm)
+Antenna Gain: 3 (dBi)
+Payload Length: 4 (byte)
+Duty Cycle: 1.6%
+Airtime: 0.0829 (sec)
+Silent time: 5.0 (sec)
+Transmitted Packets: 100
+Received Packets: 672
+Discarded Packets: 228
+Packet Loss Ratio: 25.33%
+--------------------------------------------------
+Rover ID: 7
+Swarm Size: 10
+Bandwidth: 125 (KHz)
+Spreading Factor: 9
+Coding Rate: 4/8
+Sensitivity: -129.5 (dBm)
+Transmission Power: 24 (dBm)
+Antenna Gain: 3 (dBi)
+Payload Length: 4 (byte)
+Duty Cycle: 1.6%
+Airtime: 0.0829 (sec)
+Silent time: 5.0 (sec)
+Transmitted Packets: 100
+Received Packets: 594
+Discarded Packets: 306
+Packet Loss Ratio: 34.0%
+--------------------------------------------------
+Rover ID: 8
+Swarm Size: 10
+Bandwidth: 125 (KHz)
+Spreading Factor: 9
+Coding Rate: 4/8
+Sensitivity: -129.5 (dBm)
+Transmission Power: 24 (dBm)
+Antenna Gain: 3 (dBi)
+Payload Length: 4 (byte)
+Duty Cycle: 1.6%
+Airtime: 0.0829 (sec)
+Silent time: 5.0 (sec)
+Transmitted Packets: 100
+Received Packets: 655
+Discarded Packets: 245
+Packet Loss Ratio: 27.22%
+--------------------------------------------------
+Rover ID: 9
+Swarm Size: 10
+Bandwidth: 125 (KHz)
+Spreading Factor: 9
+Coding Rate: 4/8
+Sensitivity: -129.5 (dBm)
+Transmission Power: 24 (dBm)
+Antenna Gain: 3 (dBi)
+Payload Length: 4 (byte)
+Duty Cycle: 1.6%
+Airtime: 0.0829 (sec)
+Silent time: 5.0 (sec)
+Transmitted Packets: 100
+Received Packets: 627
+Discarded Packets: 273
+Packet Loss Ratio: 30.33%
+--------------------------------------------------
+Rover ID: 10
+Swarm Size: 10
+Bandwidth: 125 (KHz)
+Spreading Factor: 9
+Coding Rate: 4/8
+Sensitivity: -129.5 (dBm)
+Transmission Power: 24 (dBm)
+Antenna Gain: 3 (dBi)
+Payload Length: 4 (byte)
+Duty Cycle: 1.6%
+Airtime: 0.0829 (sec)
+Silent time: 5.0 (sec)
+Transmitted Packets: 100
+Received Packets: 481
+Discarded Packets: 419
+Packet Loss Ratio: 46.56%
+==================================================
+
+Simulation running time: 83.2 (s)
