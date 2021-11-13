@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import os
 
 from models.world import *
 from models.slope_physics import *
@@ -15,13 +16,13 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20NE'     # Area to run simulation.
+area = 'SU20SE'     # Area to run simulation.
 N = 10              # Number of rovers.
 dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 2000         #432000      # Maximum iteration.
+steps = 200         #432000      # Maximum iteration.
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
 
@@ -35,7 +36,7 @@ user_txpw = 24    # Transmitting power, in dBm.
 # Configure control settings:
 Q = None         # State noise.
 R = None           # Measurement noise.
-ctrl_policy = 2
+ctrl_policy = 1
 # Control policy:
 # 0 - meaning no controller;
 
@@ -48,6 +49,8 @@ K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
 # Log control 0 = don't Log 1 = Log info after in a .txt file
 log_raw_control = 1
 log_summary_control = 1
+log_title = ""
+log_notes = ''
 
 def main():
     """
@@ -171,11 +174,20 @@ def main():
     print('')
     print('Simulation running time: {} (s)'.format(str(round(end - start, 1))))
 
+    #Logs directory creation if not created
+    if(log_summary_control == 1 or log_raw_control == 1):
+        if(not os.path.exists('logs\\' + area)):
+            os.mkdir(os.getcwd() + '\\logs\\' + area)
+        if(not os.path.exists('logs\\' + area + '\\control_policy_' + str(ctrl_policy))):
+            os.mkdir(os.getcwd() + '\\logs\\' + area+ '\\control_policy_' + str(ctrl_policy))
+        
+        directory = 'logs\\' + area + '\\control_policy_' + str(ctrl_policy) + '\\'
+
     #Log Summary Information
     if(log_summary_control):
         log_summary_file_name = 'SSS Summary Data, F-{} BW-{} SF-{} CR-{} TPW-{} Rovers-{} CTRL-{}'\
             .format(str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy))
-        log_summary_file = open('logs/'+log_summary_file_name+'.txt', 'w')
+        log_summary_file = open(directory + log_summary_file_name+'.txt', 'w')
         log_summary_file.write(log_summary_file_name+ '\n')
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
@@ -229,11 +241,11 @@ def main():
         log_summary_file.write('\nSimulation running time: {} (s)'.format(str(round(end - start, 1))))
         log_summary_file.close()
     
-    #Log time, x position, y position and velocity into file
+    #Log Raw Data into a file
     if(log_raw_control):
         log_raw_file_name = 'SSS Raw Data, F-{} BW-{} SF-{} CR-{} TPW-{} Rovers-{} CTRL-{}'\
             .format(str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy))
-        log_raw_file = open('logs/'+log_raw_file_name+'.txt', 'w')
+        log_raw_file = open(directory + log_raw_file_name+'.txt', 'w')
         log_raw_file.write(log_raw_file_name+ '\n')
         log_raw_file.write("\t\t Rover\n")
         log_raw_file.write("Time\t")
