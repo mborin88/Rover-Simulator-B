@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import os
+import datetime as dt
 
 from models.world import *
 from models.slope_physics import *
@@ -46,11 +47,11 @@ K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 # 2 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
 
-# Log control 0 = don't Log 1 = Log info after in a .txt file
-log_raw_control = 1
-log_summary_control = 1
-log_title = ""
-log_notes = ''
+# Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
+log_control = 1
+log_title_tag = "Test Log"
+log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
+log_notes = 'NA'            #Additional notes to be added to Log file if wished
 
 def main():
     """
@@ -175,7 +176,7 @@ def main():
     print('Simulation running time: {} (s)'.format(str(round(end - start, 1))))
 
     #Logs directory creation if not created
-    if(log_summary_control == 1 or log_raw_control == 1):
+    if(log_control >= 1):
         if(not os.path.exists('logs\\' + area)):
             os.mkdir(os.getcwd() + '\\logs\\' + area)
         if(not os.path.exists('logs\\' + area + '\\control_policy_' + str(ctrl_policy))):
@@ -184,11 +185,22 @@ def main():
         directory = 'logs\\' + area + '\\control_policy_' + str(ctrl_policy) + '\\'
 
     #Log Summary Information
-    if(log_summary_control):
-        log_summary_file_name = 'SSS Summary Data, F-{} BW-{} SF-{} CR-{} TPW-{} Rovers-{} CTRL-{}'\
-            .format(str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy))
+    if(log_control == 2 or 3):
+        log_summary_file_name = 'SSS Summary Data, ' + log_title
         log_summary_file = open(directory + log_summary_file_name+'.txt', 'w')
         log_summary_file.write(log_summary_file_name+ '\n')
+        log_summary_file.write("\nNotes: " + log_notes)
+        log_summary_file.write('\n')
+        log_summary_file.write('=' * 50)
+        log_summary_file.write('\nParameters:\n')
+        log_summary_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
+            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nState Noise(Q) = {}
+            Measurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
+            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\n Goal Driven Gain = {}\n Passive Controller Gain = {}'''\
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(Q), str(R), str(dist),\
+                str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(K_goal), str(K_neighbour)))
+        log_summary_file.write('\n')
+        log_summary_file.write('=' * 50)
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
         log_summary_file.write('\nTime elapse: {} (s)'.format(str(round(world.time, 1))))
@@ -242,11 +254,23 @@ def main():
         log_summary_file.close()
     
     #Log Raw Data into a file
-    if(log_raw_control):
-        log_raw_file_name = 'SSS Raw Data, F-{} BW-{} SF-{} CR-{} TPW-{} Rovers-{} CTRL-{}'\
-            .format(str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy))
+    if(log_control == 1 or 3):
+        #log_raw_file_name = 'SSS Raw Data, F-{} BW-{} SF-{} CR-{} TPW-{} Rovers-{} CTRL-{}'\
+        #    .format(str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy))
+        log_raw_file_name = 'SSS Raw Data, ' + log_title
         log_raw_file = open(directory + log_raw_file_name+'.txt', 'w')
         log_raw_file.write(log_raw_file_name+ '\n')
+        log_raw_file.write("Notes: " + log_notes + '\n')
+        log_raw_file.write('=' * 50)
+        log_raw_file.write('\nParameters:\n')
+        log_raw_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
+            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nState Noise(Q) = {}
+            Measurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
+            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\n Goal Driven Gain = {}\n Passive Controller Gain = {}'''\
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(Q), str(R), str(dist),\
+                str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(K_goal), str(K_neighbour)))
+        log_raw_file.write('\n')
+        log_raw_file.write('=' * 50)
         log_raw_file.write("\t\t Rover\n")
         log_raw_file.write("Time\t")
         for j  in range(N):
