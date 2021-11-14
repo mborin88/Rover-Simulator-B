@@ -195,8 +195,8 @@ def main():
         log_summary_file.write('\nParameters:\n')
         log_summary_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
             \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nState Noise(Q) = {}
-            Measurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
-            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\n Goal Driven Gain = {}\n Passive Controller Gain = {}'''\
+            \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
+            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
             .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(Q), str(R), str(dist),\
                 str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(K_goal), str(K_neighbour)))
         log_summary_file.write('\n')
@@ -255,8 +255,6 @@ def main():
     
     #Log Raw Data into a file
     if(log_control == 1 or 3):
-        #log_raw_file_name = 'SSS Raw Data, F-{} BW-{} SF-{} CR-{} TPW-{} Rovers-{} CTRL-{}'\
-        #    .format(str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy))
         log_raw_file_name = 'SSS Raw Data, ' + log_title
         log_raw_file = open(directory + log_raw_file_name+'.txt', 'w')
         log_raw_file.write(log_raw_file_name+ '\n')
