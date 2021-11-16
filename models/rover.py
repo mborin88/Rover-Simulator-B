@@ -1,4 +1,5 @@
 from random import *
+import statistics as stats
 
 from models.radio import *
 from models.P_controller import *
@@ -19,6 +20,7 @@ class Rover:
         self._r_noise = r_noise               # The measurement noise, a random variable.
         self.measurement = self._pose         # The measurement of pose, assumed noiseless at first.
         self._control = [STARTING_SPEED]      # Control input, linear velocity.
+        self._old_control = [STARTING_SPEED]  # Old control velocity applied
         self._control_policy = None
         # The control policy used by the rover.
         self._speed_controller = None
@@ -48,6 +50,10 @@ class Rover:
     @property
     def control(self):
         return self._control
+    
+    @property
+    def old_control(self):
+        return self._old_control
 
     @property
     def control_policy(self):
@@ -148,12 +154,14 @@ class Rover:
             if self._q_noise is None:
                 self._pose[0] = h[0]
                 self._pose[1] = h[1]  # Noiseless motion.
+                self._old_control[0] = self._control[0]
                 self._control[0] = sqrt(v_x ** 2 + v_y ** 2)  # Update speed.
                 self.measure()
             else:
                 noise = self.generate_noise(self._q_noise)
                 self._pose[0] = h[0] + noise[0]
                 self._pose[1] = h[1] + noise[1]  # Noisy motion.
+                self._old_control[0] = self._control[0]
                 self._control[0] = sqrt(v_x ** 2 + v_y ** 2)  # Update speed.
                 self.measure()
 
@@ -203,33 +211,45 @@ class Rover:
         Apply passive cooperative control, i.e. only adjust speed when neighbour(s)' info is received,
         otherwise do not apply any control effect.
         """
+
         goal_driven_controller = PController(ref=self._goal, gain=[0, 1e-4])
         controlled_object = self.measurement
         control_input = goal_driven_controller.execute(controlled_object)
+        p_control = 0
+        
         if control_input > MAXIMUM_SPEED:  # Control input saturation.
-            self._control[0] = MAXIMUM_SPEED
+            p_control = MAXIMUM_SPEED
         elif control_input < MINIMUM_SPEED:
-            self._control[0] = MINIMUM_SPEED
+            p_control = MINIMUM_SPEED
         else:
-            self._control[0] = control_input  # Assume changing linear velocity instantly.
-        self._control[0] *= 0.5  # Take 50% portion of goal_driven control.
+            p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation
+        #self._control[0] *= 1  # Take 100% portion of goal_driven control. #Ignore
+
+        passive_control = [self._old_control[0]]
 
         # Adjust speed according to neighbour(s)' info.
         neighbour_poses = self.get_neighbour_pose()
+        for pose in neighbour_poses:
+            if pose is not None:
+                passive_control = []
+
         for pose in neighbour_poses:
             coop_control = 0
             if pose is not None:
                 self._speed_controller.set_ref(pose)
                 controlled_object = self.measurement
                 coop_control = self._speed_controller.execute(controlled_object)
-            # print(coop_control)
-            control_input = self._control[0] + coop_control
-            if control_input > MAXIMUM_SPEED:  # Control input saturation.
-                self._control[0] = MAXIMUM_SPEED
-            elif control_input < MINIMUM_SPEED:
-                self._control[0] = MINIMUM_SPEED
-            else:
-                self._control[0] = control_input  # Assume changing linear velocity instantly.
+                # print(coop_control)
+                control_input = p_control + coop_control 
+                if control_input > MAXIMUM_SPEED:  # Control input saturation.
+                    passive_control.append(MAXIMUM_SPEED)
+                elif control_input < MINIMUM_SPEED:
+                    passive_control.append(MINIMUM_SPEED)
+                else:
+                    passive_control.append(control_input)  # Assume changing linear velocity instantly.
+
+        avg_passive_control = stats.mean(passive_control)
+        self._control[0] = (p_control + avg_passive_control) / 2
 
         self._radio.reset_neighbour_register()
         self._radio.reset_buffer()
