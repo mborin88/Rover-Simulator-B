@@ -107,6 +107,8 @@ class World:
         print('Time: {} (s)\n'.format(str(round(tn * dt, 1))))
 
         # Logically, this is the beginning of time slot.
+        # if(round(tn*dt,1) == 5.1):
+        #     print('Time')
         transmitter = None
         for rover in self._rovers:
             rover.step_motion(self, dt)

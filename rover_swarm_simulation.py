@@ -23,7 +23,7 @@ dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 200         #432000      # Maximum iteration.
+steps = 6000        #432000      # Maximum iteration.
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
 
@@ -37,7 +37,7 @@ user_txpw = 24    # Transmitting power, in dBm.
 # Configure control settings:
 Q = None         # State noise.
 R = None           # Measurement noise.
-ctrl_policy = 1
+ctrl_policy = 2
 # Control policy:
 # 0 - meaning no controller;
 
@@ -45,13 +45,14 @@ ctrl_policy = 1
 K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 
 # 2 - meaning passive-cooperative controller, if used:
-K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
+K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
-log_control = 1
-log_title_tag = "Test Log"
+log_control = 0
+log_title_tag = "Averaging Controller Old Control added"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = 'NA'            #Additional notes to be added to Log file if wished
+log_notes = '''Averaging P_control and passive control to handle majority of control being goal driven in time when co-ords not recieved.
+                Old controller parameter added to add the final old speed so that if no neighbour found continue at old speed meaned with P controller speed.'''            #Additional notes to be added to Log file if wished
 
 def main():
     """
@@ -104,6 +105,8 @@ def main():
             # The reference for passive-cooperative controller
             # dynamically changes when new packet from the neighbour is received.
             starter.config_control_policy('Passive-cooperative')
+        elif ctrl_policy == 3:
+            pass
 
     # Step simulation and record data.
     ee = []  # To record formation error.
@@ -185,7 +188,7 @@ def main():
         directory = 'logs\\' + area + '\\control_policy_' + str(ctrl_policy) + '\\'
 
     #Log Summary Information
-    if(log_control == 2 or 3):
+    if(log_control == 2 or log_control == 3):
         log_summary_file_name = 'SSS Summary Data, ' + log_title
         log_summary_file = open(directory + log_summary_file_name+'.txt', 'w')
         log_summary_file.write(log_summary_file_name+ '\n')
@@ -254,7 +257,8 @@ def main():
         log_summary_file.close()
     
     #Log Raw Data into a file
-    if(log_control == 1 or 3):
+
+    if(log_control == 1 or log_control == 3):
         log_raw_file_name = 'SSS Raw Data, ' + log_title
         log_raw_file = open(directory + log_raw_file_name+'.txt', 'w')
         log_raw_file.write(log_raw_file_name+ '\n')
@@ -272,7 +276,7 @@ def main():
         log_raw_file.write("\t\t Rover\n")
         log_raw_file.write("Time\t")
         for j  in range(N):
-            log_raw_file.write(str(j) + 'x\t' + str(j) + 'y\t' + str(j) + 'v\t-\t ')
+            log_raw_file.write(str(j+1) + 'x\t' + str(j+1) + 'y\t' + str(j+1) + 'v\t')
         for n in range(step):
             log_raw_file.write('\n' + str(round(n*t_sampling, 2)) +'\t')
             for j in range(N):
