@@ -257,7 +257,6 @@ def main():
         log_summary_file.close()
     
     #Log Raw Data into a file
-
     if(log_control == 1 or log_control == 3):
         log_raw_file_name = 'SSS Raw Data, ' + log_title
         log_raw_file = open(directory + log_raw_file_name+'.txt', 'w')
