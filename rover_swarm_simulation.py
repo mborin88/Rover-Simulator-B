@@ -23,7 +23,7 @@ dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 6000        #432000      # Maximum iteration.
+steps = 60        #432000      # Maximum iteration.
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
 
@@ -45,14 +45,13 @@ ctrl_policy = 2
 K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 
 # 2 - meaning passive-cooperative controller, if used:
-K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
+K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
 log_control = 0
-log_title_tag = "Averaging Controller Old Control added"
+log_title_tag = "Test Log RMSE added"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Averaging P_control and passive control to handle majority of control being goal driven in time when co-ords not recieved.
-                Old controller parameter added to add the final old speed so that if no neighbour found continue at old speed meaned with P controller speed.'''            #Additional notes to be added to Log file if wished
+log_notes = '''NA'''            #Additional notes to be added to Log file if wished
 
 def main():
     """
@@ -137,6 +136,7 @@ def main():
     print('Time elapse: {} (s)'.format(str(round(world.time, 1))))
     print('=' * 50)
     print('Motion information: ')
+    print('\nMax RMSE: {} (m) @ {}s'.format(str(round(max(ee), 2)), str(round(ee.index(max(ee))*t_sampling, 2))))
     for k in range(N):
         logger = world.rovers[k].pose_logger
         print('-' * 50)
@@ -210,6 +210,7 @@ def main():
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
         log_summary_file.write('\nMotion information: ')
+        log_summary_file.write('\nMax RMSE: {} (m) @ {}s'.format(str(round(max(ee), 2)), str(round(ee.index(max(ee))*t_sampling, 2))))
         for k in range(N):
             logger = world.rovers[k].pose_logger
             log_summary_file.write('\n')
@@ -277,11 +278,12 @@ def main():
         log_raw_file.write("Time\t")
         for j  in range(N):
             log_raw_file.write(str(j+1) + 'x\t' + str(j+1) + 'y\t' + str(j+1) + 'v\t')
+        log_raw_file.write('RMSE EE')
         for n in range(step):
             log_raw_file.write('\n' + str(round(n*t_sampling, 2)) +'\t')
             for j in range(N):
                 data = str(world.rovers[j].pose_logger.x_pose[j]) + ',' + str(world.rovers[j].pose_logger.y_pose[n]) \
-                    + ',' + str(world.rovers[j].pose_logger.velocity[n]) + '-'
+                    + ',' + str(world.rovers[j].pose_logger.velocity[n]) + '-' + str(ee[j])
                 log_raw_file.write(data)
         log_raw_file.close()
 
