@@ -21,6 +21,7 @@ class Rover:
         self.measurement = self._pose         # The measurement of pose, assumed noiseless at first.
         self._control = [STARTING_SPEED]      # Control input, linear velocity.
         self._old_control = [STARTING_SPEED]  # Old control velocity applied
+        self._initial_control = True          # Want to P controller until we get neighbouring positions
         self._control_policy = None
         # The control policy used by the rover.
         self._speed_controller = None
@@ -192,6 +193,8 @@ class Rover:
                     self.move2goal()
                 elif self._control_policy == 'Passive-cooperative':
                     self.passive_cooperation()
+                elif self._control_policy == 'Simple Passive-cooperative':
+                    self.simple_passive_cooperation()
 
     def move2goal(self):
         """
@@ -250,6 +253,55 @@ class Rover:
 
         avg_passive_control = stats.mean(passive_control)
         self._control[0] = (p_control + avg_passive_control) / 2
+
+        self._radio.reset_neighbour_register()
+        self._radio.reset_buffer()
+
+    def simple_passive_cooperation(self):
+        """
+        Apply passive cooperative control, i.e. only adjust speed when neighbour(s)' info is received,
+        otherwise do not apply any control effect.
+        Start with P controller then only change speed when neighbour info recieved again.
+        """
+
+        goal_driven_controller = PController(ref=self._goal, gain=[0, 1e-4])
+        controlled_object = self.measurement
+        control_input = goal_driven_controller.execute(controlled_object)
+        p_control = 0
+        
+        if control_input > MAXIMUM_SPEED:  # Control input saturation.
+            p_control = MAXIMUM_SPEED
+        elif control_input < MINIMUM_SPEED:
+            p_control = MINIMUM_SPEED
+        else:
+            p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation
+        self._control[0] = p_control*1  # Take 100% portion of goal_driven control. #Ignore
+
+        neighbour_poses = self.get_neighbour_pose()
+        if neighbour_poses.count(None) < 2:
+            self._initial_control = False
+
+        if not self._initial_control:
+            # Adjust speed according to neighbour(s)' info.
+            if neighbour_poses.count(None) < 2:
+                #self._initial_control = False
+
+                for pose in neighbour_poses:
+                    coop_control = 0
+                    if pose is not None:
+                        self._speed_controller.set_ref(pose)
+                        controlled_object = self.measurement
+                        coop_control = self._speed_controller.execute(controlled_object)
+                        control_input = p_control + coop_control
+                        if control_input > MAXIMUM_SPEED:  # Control input saturation.
+                            self._control[0] = MAXIMUM_SPEED
+                        elif control_input < MINIMUM_SPEED:
+                            self._control[0] = MINIMUM_SPEED
+                        else:
+                            self._control[0] = control_input  # Assume changing linear velocity instantly.
+
+            else:
+                self._control[0] = self._old_control[0]
 
         self._radio.reset_neighbour_register()
         self._radio.reset_buffer()
