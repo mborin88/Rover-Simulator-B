@@ -17,13 +17,14 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20NE'     # Area to run simulation.
+area = 'SU20SE'     # Area to run simulation.
 N = 10              # Number of rovers.
 dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 60        #432000      # Maximum iteration.
+steps = 432000      #432000      # Maximum iteration.
+
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
 
@@ -37,7 +38,7 @@ user_txpw = 24    # Transmitting power, in dBm.
 # Configure control settings:
 Q = None         # State noise.
 R = None           # Measurement noise.
-ctrl_policy = 2
+ctrl_policy = 3
 # Control policy:
 # 0 - meaning no controller;
 
@@ -48,10 +49,12 @@ K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
-log_control = 0
-log_title_tag = "Test Log RMSE added"
+log_control = 3
+log_title_tag = "Simple Line Sweep Controller"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''NA'''            #Additional notes to be added to Log file if wished
+log_notes = '''Use P controller until we receive neighbouring position then adjust speed. Keep at adjusted speed until 
+                new neighbouring positions obtained.
+                2nd Map Test'''            #Additional notes to be added to Log file if wished
 
 def main():
     """
@@ -105,7 +108,11 @@ def main():
             # dynamically changes when new packet from the neighbour is received.
             starter.config_control_policy('Passive-cooperative')
         elif ctrl_policy == 3:
-            pass
+            speed_controller = PController(None, K_neighbour)
+            starter.config_speed_controller(speed_controller)
+            # The reference for passive-cooperative controller
+            # dynamically changes when new packet from the neighbour is received.
+            starter.config_control_policy('Simple Passive-cooperative')
 
     # Step simulation and record data.
     ee = []  # To record formation error.
