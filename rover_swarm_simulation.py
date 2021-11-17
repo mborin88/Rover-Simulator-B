@@ -24,6 +24,7 @@ x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
 steps = 432000      #432000      # Maximum iteration.
+
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
 
@@ -142,6 +143,7 @@ def main():
     print('Time elapse: {} (s)'.format(str(round(world.time, 1))))
     print('=' * 50)
     print('Motion information: ')
+    print('\nMax RMSE: {} (m) @ {}s'.format(str(round(max(ee), 2)), str(round(ee.index(max(ee))*t_sampling, 2))))
     for k in range(N):
         logger = world.rovers[k].pose_logger
         print('-' * 50)
@@ -215,6 +217,7 @@ def main():
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
         log_summary_file.write('\nMotion information: ')
+        log_summary_file.write('\nMax RMSE: {} (m) @ {}s'.format(str(round(max(ee), 2)), str(round(ee.index(max(ee))*t_sampling, 2))))
         for k in range(N):
             logger = world.rovers[k].pose_logger
             log_summary_file.write('\n')
@@ -281,11 +284,12 @@ def main():
         log_raw_file.write("Time\t")
         for j  in range(N):
             log_raw_file.write(str(j+1) + 'x\t' + str(j+1) + 'y\t' + str(j+1) + 'v\t')
+        log_raw_file.write('RMSE EE')
         for n in range(step):
             log_raw_file.write('\n' + str(round(n*t_sampling, 2)) +'\t')
             for j in range(N):
                 data = str(world.rovers[j].pose_logger.x_pose[j]) + ',' + str(world.rovers[j].pose_logger.y_pose[n]) \
-                    + ',' + str(world.rovers[j].pose_logger.velocity[n]) + '-'
+                    + ',' + str(world.rovers[j].pose_logger.velocity[n]) + '-' + str(ee[j])
                 log_raw_file.write(data)
         log_raw_file.close()
 
