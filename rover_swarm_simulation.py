@@ -17,7 +17,7 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20NE'     # Area to run simulation.
+area = 'SU20SE'     # Area to run simulation.
 N = 10              # Number of rovers.
 dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
@@ -53,7 +53,7 @@ log_title_tag = "Simple Line Sweep Controller"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Use P controller until we receive neighbouring position then adjust speed. Keep at adjusted speed until 
                 new neighbouring positions obtained.
-                Seems awful but full run'''            #Additional notes to be added to Log file if wished
+                2nd Map Test'''            #Additional notes to be added to Log file if wished
 
 def main():
     """
