@@ -24,7 +24,7 @@ dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 200      #432000      # Maximum iteration.
+steps = 100      #432000      # Maximum iteration.
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -39,7 +39,7 @@ user_txpw = 24    # Transmitting power, in dBm.
 # Configure control settings:
 Q = None         # State noise.
 R = None           # Measurement noise.
-ctrl_policy = 3
+ctrl_policy = 1
 # Control policy:
 # 0 - meaning no controller;
 
@@ -51,11 +51,9 @@ K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
 log_control = 3
-log_title_tag = "Simple Line Sweep Controller"
+log_title_tag = "Test Log"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Use P controller until we receive neighbouring position then adjust speed. Keep at adjusted speed until 
-                new neighbouring positions obtained.
-                3rd Map Test'''            #Additional notes to be added to Log file if wished
+log_notes = '''RMSE Not erroring right'''            #Additional notes to be added to Log file if wished
 
 def main():
     """
@@ -290,10 +288,12 @@ def main():
         log_raw_file.write('RMSE EE')
         for n in range(step):
             log_raw_file.write('\n' + str(round(n*t_sampling, 2)) +'\t')
+            data = ""
             for j in range(N):
-                data = str(world.rovers[j].pose_logger.x_pose[j]) + ',' + str(world.rovers[j].pose_logger.y_pose[n]) \
-                    + ',' + str(world.rovers[j].pose_logger.velocity[n]) + '-' + str(ee[j])
-                log_raw_file.write(data)
+                data += str(round(world.rovers[j].pose_logger.x_pose[j], 3)) + ',' + str(round(world.rovers[j].pose_logger.y_pose[n], 3)) \
+                    + ',' + str(round(world.rovers[j].pose_logger.velocity[n], 3)) + '-'
+            data += str(round(ee[n], 3))
+            log_raw_file.write(data)
         log_raw_file.close()
 
     # Plot rovers' trajectories.
