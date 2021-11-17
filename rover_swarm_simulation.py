@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import time
 import os
 import datetime as dt
+import statistics as stats
 
 from models.world import *
 from models.slope_physics import *
@@ -17,13 +18,13 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20SE'     # Area to run simulation.
+area = 'SU20NW'     # Area to run simulation.
 N = 10              # Number of rovers.
 dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000      #432000      # Maximum iteration.
+steps = 200      #432000      # Maximum iteration.
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -54,7 +55,7 @@ log_title_tag = "Simple Line Sweep Controller"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Use P controller until we receive neighbouring position then adjust speed. Keep at adjusted speed until 
                 new neighbouring positions obtained.
-                2nd Map Test'''            #Additional notes to be added to Log file if wished
+                3rd Map Test'''            #Additional notes to be added to Log file if wished
 
 def main():
     """
@@ -144,6 +145,7 @@ def main():
     print('=' * 50)
     print('Motion information: ')
     print('\nMax RMSE: {} (m) @ {}s'.format(str(round(max(ee), 2)), str(round(ee.index(max(ee))*t_sampling, 2))))
+    print('Mean RMSE: {} (m)'.format(str(round(stats.mean(ee), 2))))
     for k in range(N):
         logger = world.rovers[k].pose_logger
         print('-' * 50)
@@ -218,6 +220,7 @@ def main():
         log_summary_file.write('=' * 50)
         log_summary_file.write('\nMotion information: ')
         log_summary_file.write('\nMax RMSE: {} (m) @ {}s'.format(str(round(max(ee), 2)), str(round(ee.index(max(ee))*t_sampling, 2))))
+        log_summary_file.write('\nMean RMSE: {} (m)'.format(str(round(stats.mean(ee), 2))))
         for k in range(N):
             logger = world.rovers[k].pose_logger
             log_summary_file.write('\n')
