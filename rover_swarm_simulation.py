@@ -24,7 +24,7 @@ dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000      #432000      # Maximum iteration.
+steps = 2400      #432000      # Maximum iteration.
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -51,11 +51,10 @@ K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
 log_control = 3
-log_title_tag = "Simple Line Sweep"
+log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
+log_title_tag = "Log Updates"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Use P controller until we receive neighbouring position then adjust speed. Keep at adjusted speed until 
-                new neighbouring positions obtained.
-                5th Map Test'''            #Additional notes to be added to Log file if wished
+log_notes = '''Logging per minute'''            #Additional notes to be added to Log file if wished
 
 def main():
     """
@@ -277,23 +276,24 @@ def main():
         log_raw_file.write('\nParameters:\n')
         log_raw_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
             \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nState Noise(Q) = {}
-            Measurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
-            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\n Goal Driven Gain = {}\n Passive Controller Gain = {}'''\
+            \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
+            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nLog Interval = {}\nTime Sampling = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
             .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(Q), str(R), str(dist),\
-                str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(K_goal), str(K_neighbour)))
+                str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(log_step_interval), str(t_sampling),str(K_goal), str(K_neighbour)))
         log_raw_file.write('\n')
         log_raw_file.write('=' * 50)
         log_raw_file.write("\t\t Rover\n")
         log_raw_file.write("Time\t")
-        for j  in range(N):
+        for j in range(N):
             log_raw_file.write(str(j+1) + 'x\t' + str(j+1) + 'y\t' + str(j+1) + 'v\t')
         log_raw_file.write('RMSE EE')
-        for n in range(step):
-            log_raw_file.write('\n' + str(round(n*t_sampling, 2)) +'\t')
+
+        for n in range(0, step, log_step_interval):
+            log_raw_file.write('\n' + str(round(n*t_sampling/60, 2)) +'\t')        #divide 60 for per minute
             data = ""
             for j in range(N):
-                data += str(round(world.rovers[j].pose_logger.x_pose[j], 3)) + ',' + str(round(world.rovers[j].pose_logger.y_pose[n], 3)) \
-                    + ',' + str(round(world.rovers[j].pose_logger.velocity[n], 3)) + '-'
+                data += str(round(world.rovers[j].pose_logger.x_pose[j], 2)) + ',' + str(round(world.rovers[j].pose_logger.y_pose[n], 2)) \
+                    + ',' + str(round(world.rovers[j].pose_logger.velocity[n], 2)) + '-'
             data += str(round(ee[n], 3))
             log_raw_file.write(data)
         log_raw_file.close()
