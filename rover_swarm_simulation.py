@@ -18,13 +18,13 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU30NE'     # Area to run simulation.
+area = 'SU20NE'     # Area to run simulation.
 N = 10              # Number of rovers.
 dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 2400      #432000      # Maximum iteration.
+steps = 400      #432000      # Maximum iteration.
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -39,7 +39,7 @@ user_txpw = 24    # Transmitting power, in dBm.
 # Configure control settings:
 Q = None         # State noise.
 R = None           # Measurement noise.
-ctrl_policy = 3
+ctrl_policy = 1
 # Control policy:
 # 0 - meaning no controller;
 
@@ -50,7 +50,7 @@ K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
-log_control = 3
+log_control = 0
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Log Updates"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
@@ -307,6 +307,7 @@ def main():
 
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     contf = ax.contourf(X, Y, Z, cmap=plt.get_cmap(cmap))
+    contf.set_clim(0, 110)
     plt.colorbar(contf, label='Elevation (m)')
     # labels = []
     for o in range(N):
@@ -321,6 +322,7 @@ def main():
     ax.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
 
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    ax1.set_ylim(0, 150)
     ax1.plot(ee)
     ax1.set_xlim(0.0, world.time)
     ax1.set_xlabel('Time (sec)')
@@ -328,6 +330,7 @@ def main():
     ax1.set_title('Collective Formation Performance (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
 
     fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    ax2.set_ylim(0, 0.55)
     labels = []
     for p in range(N):
         v_plotter = world.rovers[p].pose_logger
