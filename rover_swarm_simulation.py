@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import time
 import os
 import datetime as dt
@@ -24,7 +25,7 @@ dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 400      #432000      # Maximum iteration.
+steps = 100      #432000      # Maximum iteration.
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -298,7 +299,7 @@ def main():
             log_raw_file.write(data)
         log_raw_file.close()
 
-    # Plot rovers' trajectories.
+    # Plot rovers' trajectories over terrain
     x, y = np.linspace(x_min, x_max, map_terrain.n_cols), \
            np.linspace(y_min, y_max, map_terrain.n_rows)
     X, Y = np.meshgrid(x, y)
@@ -341,6 +342,23 @@ def main():
     ax2.set_xlabel('Time (sec)')
     ax2.set_ylabel('Velocity (m/s)')
     ax2.set_title('Velocity Curve (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
+
+    # Plot rovers' trajectories over landcover
+
+    fig3, ax3 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    la_map = read_asc(locate_map(area + '_landcover.asc'))
+    image, axis_range = render_rgb(la_map) 
+    ax3.imshow(image, extent=axis_range)
+
+    for o in range(N):
+        plotter = world.rovers[o].pose_logger
+        ax3.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='cyan')
+
+    ax3.set_xlim(x_min, x_max)
+    ax3.set_ylim(y_min, y_max)
+    ax3.set_xlabel('Easting (m)')
+    ax3.set_ylabel('Northing (m)')
+    ax3.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
 
     plt.show()
     plt.tight_layout()

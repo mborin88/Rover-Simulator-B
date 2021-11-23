@@ -1,11 +1,14 @@
 import numpy as np
 import os
+import sys
 import matplotlib.pyplot as plt
 from matplotlib.colors import LightSource
 import matplotlib.image as mpimg
 from PIL import Image
-
-from models.landcover_spec import LCM2015_COLORMAP
+sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator/models')
+#from models.landcover_spec import LCM2015_COLORMAP
+#from landcover_spec import LCM2015_COLORMAP
+from landcover_spec import LCM2015_COLORMAP
 
 
 def prep_data(map_object):
@@ -87,17 +90,23 @@ def render_rgb(landcover_map, cmap=LCM2015_COLORMAP):
     x_max, y_max = x_min + dx * landcover_map.n_cols, \
                    y_min + dy * landcover_map.n_rows
     ax_range = (x_min, x_max, y_min, y_max)
+    os.remove(temp_im)
+    return im, ax_range
+
+def show_rgb(im, ax_range):
     plt.imshow(im, extent=ax_range)
     plt.xlabel('Easting (m)')
     plt.ylabel('Northing (m)')
     plt.show()
-    os.remove(temp_im)
 
 
 if __name__ == '__main__':
+    sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator')
     from utils.load_map import *
     t_map = read_asc(locate_map('SU20NE_elevation.asc'))
     la_map = read_asc(locate_map('SU20NE_landcover.asc'))
     render2d(t_map)
+    image, axis_range = render_rgb(la_map)
+    show_rgb(image, axis_range)
     render3d(t_map)
-    render_rgb(la_map)
+
