@@ -373,7 +373,7 @@ def main():
             plotter = world.rovers[q1].pose_logger
             x1_waypoint.append(plotter.x_pose[k1])
             y1_waypoint.append(plotter.y_pose[k1])
-        ax3.plot(x1_waypoint, y1_waypoint, linewidth=1.8, color='black')
+        ax3.plot(x1_waypoint, y1_waypoint, linewidth=1.8, color='white')
 
     ax3.set_xlim(x_min, x_max)
     ax3.set_ylim(y_min, y_max)
