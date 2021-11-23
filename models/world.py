@@ -103,7 +103,7 @@ class World:
         """
         dt = self._dt
         tn = self._tn
-        if((dt*tn)%1000 == 0):
+        if((dt*tn)%100 == 0):
             print('Time: {} (s)\n'.format(str(round(tn * dt, 1))))
 
         # Logically, this is the beginning of time slot.

@@ -25,7 +25,7 @@ dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 100      #432000      # Maximum iteration.
+steps = 10000      #432000      # Maximum iteration.
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -56,6 +56,8 @@ log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Log Updates"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Logging per minute'''            #Additional notes to be added to Log file if wished
+
+waypoint_interval = 18000  #Log every 30 minutes
 
 def main():
     """
@@ -310,12 +312,21 @@ def main():
     contf = ax.contourf(X, Y, Z, cmap=plt.get_cmap(cmap))
     contf.set_clim(0, 110)
     plt.colorbar(contf, label='Elevation (m)')
-    # labels = []
+
     for o in range(N):
         plotter = world.rovers[o].pose_logger
         ax.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='red')
-    #    labels.append('ID: ' + str(o + 1))
-    # ax.legend(labels)
+    
+    #Waypoint grapher on contour plot
+    for k in range(waypoint_interval, steps, waypoint_interval):
+        x_waypoint = []
+        y_waypoint = []
+        for q in range(N):
+            plotter = world.rovers[q].pose_logger
+            x_waypoint.append(plotter.x_pose[k])
+            y_waypoint.append(plotter.y_pose[k])
+        ax.plot(x_waypoint, y_waypoint, linewidth=1.8, color='black')
+
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
     ax.set_xlabel('Easting (m)')
@@ -353,6 +364,16 @@ def main():
     for o in range(N):
         plotter = world.rovers[o].pose_logger
         ax3.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='cyan')
+    
+    #Waypoint grapher for landcover map
+    for k1 in range(waypoint_interval, steps, waypoint_interval):
+        x1_waypoint = []
+        y1_waypoint = []
+        for q1 in range(N):
+            plotter = world.rovers[q1].pose_logger
+            x1_waypoint.append(plotter.x_pose[k1])
+            y1_waypoint.append(plotter.y_pose[k1])
+        ax3.plot(x1_waypoint, y1_waypoint, linewidth=1.8, color='black')
 
     ax3.set_xlim(x_min, x_max)
     ax3.set_ylim(y_min, y_max)
