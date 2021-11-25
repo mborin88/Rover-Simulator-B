@@ -5,6 +5,7 @@ import time
 import os
 import datetime as dt
 import statistics as stats
+import random as rand
 
 from models.world import *
 from models.slope_physics import *
@@ -38,8 +39,10 @@ user_cr = CR[3]   # Coding rate.
 user_txpw = 24    # Transmitting power, in dBm.
 
 # Configure control settings:
-Q = None         # State noise.
-R = None           # Measurement noise.
+Q = None                                        # State noise.
+R = None                                        # Measurement noise.
+seed_value = dt.datetime.now().microsecond      #Seed value for noise 
+rand.seed(seed_value)
 ctrl_policy = 1
 # Control policy:
 # 0 - meaning no controller;
@@ -208,10 +211,10 @@ def main():
         log_summary_file.write('=' * 50)
         log_summary_file.write('\nParameters:\n')
         log_summary_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nState Noise(Q) = {}
+            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(Q), str(R), str(dist),\
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value), str(Q), str(R), str(dist),\
                 str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(K_goal), str(K_neighbour)))
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
@@ -278,10 +281,10 @@ def main():
         log_raw_file.write('=' * 50)
         log_raw_file.write('\nParameters:\n')
         log_raw_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nState Noise(Q) = {}
+            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nLog Interval = {}\nTime Sampling = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(Q), str(R), str(dist),\
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value) ,str(Q), str(R), str(dist),\
                 str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(log_step_interval), str(t_sampling),str(K_goal), str(K_neighbour)))
         log_raw_file.write('\n')
         log_raw_file.write('=' * 50)
