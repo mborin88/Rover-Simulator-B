@@ -1,5 +1,6 @@
 from random import *
 import statistics as stats
+import numpy as np
 
 from models.radio import *
 from models.P_controller import *
@@ -20,6 +21,7 @@ class Rover:
         self._r_noise = r_noise               # The measurement noise, a random variable.
         self.measurement = self._pose         # The measurement of pose, assumed noiseless at first.
         self._control = [STARTING_SPEED]      # Control input, linear velocity.
+        self._all_control = [np.nan] * 3
         self._old_control = [STARTING_SPEED]  # Old control velocity applied
         self._initial_control = True          # Want to P controller until we get neighbouring positions
         self._control_policy = None
@@ -267,15 +269,15 @@ class Rover:
         goal_driven_controller = PController(ref=self._goal, gain=[0, 1e-4])
         controlled_object = self.measurement
         control_input = goal_driven_controller.execute(controlled_object)
-        p_control = 0
         
         if control_input > MAXIMUM_SPEED:  # Control input saturation.
             p_control = MAXIMUM_SPEED
         elif control_input < MINIMUM_SPEED:
             p_control = MINIMUM_SPEED
         else:
-            p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation
-        self._control[0] = p_control*1  # Take 100% portion of goal_driven control. #Ignore
+            p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation 
+
+        self._all_control[0] = p_control
 
         neighbour_poses = self.get_neighbour_pose()
         if neighbour_poses.count(None) < 2:
@@ -284,24 +286,25 @@ class Rover:
         if not self._initial_control:
             # Adjust speed according to neighbour(s)' info.
             if neighbour_poses.count(None) < 2:
-                #self._initial_control = False
-
+                control_index = 0
                 for pose in neighbour_poses:
-                    coop_control = 0
+                    control_index += 1
                     if pose is not None:
                         self._speed_controller.set_ref(pose)
                         controlled_object = self.measurement
-                        coop_control = self._speed_controller.execute(controlled_object)
-                        control_input = p_control + coop_control
-                        if control_input > MAXIMUM_SPEED:  # Control input saturation.
-                            self._control[0] = MAXIMUM_SPEED
-                        elif control_input < MINIMUM_SPEED:
-                            self._control[0] = MINIMUM_SPEED
-                        else:
-                            self._control[0] = control_input  # Assume changing linear velocity instantly.
-
+                        self._all_control[control_index] = self._speed_controller.execute(controlled_object)
+                control_input = np.nanmean(self._all_control)
             else:
-                self._control[0] = self._old_control[0]
+                control_input = np.nanmean(self._all_control)
+        else:
+            control_input = p_control*1  # Take 100% portion of goal_driven control.
+        
+        if control_input > MAXIMUM_SPEED:  # Control input saturation.
+            self._control[0] = MAXIMUM_SPEED
+        elif control_input < MINIMUM_SPEED:
+            self._control[0] = MINIMUM_SPEED
+        else:
+            self._control[0] = control_input  # Assume changing linear velocity instantly.    
 
         self._radio.reset_neighbour_register()
         self._radio.reset_buffer()
