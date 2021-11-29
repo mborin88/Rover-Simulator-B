@@ -26,7 +26,7 @@ dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 10000      #432000      # Maximum iteration.
+steps = 1000      #432000      # Maximum iteration.
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -60,7 +60,7 @@ log_title_tag = "Log Updates"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Logging per minute'''            #Additional notes to be added to Log file if wished
 
-waypoint_interval = 18000  #Log every 30 minutes
+waypoint_interval = 1000  #Log every 30 minutes
 
 def main():
     """
