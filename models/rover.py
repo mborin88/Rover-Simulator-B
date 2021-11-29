@@ -14,15 +14,15 @@ class Rover:
     """
     A rover class.
     """
-    def __init__(self, rov_id, easting, northing, q_noise=None, r_noise=None):
+    def __init__(self, rov_id, easting, northing, q_noise=None, r_noise=None, num_rovers=10):
         self._rov_id = rov_id                 # Unique id for each rover.
         self._pose = [easting, northing]      # Pose: (x (m), y (m)).
         self._q_noise = q_noise               # The state noise, a random variable.
         self._r_noise = r_noise               # The measurement noise, a random variable.
         self.measurement = self._pose         # The measurement of pose, assumed noiseless at first.
         self._control = [STARTING_SPEED]      # Control input, linear velocity.
-        self._all_control = [np.nan] * 3
-        self._old_control = [STARTING_SPEED]  # Old control velocity applied
+        self._all_control = [np.nan] * (num_rovers + 1) #First control is p control then rovers
+        self._num_rovers = num_rovers
         self._initial_control = True          # Want to P controller until we get neighbouring positions
         self._control_policy = None
         # The control policy used by the rover.
@@ -55,8 +55,8 @@ class Rover:
         return self._control
     
     @property
-    def old_control(self):
-        return self._old_control
+    def all_control(self):
+        return self._all_control
 
     @property
     def control_policy(self):
@@ -157,14 +157,12 @@ class Rover:
             if self._q_noise is None:
                 self._pose[0] = h[0]
                 self._pose[1] = h[1]  # Noiseless motion.
-                self._old_control[0] = self._control[0]
                 self._control[0] = sqrt(v_x ** 2 + v_y ** 2)  # Update speed.
                 self.measure()
             else:
                 noise = self.generate_noise(self._q_noise)
                 self._pose[0] = h[0] + noise[0]
                 self._pose[1] = h[1] + noise[1]  # Noisy motion.
-                self._old_control[0] = self._control[0]
                 self._control[0] = sqrt(v_x ** 2 + v_y ** 2)  # Update speed.
                 self.measure()
 
@@ -230,8 +228,6 @@ class Rover:
             p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation
         #self._control[0] *= 1  # Take 100% portion of goal_driven control. #Ignore
 
-        passive_control = [self._old_control[0]]
-
         # Adjust speed according to neighbour(s)' info.
         neighbour_poses = self.get_neighbour_pose()
         for pose in neighbour_poses:
@@ -280,12 +276,12 @@ class Rover:
         self._all_control[0] = p_control
 
         neighbour_poses = self.get_neighbour_pose()
-        if neighbour_poses.count(None) < 2:
+        if neighbour_poses.count(None) < self._num_rovers:
             self._initial_control = False
 
         if not self._initial_control:
             # Adjust speed according to neighbour(s)' info.
-            if neighbour_poses.count(None) < 2:
+            if neighbour_poses.count(None) < self._num_rovers:
                 control_index = 0
                 for pose in neighbour_poses:
                     control_index += 1
@@ -293,9 +289,10 @@ class Rover:
                         self._speed_controller.set_ref(pose)
                         controlled_object = self.measurement
                         self._all_control[control_index] = self._speed_controller.execute(controlled_object)
-                control_input = np.nanmean(self._all_control)
+
+                control_input = self.weighted_control_calc()
             else:
-                control_input = np.nanmean(self._all_control)
+                control_input = self.weighted_control_calc()
         else:
             control_input = p_control*1  # Take 100% portion of goal_driven control.
         
@@ -308,6 +305,15 @@ class Rover:
 
         self._radio.reset_neighbour_register()
         self._radio.reset_buffer()
+    
+    def weighted_control_calc(self):
+        num_neighbour_speeds = self._num_rovers - self._all_control.count(np.nan)
+        v_weights = [1/num_neighbour_speeds]*self._num_rovers
+        v_weights.append(1)
+        v_weights.reverse()
+        v_weights = np.array(v_weights)
+        ma = np.ma.MaskedArray(self._all_control, mask=np.isnan(self._all_control))
+        return np.ma.average(ma, weights=v_weights)
 
     def measure(self):
         """

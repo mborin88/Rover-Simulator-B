@@ -73,11 +73,11 @@ class World:
         else:
             return False
 
-    def add_rover(self, easting, northing, q_noise=None, r_noise=None):
+    def add_rover(self, easting, northing, q_noise=None, r_noise=None, num_rovers=10):
         """
         Add a rover to the world given its coordinates.
         """
-        self._rovers.append(Rover(len(self.rovers) + 1, easting, northing, q_noise, r_noise))
+        self._rovers.append(Rover(len(self.rovers) + 1, easting, northing, q_noise, r_noise, num_rovers))
 
     def rover_completes_task(self):
         """
@@ -103,12 +103,10 @@ class World:
         """
         dt = self._dt
         tn = self._tn
-        if((dt*tn)%1 == 0):
+        if((dt*tn)%500 == 0):
             print('Time: {} (s)\n'.format(str(round(tn * dt, 1))))
 
         # Logically, this is the beginning of time slot.
-        # if(round(tn*dt,1) == 5.1):
-        #     print('Time')
         transmitter = None
         for rover in self._rovers:
             rover.step_motion(self, dt)
