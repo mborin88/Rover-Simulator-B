@@ -22,11 +22,11 @@ CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 # Configure basic simulation settings:
 area = 'SU20NE'     # Area to run simulation.
 N = 10              # Number of rovers.
-dist = 450          # Distance between rovers, in meter.
+rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 1000      #432000      # Maximum iteration.
+steps = 1800        #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -54,13 +54,13 @@ K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
-log_control = 0
+log_control = 1
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Log Updates"
+log_title_tag = "Test Log per minute"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Logging per minute'''            #Additional notes to be added to Log file if wished
 
-waypoint_interval = 1000  #Log every 30 minutes
+waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 
 def main():
     """
@@ -82,7 +82,7 @@ def main():
 
     # Add rovers to the world.
     for i in range(N):
-        world.add_rover(x_min + x_offset + i * dist, y_min + y_offset, q_noise=Q, r_noise=R)
+        world.add_rover(x_min + x_offset + i * rovers_sep, y_min + y_offset, q_noise=Q, r_noise=R)
 
     # Configure rovers' settings.
     for starter in world.rovers:
@@ -214,7 +214,7 @@ def main():
             \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value), str(Q), str(R), str(dist),\
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value), str(Q), str(R), str(rovers_sep),\
                 str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(K_goal), str(K_neighbour)))
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
@@ -282,24 +282,31 @@ def main():
         log_raw_file.write('\nParameters:\n')
         log_raw_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
             \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nNoise Seed = {}\nState Noise(Q) = {}
-            \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
+            \nMeasurement Noise(R) = {}\nDistance between Rovers(rovers_sep) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nLog Interval = {}\nTime Sampling = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value) ,str(Q), str(R), str(dist),\
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value) ,str(Q), str(R), str(rovers_sep),\
                 str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(log_step_interval), str(t_sampling),str(K_goal), str(K_neighbour)))
         log_raw_file.write('\n')
         log_raw_file.write('=' * 50)
         log_raw_file.write("\t\t Rover\n")
         log_raw_file.write("Time\t")
-        for j in range(N):
-            log_raw_file.write(str(j+1) + 'x\t' + str(j+1) + 'y\t' + str(j+1) + 'v\t')
+        for x in range(N):
+            log_raw_file.write(str(x+1) + 'x\t' + str(x+1) + 'y\t' + str(x+1) + 'v\t')
         log_raw_file.write('RMSE EE')
 
         for n in range(0, step, log_step_interval):
             log_raw_file.write('\n' + str(round(n*t_sampling/60, 2)) +'\t')        #divide 60 for per minute
             data = ""
+
             for j in range(N):
+                if(n>=log_step_interval):
+                    x = np.mean(world.rovers[j].pose_logger.velocity[(n-log_step_interval):n])
+                    avg_velocity = round(np.mean(world.rovers[j].pose_logger.velocity[(n-log_step_interval):n]), 3)
+                else:
+                    avg_velocity = round(world.rovers[j].pose_logger.velocity[n], 3)
+
                 data += str(round(world.rovers[j].pose_logger.x_pose[j], 2)) + ',' + str(round(world.rovers[j].pose_logger.y_pose[n], 2)) \
-                    + ',' + str(round(world.rovers[j].pose_logger.velocity[n], 2)) + '-'
+                    + ',' + str(avg_velocity) + '-'
             data += str(round(ee[n], 3))
             log_raw_file.write(data)
         log_raw_file.close()
