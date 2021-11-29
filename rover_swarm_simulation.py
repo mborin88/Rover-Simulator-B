@@ -294,20 +294,25 @@ def main():
             log_raw_file.write(str(x+1) + 'x\t' + str(x+1) + 'y\t' + str(x+1) + 'v\t')
         log_raw_file.write('RMSE EE')
 
-        for n in range(0, step, log_step_interval):
+        for n in range(0, step+1, log_step_interval):   #+1 for velocity to calculate avg speed of the last interval.
             log_raw_file.write('\n' + str(round(n*t_sampling/60, 2)) +'\t')        #divide 60 for per minute
             data = ""
-
             for j in range(N):
                 if(n>=log_step_interval):
-                    x = np.mean(world.rovers[j].pose_logger.velocity[(n-log_step_interval):n])
                     avg_velocity = round(np.mean(world.rovers[j].pose_logger.velocity[(n-log_step_interval):n]), 3)
                 else:
                     avg_velocity = round(world.rovers[j].pose_logger.velocity[n], 3)
 
-                data += str(round(world.rovers[j].pose_logger.x_pose[j], 2)) + ',' + str(round(world.rovers[j].pose_logger.y_pose[n], 2)) \
+                if(n>=step): #need last velocity interval but position index doesn't include it.
+                    n = step-1
+
+                data += str(round(world.rovers[j].pose_logger.x_pose[n], 2)) + ',' + str(round(world.rovers[j].pose_logger.y_pose[n], 2)) \
                     + ',' + str(avg_velocity) + '-'
-            data += str(round(ee[n], 3))
+
+            if(n>=log_step_interval):
+                data += str(round(np.mean(ee[n-log_step_interval:n]), 3))
+            else:
+                data += str(round(np.mean(ee[n]), 3))
             log_raw_file.write(data)
         log_raw_file.close()
 
@@ -345,27 +350,39 @@ def main():
 
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     ax1.set_ylim(0, 150)
-    ax1.plot(ee)
-    ax1.set_xlim(0.0, world.time)
-    ax1.set_xlabel('Time (sec)')
+    ax1.set_xlim(0.0, world.time/60)
+    avg_ee = []
+    for q in range(0, step+1, log_step_interval):
+        if(q>=log_step_interval):
+            avg_ee.append(round(np.mean(ee[(q-log_step_interval):q]), 2))
+        else:
+            avg_ee.append(round(ee[q], 2))
+    ax1.plot(avg_ee)
+    ax1.set_xlabel('Time (min)')
     ax1.set_ylabel('Root Mean Square Formation Error (m)')
-    ax1.set_title('Collective Formation Performance (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
+    ax1.set_title('Average Collective Formation Performance per minute (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
 
     fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     ax2.set_ylim(0, 0.55)
+    ax2.set_xlim(0.0, world.time/60)
     labels = []
     for p in range(N):
         v_plotter = world.rovers[p].pose_logger
-        ax2.plot(v_plotter.velocity, linewidth=1.8)
+        avg_graph_velocity = []
+        for a in range(0, step+1, log_step_interval):
+            if(a>=log_step_interval):
+                avg_graph_velocity.append(round(np.mean(v_plotter.velocity[(a-log_step_interval):a]), 3))
+            else:
+                avg_graph_velocity.append(round(v_plotter.velocity[a], 3))
+        ax2.plot(avg_graph_velocity, linewidth=1.8)
         labels.append('ID: ' + str(p + 1))
-    ax2.legend(labels)
-    ax2.set_xlim(0.0, world.time)
-    ax2.set_xlabel('Time (sec)')
+
+    ax2.legend(labels) 
+    ax2.set_xlabel('Time (min)')
     ax2.set_ylabel('Velocity (m/s)')
-    ax2.set_title('Velocity Curve (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
+    ax2.set_title('Average Velocity Curve per minute (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
 
     # Plot rovers' trajectories over landcover
-
     fig3, ax3 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     la_map = read_asc(locate_map(area + '_landcover.asc'))
     image, axis_range = render_rgb(la_map) 
