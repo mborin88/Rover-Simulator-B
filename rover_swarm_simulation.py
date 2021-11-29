@@ -1,9 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import time
 import os
 import datetime as dt
 import statistics as stats
+import random as rand
 
 from models.world import *
 from models.slope_physics import *
@@ -18,13 +20,13 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU30NE'     # Area to run simulation.
+area = 'SU20NE'     # Area to run simulation.
 N = 10              # Number of rovers.
 dist = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 2400      #432000      # Maximum iteration.
+steps = 10000      #432000      # Maximum iteration.
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -37,9 +39,11 @@ user_cr = CR[3]   # Coding rate.
 user_txpw = 24    # Transmitting power, in dBm.
 
 # Configure control settings:
-Q = None         # State noise.
-R = None           # Measurement noise.
-ctrl_policy = 3
+Q = None                                        # State noise.
+R = None                                        # Measurement noise.
+seed_value = dt.datetime.now().microsecond      #Seed value for noise 
+rand.seed(seed_value)
+ctrl_policy = 1
 # Control policy:
 # 0 - meaning no controller;
 
@@ -50,11 +54,13 @@ K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
-log_control = 3
+log_control = 0
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Log Updates"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Logging per minute'''            #Additional notes to be added to Log file if wished
+
+waypoint_interval = 18000  #Log every 30 minutes
 
 def main():
     """
@@ -205,10 +211,10 @@ def main():
         log_summary_file.write('=' * 50)
         log_summary_file.write('\nParameters:\n')
         log_summary_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nState Noise(Q) = {}
+            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(Q), str(R), str(dist),\
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value), str(Q), str(R), str(dist),\
                 str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(K_goal), str(K_neighbour)))
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
@@ -275,10 +281,10 @@ def main():
         log_raw_file.write('=' * 50)
         log_raw_file.write('\nParameters:\n')
         log_raw_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nState Noise(Q) = {}
+            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nLog Interval = {}\nTime Sampling = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(Q), str(R), str(dist),\
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value) ,str(Q), str(R), str(dist),\
                 str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(log_step_interval), str(t_sampling),str(K_goal), str(K_neighbour)))
         log_raw_file.write('\n')
         log_raw_file.write('=' * 50)
@@ -298,7 +304,7 @@ def main():
             log_raw_file.write(data)
         log_raw_file.close()
 
-    # Plot rovers' trajectories.
+    # Plot rovers' trajectories over terrain
     x, y = np.linspace(x_min, x_max, map_terrain.n_cols), \
            np.linspace(y_min, y_max, map_terrain.n_rows)
     X, Y = np.meshgrid(x, y)
@@ -307,13 +313,23 @@ def main():
 
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     contf = ax.contourf(X, Y, Z, cmap=plt.get_cmap(cmap))
+    contf.set_clim(0, 110)
     plt.colorbar(contf, label='Elevation (m)')
-    # labels = []
+
     for o in range(N):
         plotter = world.rovers[o].pose_logger
         ax.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='red')
-    #    labels.append('ID: ' + str(o + 1))
-    # ax.legend(labels)
+    
+    #Waypoint grapher on contour plot
+    for k in range(waypoint_interval, steps, waypoint_interval):
+        x_waypoint = []
+        y_waypoint = []
+        for q in range(N):
+            plotter = world.rovers[q].pose_logger
+            x_waypoint.append(plotter.x_pose[k])
+            y_waypoint.append(plotter.y_pose[k])
+        ax.plot(x_waypoint, y_waypoint, linewidth=1.8, color='black')
+
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
     ax.set_xlabel('Easting (m)')
@@ -321,6 +337,7 @@ def main():
     ax.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
 
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    ax1.set_ylim(0, 150)
     ax1.plot(ee)
     ax1.set_xlim(0.0, world.time)
     ax1.set_xlabel('Time (sec)')
@@ -328,6 +345,7 @@ def main():
     ax1.set_title('Collective Formation Performance (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
 
     fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    ax2.set_ylim(0, 0.55)
     labels = []
     for p in range(N):
         v_plotter = world.rovers[p].pose_logger
@@ -338,6 +356,33 @@ def main():
     ax2.set_xlabel('Time (sec)')
     ax2.set_ylabel('Velocity (m/s)')
     ax2.set_title('Velocity Curve (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
+
+    # Plot rovers' trajectories over landcover
+
+    fig3, ax3 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    la_map = read_asc(locate_map(area + '_landcover.asc'))
+    image, axis_range = render_rgb(la_map) 
+    ax3.imshow(image, extent=axis_range)
+
+    for o in range(N):
+        plotter = world.rovers[o].pose_logger
+        ax3.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='cyan')
+    
+    #Waypoint grapher for landcover map
+    for k1 in range(waypoint_interval, steps, waypoint_interval):
+        x1_waypoint = []
+        y1_waypoint = []
+        for q1 in range(N):
+            plotter = world.rovers[q1].pose_logger
+            x1_waypoint.append(plotter.x_pose[k1])
+            y1_waypoint.append(plotter.y_pose[k1])
+        ax3.plot(x1_waypoint, y1_waypoint, linewidth=1.8, color='white')
+
+    ax3.set_xlim(x_min, x_max)
+    ax3.set_ylim(y_min, y_max)
+    ax3.set_xlabel('Easting (m)')
+    ax3.set_ylabel('Northing (m)')
+    ax3.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
 
     plt.show()
     plt.tight_layout()
