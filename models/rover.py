@@ -213,6 +213,7 @@ class Rover:
         """
         Apply passive cooperative control, i.e. only adjust speed when neighbour(s)' info is received,
         otherwise do not apply any control effect.
+        Need array for time sinces last recieved
         """
 
         goal_driven_controller = PController(ref=self._goal, gain=[0, 1e-4])
@@ -307,6 +308,12 @@ class Rover:
         self._radio.reset_buffer()
     
     def weighted_control_calc(self):
+        #Mean control effot for neighbours then add it to P controller
+        #Higher weighted closer ones? 
+        mean_control = 1
+        if(mean_control):
+            neighbour_mean = np.nanmean(self._all_control[1:])
+            return self._all_control[0] + neighbour_mean
         num_neighbour_speeds = self._num_rovers - self._all_control.count(np.nan)
         v_weights = [1/num_neighbour_speeds]*self._num_rovers
         v_weights.append(1)

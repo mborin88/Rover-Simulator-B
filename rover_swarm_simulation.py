@@ -20,13 +20,13 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20NE'     # Area to run simulation.
+area = 'SU20SE'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 1200        #432000      # Maximum iteration
+steps = 25000        #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -51,14 +51,15 @@ ctrl_policy = 3
 K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 
 # 2 - meaning passive-cooperative controller, if used:
-K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
+K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
-log_control = 0
+log_control = 3
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Weighted average of neighbours"
+log_title_tag = "Mean of neighbours Summed to P"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Weighted average of neighbours making it 1:1 (P controller:All nighbours)'''            #Additional notes to be added to Log file if wished
+log_notes = '''Neighbours control no weighted meaned then summed to the P_controller speed
+                Gain: 1 --> 0.1'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 
