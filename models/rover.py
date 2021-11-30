@@ -241,7 +241,7 @@ class Rover:
                 self._speed_controller.set_ref(pose)
                 controlled_object = self.measurement
                 coop_control = self._speed_controller.execute(controlled_object)
-                # print(coop_control)
+                
                 control_input = p_control + coop_control 
                 if control_input > MAXIMUM_SPEED:  # Control input saturation.
                     passive_control.append(MAXIMUM_SPEED)

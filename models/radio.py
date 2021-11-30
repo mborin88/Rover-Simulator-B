@@ -257,7 +257,7 @@ class Radio:
         """
         Reset neighbour register.
         """
-        for i in range(2):
+        for i in range(self._total_radios):
             self._neighbour_register[i] = None
 
     def reset_buffer(self):
