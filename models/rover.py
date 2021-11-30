@@ -262,7 +262,7 @@ class Rover:
         Start with P controller then only change speed when neighbour info recieved again.
         """
 
-        goal_driven_controller = PController(ref=self._goal, gain=[0, 1e-4])
+        goal_driven_controller = PController(ref=self._goal, gain=[0, 1e-3])
         controlled_object = self.measurement
         control_input = goal_driven_controller.execute(controlled_object)
         
@@ -312,8 +312,7 @@ class Rover:
         v_weights.append(1)
         v_weights.reverse()
         v_weights = np.array(v_weights)
-        ma = np.ma.MaskedArray(self._all_control, mask=np.isnan(self._all_control))
-        return np.ma.average(ma, weights=v_weights)
+        return np.nansum(self._all_control*v_weights)
 
     def measure(self):
         """
