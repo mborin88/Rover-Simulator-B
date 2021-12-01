@@ -31,6 +31,7 @@ class Rover:
         self._control_policy = None
         self._decay_type = decay_type
         self._decay_zero_crossing = decay_zero_crossing
+        self._connectivity = [0] * num_rovers
 
         # The control policy used by the rover.
         self._speed_controller = None
@@ -88,6 +89,10 @@ class Rover:
     @property
     def decay_zero_crossing(self):
         return self._decay_zero_crossing
+
+    @property
+    def connectivity(self):
+        return self._connectivity
 
     @property
     def speed_controller(self):
@@ -260,7 +265,9 @@ class Rover:
         neighbour_poses = self.get_neighbour_pose()
         if neighbour_poses.count(None) < self._num_rovers:
             self._initial_control = False
-        
+
+        self.connectivity_reset()
+        self.neighbour_connectivity(neighbour_poses)
         
         for i in range(1, len(self._steps_control_not_updated)):
             self._steps_control_not_updated[i] += 1 #all incremented by 1
@@ -319,6 +326,10 @@ class Rover:
         neighbour_poses = self.get_neighbour_pose()
         if neighbour_poses.count(None) < self._num_rovers:
             self._initial_control = False
+
+        self.connectivity_reset()
+        self.neighbour_connectivity(neighbour_poses)
+        
 
         for i in range(1, len(self._steps_control_not_updated)):
             self._steps_control_not_updated[i] += 1 #all incremented by 1
@@ -393,6 +404,22 @@ class Rover:
             noise = self.generate_noise(self._r_noise)
             self.measurement[0] = self._pose[0] + noise[0]
             self.measurement[1] = self._pose[1] + noise[1]  # Noisy measurement.
+
+    def connectivity_reset(self):
+        """
+        Reset connectivity array
+        """
+        self._connectivity = [0]*self._num_rovers
+
+    def neighbour_connectivity(self, neighbours):
+        """
+        Reset connectivity array
+        """
+        for i in range(len(neighbours)):
+            if neighbours[i] is not None:
+                self._connectivity[i] = 1
+            else:
+                self._connectivity[i] = 0
 
     def is_goal_reached(self):
         """
