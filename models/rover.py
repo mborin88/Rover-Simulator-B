@@ -22,6 +22,7 @@ class Rover:
         self.measurement = self._pose         # The measurement of pose, assumed noiseless at first.
         self._control = [STARTING_SPEED]      # Control input, linear velocity.
         self._all_control = [np.nan] * (num_rovers + 1) #First control is p control then rovers
+        self._steps_control_not_updated = [0] * (num_rovers + 1) #Amount of steps since that control has been updated.
         self._num_rovers = num_rovers
         self._initial_control = True          # Want to P controller until we get neighbouring positions
         self._control_policy = None
@@ -209,53 +210,66 @@ class Rover:
         else:
             self._control[0] = control_input  # Assume changing linear velocity instantly.
 
+
     def passive_cooperation(self):
         """
         Apply passive cooperative control, i.e. only adjust speed when neighbour(s)' info is received,
         otherwise do not apply any control effect.
         Need array for time sinces last recieved
+        Slowly push all_control values that haven't been recieved to 0. Exponential needed
         """
 
-        goal_driven_controller = PController(ref=self._goal, gain=[0, 1e-4])
+        goal_driven_controller = PController(ref=self._goal, gain=[0, 1e-3])
         controlled_object = self.measurement
         control_input = goal_driven_controller.execute(controlled_object)
-        p_control = 0
         
         if control_input > MAXIMUM_SPEED:  # Control input saturation.
             p_control = MAXIMUM_SPEED
         elif control_input < MINIMUM_SPEED:
             p_control = MINIMUM_SPEED
         else:
-            p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation
-        #self._control[0] *= 1  # Take 100% portion of goal_driven control. #Ignore
+            p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation 
 
-        # Adjust speed according to neighbour(s)' info.
+        self._all_control[0] = p_control
+
         neighbour_poses = self.get_neighbour_pose()
-        for pose in neighbour_poses:
-            if pose is not None:
-                passive_control = []
+        if neighbour_poses.count(None) < self._num_rovers:
+            self._initial_control = False
+        
+        
+        for i in range(1, len(self._steps_control_not_updated)):
+            self._steps_control_not_updated[i] += 1 #all incremented by 1
 
-        for pose in neighbour_poses:
-            coop_control = 0
-            if pose is not None:
-                self._speed_controller.set_ref(pose)
-                controlled_object = self.measurement
-                coop_control = self._speed_controller.execute(controlled_object)
-                
-                control_input = p_control + coop_control 
-                if control_input > MAXIMUM_SPEED:  # Control input saturation.
-                    passive_control.append(MAXIMUM_SPEED)
-                elif control_input < MINIMUM_SPEED:
-                    passive_control.append(MINIMUM_SPEED)
-                else:
-                    passive_control.append(control_input)  # Assume changing linear velocity instantly.
+        if not self._initial_control:
+            # Adjust speed according to neighbour(s)' info.
+            if neighbour_poses.count(None) < self._num_rovers:
+                control_index = 0
+                for pose in neighbour_poses:
+                    control_index += 1
+                    if pose is not None:
+                        self._speed_controller.set_ref(pose)
+                        controlled_object = self.measurement
+                        self._all_control[control_index] = self._speed_controller.execute(controlled_object)
+                        self._steps_control_not_updated[control_index] = 0 #set to -1
 
-        avg_passive_control = stats.mean(passive_control)
-        self._control[0] = (p_control + avg_passive_control) / 2
+                control_input = self.weighted_control_calc()
+            else:
+                control_input = self.weighted_control_calc()
+        else:
+            control_input = p_control*1  # Take 100% portion of goal_driven control.
+        
+        #all incremented by 1
+        
+        if control_input > MAXIMUM_SPEED:  # Control input saturation.
+            self._control[0] = MAXIMUM_SPEED
+        elif control_input < MINIMUM_SPEED:
+            self._control[0] = MINIMUM_SPEED
+        else:
+            self._control[0] = control_input  # Assume changing linear velocity instantly.    
 
         self._radio.reset_neighbour_register()
         self._radio.reset_buffer()
-
+    
     def simple_passive_cooperation(self):
         """
         Apply passive cooperative control, i.e. only adjust speed when neighbour(s)' info is received,
@@ -280,6 +294,9 @@ class Rover:
         if neighbour_poses.count(None) < self._num_rovers:
             self._initial_control = False
 
+        for i in range(1, len(self._steps_control_not_updated)):
+            self._steps_control_not_updated[i] += 1 #all incremented by 1
+
         if not self._initial_control:
             # Adjust speed according to neighbour(s)' info.
             if neighbour_poses.count(None) < self._num_rovers:
@@ -290,8 +307,9 @@ class Rover:
                         self._speed_controller.set_ref(pose)
                         controlled_object = self.measurement
                         self._all_control[control_index] = self._speed_controller.execute(controlled_object)
-
+                        self._steps_control_not_updated[control_index] = 0 
                 control_input = self.weighted_control_calc()
+                
             else:
                 control_input = self.weighted_control_calc()
         else:
@@ -308,18 +326,14 @@ class Rover:
         self._radio.reset_buffer()
     
     def weighted_control_calc(self):
-        #Mean control effot for neighbours then add it to P controller
-        #Higher weighted closer ones? 
+        """
+        Mean control of all the neighbouring velocities
+        Then summed with the P controller Speed.
+        """ 
         mean_control = 1
         if(mean_control):
             neighbour_mean = np.nanmean(self._all_control[1:])
             return self._all_control[0] + neighbour_mean
-        num_neighbour_speeds = self._num_rovers - self._all_control.count(np.nan)
-        v_weights = [1/num_neighbour_speeds]*self._num_rovers
-        v_weights.append(1)
-        v_weights.reverse()
-        v_weights = np.array(v_weights)
-        return np.nansum(self._all_control*v_weights)
 
     def measure(self):
         """
