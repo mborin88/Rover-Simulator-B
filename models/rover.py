@@ -13,19 +13,25 @@ MINIMUM_SPEED = 0.05       # m/s, which depicts the worst scenario and cannot be
 class Rover:
     """
     A rover class.
+    decay_type = 'quad'
+    zero_cross = 1200 #Decay = 0 at 2 minutes of silence from that rover.
     """
-    def __init__(self, rov_id, easting, northing, q_noise=None, r_noise=None, num_rovers=10):
+    def __init__(self, rov_id, easting, northing, q_noise=None, r_noise=None, num_rovers=10, decay_type = 'quad', decay_zero_crossing=1200):
         self._rov_id = rov_id                 # Unique id for each rover.
         self._pose = [easting, northing]      # Pose: (x (m), y (m)).
         self._q_noise = q_noise               # The state noise, a random variable.
         self._r_noise = r_noise               # The measurement noise, a random variable.
         self.measurement = self._pose         # The measurement of pose, assumed noiseless at first.
+
         self._control = [STARTING_SPEED]      # Control input, linear velocity.
-        self._all_control = [np.nan] * (num_rovers + 1) #First control is p control then rovers
-        self._steps_control_not_updated = [0] * (num_rovers + 1) #Amount of steps since that control has been updated.
+        self._all_control = np.array([np.nan] * (num_rovers + 1)) #First control is p control then rovers
+        self._steps_control_not_updated = np.array([0.0] * (num_rovers + 1)) #Amount of steps since that control has been updated.
         self._num_rovers = num_rovers
         self._initial_control = True          # Want to P controller until we get neighbouring positions
         self._control_policy = None
+        self._decay_type = decay_type
+        self._decay_zero_crossing = decay_zero_crossing
+
         # The control policy used by the rover.
         self._speed_controller = None
         # The speed controller, a specific type of controller object.
@@ -58,10 +64,30 @@ class Rover:
     @property
     def all_control(self):
         return self._all_control
+    
+    @property
+    def steps_control_not_updated(self):
+        return self._steps_control_not_updated
+
+    @property
+    def num_rovers(self):
+        return self._num_rovers
+
+    @property
+    def initial_control(self):
+        return self._initial_control
 
     @property
     def control_policy(self):
         return self._control_policy
+
+    @property
+    def decay_type(self):
+        return self._decay_type
+
+    @property
+    def decay_zero_crossing(self):
+        return self._decay_zero_crossing
 
     @property
     def speed_controller(self):
@@ -213,10 +239,9 @@ class Rover:
 
     def passive_cooperation(self):
         """
-        Apply passive cooperative control, i.e. only adjust speed when neighbour(s)' info is received,
-        otherwise do not apply any control effect.
-        Need array for time sinces last recieved
-        Slowly push all_control values that haven't been recieved to 0. Exponential needed
+        Apply passive cooperative control, i.e. only adjust speed when neighbour(s)' info.
+        Recieve all info scale old info to be less relevant. At certain time thershold old ignore old info.
+        Slowly push all_control values that haven't been recieved to 0.
         """
 
         goal_driven_controller = PController(ref=self._goal, gain=[0, 1e-3])
@@ -247,13 +272,14 @@ class Rover:
                 for pose in neighbour_poses:
                     control_index += 1
                     if pose is not None:
+                        self._steps_control_not_updated[control_index] = 0
                         self._speed_controller.set_ref(pose)
                         controlled_object = self.measurement
                         self._all_control[control_index] = self._speed_controller.execute(controlled_object)
-                        self._steps_control_not_updated[control_index] = 0 #set to -1
-
+                self.scale_all_control()
                 control_input = self.weighted_control_calc()
             else:
+                self.scale_all_control()
                 control_input = self.weighted_control_calc()
         else:
             control_input = p_control*1  # Take 100% portion of goal_driven control.
@@ -334,6 +360,28 @@ class Rover:
         if(mean_control):
             neighbour_mean = np.nanmean(self._all_control[1:])
             return self._all_control[0] + neighbour_mean
+
+    def time_decay(self, value):
+        if(self._decay_type == 'exp'):
+            scale = (-1/np.exp(-value + self._decay_zero_crossing)) + 1
+        elif (self._decay_type == 'quad'): 
+            scale = (-1/(self._decay_zero_crossing**2)) * (value-self._decay_zero_crossing) * (value + self._decay_zero_crossing)
+        else:
+            scale = 1
+
+        if(scale <= 0):
+            scale = 0
+
+        return scale
+
+    def scale_all_control(self):
+        """
+        Scale all control variable. 
+        """ 
+        multiplier = np.array([1.0]*len(self._all_control))
+        for i in range(1,len(self._all_control)):
+            multiplier[i] = self.time_decay(self._steps_control_not_updated[i])
+        self._all_control = self._all_control * multiplier
 
     def measure(self):
         """

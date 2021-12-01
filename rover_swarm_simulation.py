@@ -26,7 +26,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 120000        #432000      # Maximum iteration
+steps = 25000        #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -43,7 +43,7 @@ Q = None                                        # State noise.
 R = None                                        # Measurement noise.
 seed_value = dt.datetime.now().microsecond      #Seed value for noise 
 rand.seed(seed_value)
-ctrl_policy = 3
+ctrl_policy = 2
 # Control policy:
 # 0 - meaning no controller;
 
@@ -52,15 +52,18 @@ K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 
 # 2 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
+decay = 'quad'
+zero_crossing = 1200
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
 log_control = 3
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Basic Line Sweeping Halfway Error Finding"
+log_title_tag = "Advance Line Sweeping Initial Test"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Neighbours control no weighted meaned then summed to the P_controller speed
                 Gain: 1 --> 0.1
-                Error corrected: Reset was only resetting postions 1 and 2'''            #Additional notes to be added to Log file if wished
+                Time decay on control that hasn't been recieved. Ignore 2 minutes old info. 
+                Test to see if initial functionality in well connected environement is still sufficient'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 
@@ -84,7 +87,8 @@ def main():
 
     # Add rovers to the world.
     for i in range(N):
-        world.add_rover(x_min + x_offset + i * rovers_sep, y_min + y_offset, q_noise=Q, r_noise=R, num_rovers=N)
+        world.add_rover(x_min + x_offset + i * rovers_sep, y_min + y_offset, q_noise=Q, r_noise=R, num_rovers=N,\
+                            decay_type= decay, decay_zero_crossing = zero_crossing)
 
     # Configure rovers' settings.
     for starter in world.rovers:
