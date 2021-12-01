@@ -56,12 +56,11 @@ decay = 'quad'
 zero_crossing = 1200
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
-log_control = 0
+log_control = 3
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Advance Line Sweeping Initial Test"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Neighbours control no weighted meaned then summed to the P_controller speed
-                Gain: 1 --> 0.1
+log_notes = '''Neighbours control no weighted meaned then summed to the P_controller speed.
                 Time decay on control that hasn't been recieved. Ignore 2 minutes old info. 
                 Test to see if initial functionality in well connected environement is still sufficient'''            #Additional notes to be added to Log file if wished
 
@@ -219,11 +218,12 @@ def main():
         log_summary_file.write('=' * 50)
         log_summary_file.write('\nParameters:\n')
         log_summary_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nNoise Seed = {}\nState Noise(Q) = {}
+            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value), str(Q), str(R), str(rovers_sep),\
-                str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(K_goal), str(K_neighbour)))
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
+                    str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
+                    str(len_interval), str(K_goal), str(K_neighbour)))
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
         log_summary_file.write('\n')
@@ -289,11 +289,12 @@ def main():
         log_raw_file.write('=' * 50)
         log_raw_file.write('\nParameters:\n')
         log_raw_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nNoise Seed = {}\nState Noise(Q) = {}
+            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(rovers_sep) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nLog Interval = {}\nTime Sampling = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value) ,str(Q), str(R), str(rovers_sep),\
-                str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(log_step_interval), str(t_sampling),str(K_goal), str(K_neighbour)))
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
+                    str(seed_value) ,str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), \
+                    str(log_step_interval), str(t_sampling),str(K_goal), str(K_neighbour)))
         log_raw_file.write('\n')
         log_raw_file.write('=' * 50)
         log_raw_file.write("\t\t Rover\n")
@@ -341,7 +342,7 @@ def main():
         ax.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='red')
     
     #Waypoint grapher on contour plot
-    for k in range(waypoint_interval, steps, waypoint_interval):
+    for k in range(waypoint_interval, step, waypoint_interval):
         x_waypoint = []
         y_waypoint = []
         for q in range(N):
@@ -407,7 +408,7 @@ def main():
         ax3.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='cyan')
     
     #Waypoint grapher for landcover map
-    for k1 in range(waypoint_interval, steps, waypoint_interval):
+    for k1 in range(waypoint_interval, step, waypoint_interval):
         x1_waypoint = []
         y1_waypoint = []
         for q1 in range(N):
