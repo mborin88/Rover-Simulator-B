@@ -26,7 +26,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 1800        #432000      # Maximum iteration
+steps = 120000        #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -43,7 +43,7 @@ Q = None                                        # State noise.
 R = None                                        # Measurement noise.
 seed_value = dt.datetime.now().microsecond      #Seed value for noise 
 rand.seed(seed_value)
-ctrl_policy = 1
+ctrl_policy = 3
 # Control policy:
 # 0 - meaning no controller;
 
@@ -51,14 +51,16 @@ ctrl_policy = 1
 K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 
 # 2 - meaning passive-cooperative controller, if used:
-K_neighbour = [0, 1]  # Control gain for passive-cooperative controller;
+K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
-log_control = 1
+log_control = 3
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Test Log per minute"
+log_title_tag = "Basic Line Sweeping Halfway Error Finding"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Logging per minute'''            #Additional notes to be added to Log file if wished
+log_notes = '''Neighbours control no weighted meaned then summed to the P_controller speed
+                Gain: 1 --> 0.1
+                Error corrected: Reset was only resetting postions 1 and 2'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 
@@ -82,7 +84,7 @@ def main():
 
     # Add rovers to the world.
     for i in range(N):
-        world.add_rover(x_min + x_offset + i * rovers_sep, y_min + y_offset, q_noise=Q, r_noise=R)
+        world.add_rover(x_min + x_offset + i * rovers_sep, y_min + y_offset, q_noise=Q, r_noise=R, num_rovers=N)
 
     # Configure rovers' settings.
     for starter in world.rovers:
@@ -198,14 +200,15 @@ def main():
             os.mkdir(os.getcwd() + '\\logs\\' + area)
         if(not os.path.exists('logs\\' + area + '\\control_policy_' + str(ctrl_policy))):
             os.mkdir(os.getcwd() + '\\logs\\' + area+ '\\control_policy_' + str(ctrl_policy))
-        
-        directory = 'logs\\' + area + '\\control_policy_' + str(ctrl_policy) + '\\'
+        if(not os.path.exists('logs\\' + area + '\\control_policy_' + str(ctrl_policy) + '\\' + str(log_title))):
+            os.mkdir(os.getcwd() + '\\logs\\' + str(area) + '\\control_policy_' + str(ctrl_policy) + '\\' + str(log_title))
+        directory = 'logs\\' + str(area) + '\\control_policy_' + str(ctrl_policy) + '\\' + str(log_title) + '\\'
 
     #Log Summary Information
     if(log_control == 2 or log_control == 3):
-        log_summary_file_name = 'SSS Summary Data, ' + log_title
+        log_summary_file_name = 'SSS Summary Data'
         log_summary_file = open(directory + log_summary_file_name+'.txt', 'w')
-        log_summary_file.write(log_summary_file_name+ '\n')
+        log_summary_file.write(log_summary_file_name + ': ' + log_title + '\n')
         log_summary_file.write("\nNotes: " + log_notes)
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
@@ -274,9 +277,9 @@ def main():
     
     #Log Raw Data into a file
     if(log_control == 1 or log_control == 3):
-        log_raw_file_name = 'SSS Raw Data, ' + log_title
+        log_raw_file_name = 'SSS Raw Data'
         log_raw_file = open(directory + log_raw_file_name+'.txt', 'w')
-        log_raw_file.write(log_raw_file_name+ '\n')
+        log_raw_file.write(log_raw_file_name + ': ' + log_title + '\n')
         log_raw_file.write("Notes: " + log_notes + '\n')
         log_raw_file.write('=' * 50)
         log_raw_file.write('\nParameters:\n')
@@ -347,6 +350,8 @@ def main():
     ax.set_xlabel('Easting (m)')
     ax.set_ylabel('Northing (m)')
     ax.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
+    if(log_control>=1):
+        plt.savefig(directory + 'Elevation.png')
 
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     ax1.set_ylim(0, 150)
@@ -361,6 +366,8 @@ def main():
     ax1.set_xlabel('Time (min)')
     ax1.set_ylabel('Root Mean Square Formation Error (m)')
     ax1.set_title('Average Collective Formation Performance per minute (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
+    if(log_control>=1):
+        plt.savefig(directory + 'RMSE.png')
 
     fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     ax2.set_ylim(0, 0.55)
@@ -381,6 +388,8 @@ def main():
     ax2.set_xlabel('Time (min)')
     ax2.set_ylabel('Velocity (m/s)')
     ax2.set_title('Average Velocity Curve per minute (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
+    if(log_control>=1):
+        plt.savefig(directory + 'Velocity.png')
 
     # Plot rovers' trajectories over landcover
     fig3, ax3 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
@@ -407,6 +416,29 @@ def main():
     ax3.set_xlabel('Easting (m)')
     ax3.set_ylabel('Northing (m)')
     ax3.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
+    if(log_control>=1):
+        plt.savefig(directory + 'Landcover.png')
+    
+    fig2, ax4 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    ax4.set_ylim(y_min, y_max) 
+    ax4.set_xlim(0.0, world.time/60)
+    labels = []
+    for p in range(N):
+        v_plotter = world.rovers[p].pose_logger
+        rover_y_pose = []
+        for a in range(0, step+1, log_step_interval):
+            if(a>=step):
+                a = step-1
+            rover_y_pose.append(v_plotter.y_pose[a])
+        ax4.plot(rover_y_pose, linewidth=1.8)
+        labels.append('ID: ' + str(p + 1))
+
+    ax4.legend(labels) 
+    ax4.set_xlabel('Time (min)')
+    ax4.set_ylabel('Y position (m)')
+    ax4.set_title('Y postion Trajectory (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
+    if(log_control>=1):
+        plt.savefig(directory + 'Y_Position.png')
 
     plt.show()
     plt.tight_layout()

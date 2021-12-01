@@ -142,6 +142,7 @@ class Radio:
         Set total number of radios, including self.
         """
         self._total_radios = size
+        self._neighbour_register = [None]*size
 
     def set_t_slot(self, new_t_slot):
         """
@@ -243,18 +244,20 @@ class Radio:
         """
         packet = self._receiver_buffer
         tx_id = packet.tx.radio_id
-        if tx_id == (self._radio_id - 1):
-            self._neighbour_register[0] = packet
-        elif tx_id == (self._radio_id + 1):
-            self._neighbour_register[1] = packet
-        else:
-            pass
+        self._neighbour_register[tx_id - 1] = packet
+
+        # if tx_id == (self._radio_id - 1):
+        #     self._neighbour_register[0] = packet
+        # elif tx_id == (self._radio_id + 1):
+        #     self._neighbour_register[1] = packet
+        # else:
+        #     pass
 
     def reset_neighbour_register(self):
         """
         Reset neighbour register.
         """
-        for i in range(2):
+        for i in range(self._total_radios):
             self._neighbour_register[i] = None
 
     def reset_buffer(self):
