@@ -44,7 +44,7 @@ R = None                                        # Measurement noise.
 seed_value = dt.datetime.now().microsecond      #Seed value for noise 
 rand.seed(seed_value)
 
-ctrl_policy = 2
+ctrl_policy = 3
 # Control policy:
 # 0 - meaning no controller;
 
