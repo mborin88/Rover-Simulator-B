@@ -26,7 +26,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000        #432000      # Maximum iteration
+steps = 432000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -448,10 +448,10 @@ def main():
 
     connectivity_fig = [0]*N
     connectivity_ax = [0]*N
-    for o in range(N):
-        connectivity_fig[o], connectivity_ax[o] = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+        
 
-    for b in range(N): 
+    for b in range(N):
+        connectivity_fig[b], connectivity_ax[b] = plt.subplots(nrows=1, ncols=1, figsize=(6, 6)) 
         connectivity_ax[b].set_ylim(0, ((log_step_interval/len_interval) + 1)) 
         connectivity_ax[b].set_xlim(0.0, world.time/60)
         connectivity_ax[b].set_xlabel('Time (min)')
