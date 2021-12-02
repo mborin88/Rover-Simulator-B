@@ -20,7 +20,7 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20NE'     # Area to run simulation.
+area = 'SU20NW'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
@@ -58,7 +58,7 @@ zero_crossing = 1200
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
 log_control = 3
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Advance Line Sweeping Initial Test"
+log_title_tag = "Advance Line Sweeping"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Neighbours control no weighted meaned then summed to the P_controller speed.
                 Time decay on control that hasn't been recieved. Ignore 2 minutes old info. 
