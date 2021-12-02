@@ -20,7 +20,7 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20NW'     # Area to run simulation.
+area = 'SU20SE'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
@@ -44,7 +44,7 @@ R = None                                        # Measurement noise.
 seed_value = dt.datetime.now().microsecond      #Seed value for noise 
 rand.seed(seed_value)
 
-ctrl_policy = 3
+ctrl_policy = 2
 # Control policy:
 # 0 - meaning no controller;
 
@@ -59,11 +59,9 @@ zero_crossing = 1200
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
 log_control = 3
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Advance Line Sweeping"
+log_title_tag = "Basic Line Sweeping"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Neighbours control no weighted meaned then summed to the P_controller speed.
-                Time decay on control that hasn't been recieved. Ignore 2 minutes old info. 
-                Test to see if initial functionality in well connected environement is still sufficient'''            #Additional notes to be added to Log file if wished
+log_notes = '''Full Run'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 

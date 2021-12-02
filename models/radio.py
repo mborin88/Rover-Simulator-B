@@ -246,13 +246,6 @@ class Radio:
         tx_id = packet.tx.radio_id
         self._neighbour_register[tx_id - 1] = packet
 
-        # if tx_id == (self._radio_id - 1):
-        #     self._neighbour_register[0] = packet
-        # elif tx_id == (self._radio_id + 1):
-        #     self._neighbour_register[1] = packet
-        # else:
-        #     pass
-
     def reset_neighbour_register(self):
         """
         Reset neighbour register.
