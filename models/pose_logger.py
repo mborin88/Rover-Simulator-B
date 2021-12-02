@@ -7,6 +7,7 @@ class PoseLogger:
         self.x_pose = []
         self.y_pose = []
         self.velocity = []
+        self.connectivity = []
         self.termination_time = None
 
     def log_pose(self):
@@ -21,6 +22,12 @@ class PoseLogger:
         Record velocity.
         """
         self.velocity.append(self.rover.control[0])
+
+    def log_connectivity(self):
+        """
+        Record velocity.
+        """
+        self.connectivity.append(self.rover.connectivity)
 
     def log_termination_time(self):
         """

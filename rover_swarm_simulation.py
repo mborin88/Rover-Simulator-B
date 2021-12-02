@@ -20,13 +20,13 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20NE'     # Area to run simulation.
+area = 'SU20NW'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 120000        #432000      # Maximum iteration
+steps = 432000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 50   # Number of time slots between transmissions for one device.
@@ -43,7 +43,7 @@ Q = None                                        # State noise.
 R = None                                        # Measurement noise.
 seed_value = dt.datetime.now().microsecond      #Seed value for noise 
 rand.seed(seed_value)
-ctrl_policy = 3
+ctrl_policy = 2
 # Control policy:
 # 0 - meaning no controller;
 
@@ -52,15 +52,17 @@ K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 
 # 2 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
+decay = 'quad'
+zero_crossing = 1200
 
 # Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
 log_control = 3
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Basic Line Sweeping Halfway Error Finding"
+log_title_tag = "Advance Line Sweeping"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Neighbours control no weighted meaned then summed to the P_controller speed
-                Gain: 1 --> 0.1
-                Error corrected: Reset was only resetting postions 1 and 2'''            #Additional notes to be added to Log file if wished
+log_notes = '''Neighbours control no weighted meaned then summed to the P_controller speed.
+                Time decay on control that hasn't been recieved. Ignore 2 minutes old info. 
+                Test to see if initial functionality in well connected environement is still sufficient'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 
@@ -84,7 +86,8 @@ def main():
 
     # Add rovers to the world.
     for i in range(N):
-        world.add_rover(x_min + x_offset + i * rovers_sep, y_min + y_offset, q_noise=Q, r_noise=R, num_rovers=N)
+        world.add_rover(x_min + x_offset + i * rovers_sep, y_min + y_offset, q_noise=Q, r_noise=R, num_rovers=N,\
+                            decay_type= decay, decay_zero_crossing = zero_crossing)
 
     # Configure rovers' settings.
     for starter in world.rovers:
@@ -130,6 +133,7 @@ def main():
         for l in range(N):
             world.rovers[l].pose_logger.log_pose()
             world.rovers[l].pose_logger.log_velocity()
+            world.rovers[l].pose_logger.log_connectivity()
         error = 0.0
         for m in range(N - 1):  # Root mean square formation error
             error += (world.rovers[m + 1].pose_logger.y_pose[-1]
@@ -214,11 +218,12 @@ def main():
         log_summary_file.write('=' * 50)
         log_summary_file.write('\nParameters:\n')
         log_summary_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nNoise Seed = {}\nState Noise(Q) = {}
+            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value), str(Q), str(R), str(rovers_sep),\
-                str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(K_goal), str(K_neighbour)))
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
+                    str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
+                    str(len_interval), str(K_goal), str(K_neighbour)))
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
         log_summary_file.write('\n')
@@ -284,11 +289,12 @@ def main():
         log_raw_file.write('=' * 50)
         log_raw_file.write('\nParameters:\n')
         log_raw_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nNoise Seed = {}\nState Noise(Q) = {}
+            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(rovers_sep) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nLog Interval = {}\nTime Sampling = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(seed_value) ,str(Q), str(R), str(rovers_sep),\
-                str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), str(log_step_interval), str(t_sampling),str(K_goal), str(K_neighbour)))
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
+                    str(seed_value) ,str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), \
+                    str(log_step_interval), str(t_sampling),str(K_goal), str(K_neighbour)))
         log_raw_file.write('\n')
         log_raw_file.write('=' * 50)
         log_raw_file.write("\t\t Rover\n")
@@ -336,7 +342,7 @@ def main():
         ax.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='red')
     
     #Waypoint grapher on contour plot
-    for k in range(waypoint_interval, steps, waypoint_interval):
+    for k in range(waypoint_interval, step, waypoint_interval):
         x_waypoint = []
         y_waypoint = []
         for q in range(N):
@@ -402,7 +408,7 @@ def main():
         ax3.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='cyan')
     
     #Waypoint grapher for landcover map
-    for k1 in range(waypoint_interval, steps, waypoint_interval):
+    for k1 in range(waypoint_interval, step, waypoint_interval):
         x1_waypoint = []
         y1_waypoint = []
         for q1 in range(N):
@@ -439,6 +445,37 @@ def main():
     ax4.set_title('Y postion Trajectory (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
     if(log_control>=1):
         plt.savefig(directory + 'Y_Position.png')
+
+    connectivity_fig = [0]*N
+    connectivity_ax = [0]*N
+        
+
+    for b in range(N):
+        connectivity_fig[b], connectivity_ax[b] = plt.subplots(nrows=1, ncols=1, figsize=(6, 6)) 
+        connectivity_ax[b].set_ylim(0, ((log_step_interval/len_interval) + 1)) 
+        connectivity_ax[b].set_xlim(0.0, world.time/60)
+        connectivity_ax[b].set_xlabel('Time (min)')
+        connectivity_ax[b].set_ylabel('Numbers of times connected to in the minute')
+        connectivity_ax[b].set_title('Connection of rover {} (Time Elapse: {} min)'.format(str(b+1) ,str(round(world.time/60, 1))))
+
+        connectivity_plotter = world.rovers[b].pose_logger
+        sum_connectivity = []
+        for c_step in range(0, step+1, log_step_interval):
+            if(c_step>=log_step_interval):
+                test1 = np.array(connectivity_plotter.connectivity[(c_step-log_step_interval):c_step])
+                sum_connectivity.append(np.sum(test1, axis=0))
+            else:
+                sum_connectivity.append(np.array([0]*N))
+
+        labels = []
+        plot_connectivity = []
+        for z in range(N):
+            plot_connectivity.append([item[z] for item in sum_connectivity])
+            connectivity_ax[b].plot(plot_connectivity[z], linewidth=1.8)
+            labels.append('ID: ' + str(z + 1))
+        connectivity_ax[b].legend(labels)
+        if(log_control>=1):
+            plt.savefig(directory + 'Connection_of_rover_' + str(b+1) + '.png')
 
     plt.show()
     plt.tight_layout()
