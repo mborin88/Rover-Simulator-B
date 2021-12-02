@@ -57,7 +57,7 @@ decay = 'quad'
 zero_crossing = 25 * len_interval #25 communication cycles for it to fully decay
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '010'
+log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Len interval break test"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
@@ -375,24 +375,17 @@ def main():
         plt.savefig(directory + 'RMSE.png')
 
     fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
-    ax2.set_ylim(0, 0.55)
-    ax2.set_xlim(0.0, world.time/60)
     labels = []
+    velocities = []
     for p in range(N):
         v_plotter = world.rovers[p].pose_logger
-        avg_graph_velocity = []
-        for a in range(0, step+1, log_step_interval):
-            if(a>=log_step_interval):
-                avg_graph_velocity.append(round(np.mean(v_plotter.velocity[(a-log_step_interval):a]), 3))
-            else:
-                avg_graph_velocity.append(round(v_plotter.velocity[a], 3))
-        ax2.plot(avg_graph_velocity, linewidth=1.8)
+        velocities.append(v_plotter.velocity)
         labels.append('ID: ' + str(p + 1))
-
-    ax2.legend(labels) 
-    ax2.set_xlabel('Time (min)')
-    ax2.set_ylabel('Velocity (m/s)')
+    ax2.boxplot(velocities, autorange=True, showfliers=False, whis=(0,100))
+    ax2.set_xticklabels(labels)
     ax2.set_title('Average Velocity Curve per minute (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
+    del velocities
+
     if(int(log_control[2]) == 1):
         plt.savefig(directory + 'Velocity.png')
 
