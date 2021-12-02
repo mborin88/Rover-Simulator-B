@@ -26,10 +26,10 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000      #432000      # Maximum iteration
+steps = 200      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
-len_interval = 50   # Number of time slots between transmissions for one device.
+len_interval = 80   # Number of time slots between transmissions for one device.
 
 # Configure communication settings:
 user_f = 869.525  # Carrier center frequency, in MHz.
@@ -54,12 +54,12 @@ K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 # 2 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
 decay = 'quad'
-zero_crossing = 1200
+zero_crossing = 25 * len_interval #25 communication cycles for it to fully decay
 
-# Log control 0 = don't Log 1 = Log raw data, 2 = Log summary data, 3 = Log both raw and Summary
-log_control = 3
+# Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
+log_control = '010'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Basic Line Sweeping"
+log_title_tag = "Len interval break test"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Full Run'''            #Additional notes to be added to Log file if wished
 
@@ -198,7 +198,7 @@ def main():
     print('Simulation running time: {} (s)'.format(str(round(end - start, 1))))
 
     #Logs directory creation if not created
-    if(log_control >= 1):
+    if(int(log_control) >= 1):
         if(not os.path.exists('logs\\' + area)):
             os.mkdir(os.getcwd() + '\\logs\\' + area)
         if(not os.path.exists('logs\\' + area + '\\control_policy_' + str(ctrl_policy))):
@@ -208,7 +208,7 @@ def main():
         directory = 'logs\\' + str(area) + '\\control_policy_' + str(ctrl_policy) + '\\' + str(log_title) + '\\'
 
     #Log Summary Information
-    if(log_control == 2 or log_control == 3):
+    if(int(log_control[1]) == 1):
         log_summary_file_name = 'SSS Summary Data'
         log_summary_file = open(directory + log_summary_file_name+'.txt', 'w')
         log_summary_file.write(log_summary_file_name + ': ' + log_title + '\n')
@@ -280,7 +280,7 @@ def main():
         log_summary_file.close()
     
     #Log Raw Data into a file
-    if(log_control == 1 or log_control == 3):
+    if(int(log_control[0]) == 1):
         log_raw_file_name = 'SSS Raw Data'
         log_raw_file = open(directory + log_raw_file_name+'.txt', 'w')
         log_raw_file.write(log_raw_file_name + ': ' + log_title + '\n')
@@ -355,7 +355,7 @@ def main():
     ax.set_xlabel('Easting (m)')
     ax.set_ylabel('Northing (m)')
     ax.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
-    if(log_control>=1):
+    if(int(log_control[2]) == 1):
         plt.savefig(directory + 'Elevation.png')
 
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
@@ -371,7 +371,7 @@ def main():
     ax1.set_xlabel('Time (min)')
     ax1.set_ylabel('Root Mean Square Formation Error (m)')
     ax1.set_title('Average Collective Formation Performance per minute (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
-    if(log_control>=1):
+    if(int(log_control[2]) == 1):
         plt.savefig(directory + 'RMSE.png')
 
     fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
@@ -393,7 +393,7 @@ def main():
     ax2.set_xlabel('Time (min)')
     ax2.set_ylabel('Velocity (m/s)')
     ax2.set_title('Average Velocity Curve per minute (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
-    if(log_control>=1):
+    if(int(log_control[2]) == 1):
         plt.savefig(directory + 'Velocity.png')
 
     # Plot rovers' trajectories over landcover
@@ -421,7 +421,7 @@ def main():
     ax3.set_xlabel('Easting (m)')
     ax3.set_ylabel('Northing (m)')
     ax3.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
-    if(log_control>=1):
+    if(int(log_control[2]) == 1):
         plt.savefig(directory + 'Landcover.png')
     
     fig2, ax4 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
@@ -442,7 +442,7 @@ def main():
     ax4.set_xlabel('Time (min)')
     ax4.set_ylabel('Y position (m)')
     ax4.set_title('Y postion Trajectory (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
-    if(log_control>=1):
+    if(int(log_control[2]) == 1):
         plt.savefig(directory + 'Y_Position.png')
 
     connectivity_fig = [0]*N
@@ -473,7 +473,7 @@ def main():
             connectivity_ax[b].plot(plot_connectivity[z], linewidth=1.8)
             labels.append('ID: ' + str(z + 1))
         connectivity_ax[b].legend(labels)
-        if(log_control>=1):
+        if(int(log_control[2]) == 1):
             plt.savefig(directory + 'Connection_of_rover_' + str(b+1) + '.png')
 
     plt.show()
