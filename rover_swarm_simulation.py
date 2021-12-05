@@ -323,7 +323,7 @@ def main():
                 data += str(round(np.mean(ee[n]), 3))
             log_raw_file.write(data)
         log_raw_file.close()
-
+        
     # Plot rovers' trajectories over terrain
     x, y = np.linspace(x_min, x_max, map_terrain.n_cols), \
            np.linspace(y_min, y_max, map_terrain.n_rows)
@@ -357,7 +357,8 @@ def main():
     ax.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
     if(int(log_control[2]) == 1):
         plt.savefig(directory + 'Elevation.png')
-
+    
+    #RMSE of rovers position error over time
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     ax1.set_ylim(0, 150)
     ax1.set_xlim(0.0, world.time/60)
@@ -374,6 +375,7 @@ def main():
     if(int(log_control[2]) == 1):
         plt.savefig(directory + 'RMSE.png')
 
+    #Velocity boxplots of each rover whiskers going from 0% - 100%
     fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     labels = []
     velocities = []
@@ -417,7 +419,8 @@ def main():
     if(int(log_control[2]) == 1):
         plt.savefig(directory + 'Landcover.png')
     
-    fig2, ax4 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    #Y Position of each rover time. 
+    fig4, ax4 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     ax4.set_ylim(y_min, y_max) 
     ax4.set_xlim(0.0, world.time/60)
     labels = []
@@ -438,10 +441,37 @@ def main():
     if(int(log_control[2]) == 1):
         plt.savefig(directory + 'Y_Position.png')
 
+    #Overview of connectivity for the mission
+    fig5, ax5 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    rover_connectivity = []
+    for x in range(N):
+        rover_connectivity.append([])
+        connectivity_plotter = world.rovers[x].pose_logger
+        sum_connectivity = []
+        for c_step in range(len_interval, step+1, len_interval):
+            if(c_step>=len_interval):
+                rover_connectivity_interval = np.array(connectivity_plotter.connectivity[(c_step-len_interval):c_step])
+                sum_connectivity.append(sum(np.sum(rover_connectivity_interval, axis=0)))
+        rover_connectivity[x] = sum_connectivity
+    
+    connectivity = []
+    for i in range(len(rover_connectivity[0])):
+        connectivity_interval = [comm_time[i] for comm_time in rover_connectivity]
+        connectivity.append(sum(connectivity_interval))
+    
+    ax.set_ylim([0, (N**2)-N])
+    ax5.boxplot(connectivity, autorange=True, showfliers=False, whis=(0,100))
+    ax5.set_title('Connectivity of Mission')
+    ax5.set_ylabel('Connectivity')
+    ax5.set_xlabel('Mission')
+    if(int(log_control[2]) == 1):
+        plt.savefig(directory + 'Mission_Connectivity.png')
+
+
+    #Individual connectvity of each rover
     connectivity_fig = [0]*N
     connectivity_ax = [0]*N
         
-
     for b in range(N):
         connectivity_fig[b], connectivity_ax[b] = plt.subplots(nrows=1, ncols=1, figsize=(6, 6)) 
         connectivity_ax[b].set_ylim(0, ((log_step_interval/len_interval) + 1)) 
@@ -454,8 +484,8 @@ def main():
         sum_connectivity = []
         for c_step in range(0, step+1, log_step_interval):
             if(c_step>=log_step_interval):
-                test1 = np.array(connectivity_plotter.connectivity[(c_step-log_step_interval):c_step])
-                sum_connectivity.append(np.sum(test1, axis=0))
+                rover_connectivity_interval = np.array(connectivity_plotter.connectivity[(c_step-log_step_interval):c_step])
+                sum_connectivity.append(np.sum(rover_connectivity_interval, axis=0))
             else:
                 sum_connectivity.append(np.array([0]*N))
 
@@ -471,7 +501,6 @@ def main():
 
     plt.show()
     plt.tight_layout()
-
 
 if __name__ == '__main__':
     main()
