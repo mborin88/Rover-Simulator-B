@@ -20,13 +20,13 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20NE'     # Area to run simulation.
+area = 'SU30NE'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000      #432000      # Maximum iteration
+steps = 160      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 80   # Number of time slots between transmissions for one device.
@@ -57,11 +57,12 @@ decay = 'quad'
 zero_crossing = 25 * len_interval #25 communication cycles for it to fully decay
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '111'
+log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Duty Cycle Valid"
+log_title_tag = "Mission Connectivity"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Duty cycle reduced to 1% by making silent time 80 steps'''            #Additional notes to be added to Log file if wished
+log_notes = '''Duty cycle reduced to 1% by making silent time 80 steps
+                New Mission Connectivity Graph'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 
@@ -360,7 +361,7 @@ def main():
     
     #RMSE of rovers position error over time
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
-    ax1.set_ylim(0, 150)
+    ax1.set_ylim(0, 100)
     ax1.set_xlim(0.0, world.time/60)
     avg_ee = []
     for q in range(0, step+1, log_step_interval):
@@ -457,9 +458,9 @@ def main():
     connectivity = []
     for i in range(len(rover_connectivity[0])):
         connectivity_interval = [comm_time[i] for comm_time in rover_connectivity]
-        connectivity.append(sum(connectivity_interval))
+        connectivity.append(sum(connectivity_interval)/((N**2)-N))
     
-    ax.set_ylim([0, (N**2)-N])
+    ax5.set_ylim([0, 1])
     ax5.boxplot(connectivity, autorange=True, showfliers=False, whis=(0,100))
     ax5.set_title('Connectivity of Mission')
     ax5.set_ylabel('Connectivity')
