@@ -103,10 +103,10 @@ def show_rgb(im, ax_range):
 if __name__ == '__main__':
     sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator')
     from utils.load_map import *
-    t_map = read_asc(locate_map('SU20NE_elevation.asc'))
+    t_map = read_asc(locate_map('SU30SE_elevation.asc'))
     la_map = read_asc(locate_map('SU20NE_landcover.asc'))
     render2d(t_map)
     image, axis_range = render_rgb(la_map)
     show_rgb(image, axis_range)
-    render3d(t_map)
+    #render3d(t_map)
 
