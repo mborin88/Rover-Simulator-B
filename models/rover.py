@@ -193,7 +193,7 @@ class Rover:
                 self.measure()
             else:
                 noise = self.generate_noise(self._q_noise)
-                self._pose[0] = h[0] + noise[0]
+                self._pose[0] = h[0] + noise[0]  #No noise on x yet
                 self._pose[1] = h[1] + noise[1]  # Noisy motion.
                 self._control[0] = sqrt(v_x ** 2 + v_y ** 2)  # Update speed.
                 self.measure()
