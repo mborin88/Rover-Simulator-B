@@ -39,7 +39,7 @@ user_cr = CR[3]   # Coding rate.
 user_txpw = 24    # Transmitting power, in dBm.
 
 # Configure control settings:
-Q = None                                       # State noise.
+Q = [0, 1]                                       # State noise.
 R = None                                        # Measurement noise.
 seed_value = dt.datetime.now().microsecond      #Seed value for noise 
 rand.seed(seed_value)
@@ -53,13 +53,13 @@ K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
 
 # 2 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
-decay = 'exp'
+decay = 'quad'
 zero_crossing = 25 * len_interval #25 communication cycles for it to fully decay
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Full Exponential decay style"
+log_title_tag = "State Noise Variance 1"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Full Exponential decay style'''            #Additional notes to be added to Log file if wished
 
