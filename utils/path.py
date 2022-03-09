@@ -25,55 +25,6 @@ def prep_data(map_object):
             data_re[i, j] = map_object.data[map_object.n_rows - i - 1, j]
     return data_re
 
-
-def render2d(terrain_map, cmap='gist_earth', window_size=(8, 8)):
-    """
-    Render a terrain map as a 2d contour plot.
-    """
-    x_min, y_min = terrain_map.x_llcorner, terrain_map.y_llcorner
-    x_max, y_max = x_min + terrain_map.resolution * terrain_map.n_cols, \
-                   y_min + terrain_map.resolution * terrain_map.n_rows
-    x, y = np.linspace(x_min, x_max, terrain_map.n_cols), \
-           np.linspace(y_min, y_max, terrain_map.n_rows)
-    xx, yy = np.meshgrid(x, y)
-    z = prep_data(terrain_map)
-    fig, ax = plt.subplots(figsize=window_size)
-    contf = ax.contourf(xx, yy, z, cmap=plt.get_cmap(cmap))
-    plt.colorbar(contf, label='Elevation (m)')
-    ax.set_xlabel('Easting (m)')
-    ax.set_ylabel('Northing (m)')
-    plt.show()
-    plt.tight_layout()
-
-
-def render3d(terrain_map, azimuth=315, altitude=45, cmap='gist_earth', downsample=1,
-             window_size=(8, 8)):
-    """
-    Render a terrain map as a 3d image.
-    """
-    x_min, y_min = terrain_map.x_llcorner, terrain_map.y_llcorner
-    x_max, y_max = x_min + terrain_map.resolution * terrain_map.n_cols, \
-                   y_min + terrain_map.resolution * terrain_map.n_rows
-    x, y = np.linspace(x_min, x_max, terrain_map.n_cols), \
-           np.linspace(y_min, y_max, terrain_map.n_rows)
-    xx, yy = np.meshgrid(x, y)
-    z = prep_data(terrain_map)
-    fig, ax = plt.subplots(subplot_kw=dict(projection='3d'), figsize=window_size)
-    ls = LightSource(azimuth, altitude)
-    rgb = ls.shade(z, cmap=plt.get_cmap(cmap), vert_exag=0.1, blend_mode='soft')
-    ax.plot_surface(xx, yy, z, rstride=downsample, cstride=downsample,
-                    facecolors=rgb, linewidth=0, antialiased=False, shade=False)
-    ax.set_xlabel('Easting (m)')
-    ax.set_ylabel('Northing (m)')
-    ax.set_zlabel('Elevation (m)')
-    ax.grid(False)
-    ax.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
-    ax.w_yaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
-    ax.w_zaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
-    plt.show()
-    plt.tight_layout()
-
-
 def render_rgb(landcover_map, cmap=LCM2015_COLORMAP):
     """
     Render a land cover map using specified RGB colour scheme.

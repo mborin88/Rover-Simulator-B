@@ -6,8 +6,6 @@ from matplotlib.colors import LightSource
 import matplotlib.image as mpimg
 from PIL import Image
 sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator/models')
-#from models.landcover_spec import LCM2015_COLORMAP
-#from landcover_spec import LCM2015_COLORMAP
 from landcover_spec import LCM2015_COLORMAP
 
 
