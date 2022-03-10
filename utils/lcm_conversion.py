@@ -8,7 +8,7 @@ array = contents.split()
 map.close()
 
 new_dir = "C:\\Users\\borin\\Documents\\GitHub\\Rover-Simulator\\maps\\"
-the_map =   "TL16NW"
+the_map =   "SP47SW"
 new_map_name = the_map + "_landcover.asc"
 new_map = open(new_dir + new_map_name, "w")
 

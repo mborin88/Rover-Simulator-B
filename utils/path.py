@@ -149,7 +149,7 @@ def show_rgb(im, ax_range):
 if __name__ == '__main__':
     sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator')
     from utils.load_map import *
-    t_map = read_asc(locate_map('TL16NE.asc'))
+    t_map = read_asc(locate_map('TL16NE_elevation.asc'))
     # la_map = read_asc(locate_map('SU20NE_landcover.asc'))
     render2d_waypoints(t_map)
     plt.close()
