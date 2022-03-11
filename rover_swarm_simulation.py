@@ -13,6 +13,7 @@ from models.P_controller import *
 from models.pose_logger import *
 from utils.load_map import *
 from utils.render import *
+from utils.path import *
 
 
 BW = [125, 250, 500]                # Selectable bandwidth, in KHz.
@@ -64,6 +65,8 @@ log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Full Exponential decay style'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
+waypoints = []
+num_of_waypoints = 10
 
 def main():
     """
@@ -83,9 +86,12 @@ def main():
     world = World(map_terrain, map_landcover, t_sampling)
     world.config_engine(SlopePhysics(world))
 
+    image, axis_range = render_rgb(map_landcover)
+    show_rgb_waypoints(image, axis_range, waypoints, x_offset, y_offset, goal_offset, rovers_sep, N, num_of_waypoints)
+
     # Add rovers to the world.
     for i in range(N):
-        world.add_rover(x_min + x_offset + i * rovers_sep, y_min + y_offset, q_noise=Q, r_noise=R, num_rovers=N,\
+        world.add_rover(waypoints[i][0][0], waypoints[i][0][1], q_noise=Q, r_noise=R, num_rovers=N,\
                             decay_type= decay, decay_zero_crossing = zero_crossing)
 
     # Configure rovers' settings.
@@ -393,8 +399,7 @@ def main():
 
     # Plot rovers' trajectories over landcover
     fig3, ax3 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
-    la_map = read_asc(locate_map(area + '_landcover.asc'))
-    image, axis_range = render_rgb(la_map) 
+    image, axis_range = render_rgb(map_landcover) 
     ax3.imshow(image, extent=axis_range)
 
     for o in range(N):
