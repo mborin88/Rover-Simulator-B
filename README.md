@@ -47,3 +47,7 @@ Third party library requirments: Numpy, Matplotlib, Pillow.
 'ctrl_policy' - The control policy used (0, 1, 2).
 
 'K' - Gain of controller.
+
+NOTE: Landcovers are loaded from top left to bottom right, so when we load landcover map columns
+and rows are inverted. e.g. position = (x,y)
+When reference landcoverMap.get_data(y, x)

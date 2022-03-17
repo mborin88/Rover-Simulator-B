@@ -97,7 +97,7 @@ class Map:
         elif self.is_valid_index(row, col) == -2:
             raise IndexesOutOfRange()
 
-    def get_data(self, easting, northing):
+    def get_data(self, northing, easting):
         """
         Get data at given coordinates.
         """

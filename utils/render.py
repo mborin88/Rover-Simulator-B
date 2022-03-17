@@ -76,9 +76,9 @@ def render_rgb(landcover_map, cmap=LCM2015_COLORMAP):
     rgb = Image.new('RGB', (rows, cols))
     for i in range(rows):
         for j in range(cols):
-            rgb.putpixel((i, j), (cmap[int(landcover_map.data[i, j])][0],
-                                  cmap[int(landcover_map.data[i, j])][1],
-                                  cmap[int(landcover_map.data[i, j])][2]))
+            rgb.putpixel((i, j), (cmap[int(landcover_map.data[j, i])][0],
+                                  cmap[int(landcover_map.data[j, i])][1],
+                                  cmap[int(landcover_map.data[j, i])][2]))
     rgb.save(os.path.abspath(os.path.dirname(__file__)) + '\\temp.png')
     temp_im = os.path.abspath(os.path.dirname(__file__)) + '\\temp.png'
     im = mpimg.imread(temp_im)
@@ -101,7 +101,7 @@ def show_rgb(im, ax_range):
 if __name__ == '__main__':
     sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator')
     from utils.load_map import *
-    map_name = 'SX49SW'
+    map_name = 'SU20NE'
     t_map = read_asc(locate_map(map_name + '_elevation.asc'))
     la_map = read_asc(locate_map(map_name + '_landcover.asc'))
     render2d(t_map)

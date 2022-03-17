@@ -33,9 +33,9 @@ def render_rgb(landcover_map, cmap=LCM2015_COLORMAP):
     rgb = Image.new('RGB', (rows, cols))
     for i in range(rows):
         for j in range(cols):
-            rgb.putpixel((i, j), (cmap[int(landcover_map.data[i, j])][0],
-                                  cmap[int(landcover_map.data[i, j])][1],
-                                  cmap[int(landcover_map.data[i, j])][2]))
+            rgb.putpixel((i, j), (cmap[int(landcover_map.data[j, i])][0],
+                                  cmap[int(landcover_map.data[j, i])][1],
+                                  cmap[int(landcover_map.data[j, i])][2]))
     rgb.save(os.path.abspath(os.path.dirname(__file__)) + '\\temp.png')
     temp_im = os.path.abspath(os.path.dirname(__file__)) + '\\temp.png'
     im = mpimg.imread(temp_im)
