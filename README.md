@@ -49,5 +49,8 @@ Third party library requirments: Numpy, Matplotlib, Pillow.
 'K' - Gain of controller.
 
 NOTE: Landcovers are loaded from top left to bottom right, so when we load landcover map columns
-and rows are inverted. e.g. position = (x,y)
-When reference landcoverMap.get_data(y, x)
+and rows are inverted. e.g. if position = (x, y) 
+Then if we reference the data directly from the landcover map then we refernce .data(y, x)
+However this is already accounted for in the get_data function where easting and northing are swapped. 
+Representing this switch the variable names are psuedo_northing, and psuedo_easting
+So we can normally call this function as get_data(x, y)
