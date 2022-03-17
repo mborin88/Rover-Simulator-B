@@ -1,6 +1,8 @@
+from msilib import RadioButtonGroup
 from random import *
 import statistics as stats
 import numpy as np
+import math
 
 from models.radio import *
 from models.P_controller import *
@@ -16,14 +18,15 @@ class Rover:
     decay_type = 'quad'
     zero_cross = 1200 #Decay = 0 at 2 minutes of silence from that rover.
     """
-    def __init__(self, rov_id, easting, northing, q_noise=None, r_noise=None, num_rovers=10, decay_type = 'quad', decay_zero_crossing=1200):
+    def __init__(self, rov_id, easting, northing, rov_waypoints, q_noise=None, r_noise=None, num_rovers=10, decay_type = 'quad', decay_zero_crossing=1200):
         self._rov_id = rov_id                 # Unique id for each rover.
         self._pose = [easting, northing]      # Pose: (x (m), y (m)).
         self._q_noise = q_noise               # The state noise, a random variable.
         self._r_noise = r_noise               # The measurement noise, a random variable.
         self.measurement = self._pose         # The measurement of pose, assumed noiseless at first.
+        self._waypoints = rov_waypoints
 
-        self._control = [STARTING_SPEED]      # Control input, linear velocity.
+        self._control = [0, STARTING_SPEED, STARTING_SPEED]      # Control input, linear velocity.
         self._all_control = np.array([np.nan] * (num_rovers + 1)) #First control is p control then rovers
         self._steps_control_not_updated = np.array([0.0] * (num_rovers + 1)) #Amount of steps since that control has been updated.
         self._num_rovers = num_rovers
@@ -37,7 +40,7 @@ class Rover:
         self._speed_controller = None
         # The speed controller, a specific type of controller object.
         self._radio = None              # The communication module, a radio object.
-        self._goal = None               # The goal point desired to be reached.
+        self._goal_index = 1
         self._termination_flag = False  # The flag indicating that mission is terminated.
         self._termination_time = None   # The time when rover completes its task.
         self.pose_logger = None         # The logger to record pose, a motion logger object.
@@ -57,6 +60,14 @@ class Rover:
     @property
     def r_noise(self):
         return self._r_noise
+    
+    @property
+    def waypoints(self):
+        return self._waypoints
+    
+    @property
+    def goal_index(self):
+        return self._goal_index
 
     @property
     def control(self):
@@ -104,7 +115,7 @@ class Rover:
 
     @property
     def goal(self):
-        return self._goal
+        return self._waypoints[self._goal_index]
 
     @property
     def termination_time(self):
@@ -155,11 +166,16 @@ class Rover:
             gen_noise.append(gauss(0, sigma[i]))
         return gen_noise
 
-    def set_goal(self, goal):
+    def set_current_goal(self, goal):
         """
         Set goal point.
         """
-        self._goal = goal
+        self._current_goal = goal
+
+    def update_speeds(self, vx, vy):
+        self._control[0] = round(vx, 3)
+        self._control[1] = round(vy, 3)
+        self._control[2] = round(sqrt(vx ** 2 + vy ** 2), 3)  # Update speed.
 
     def step_motion(self, world, dt):
         """
@@ -171,12 +187,18 @@ class Rover:
             p = self._pose
             u = self._control
             slope_y = world.dynamics_engine.northing_slope(p[0], p[1])
-            a = world.dynamics_engine.generate_acceleration(slope_y)
-            a_f = world.dynamics_engine.generate_friction(slope_y)
-            v_x = 0
-            v_y = u[0] + a * dt + a_f * dt
+            a_y = world.dynamics_engine.generate_acceleration(slope_y)
+            a_yf = world.dynamics_engine.generate_friction(slope_y)
+            v_y = u[1] + a_y * dt + a_yf * dt
+
+            slope_x = world.dynamics_engine.easting_slope(p[0], p[1])
+            a_x = world.dynamics_engine.generate_acceleration(slope_x)
+            a_xf = world.dynamics_engine.generate_friction(slope_x)
+            v_x = u[0] + a_x * dt + a_xf * dt
+            
             if v_y < MINIMUM_SPEED:
                 v_y = MINIMUM_SPEED
+
             # Assume in the worst scenario rover can still maintain a minimum speed.
             h = [p[0] + dt * v_x,
                  p[1] + dt * v_y]  # State transition.
@@ -189,7 +211,7 @@ class Rover:
             if self._q_noise is None:
                 self._pose[0] = h[0]
                 self._pose[1] = h[1]  # Noiseless motion.
-                self._control[0] = sqrt(v_x ** 2 + v_y ** 2)  # Update speed.
+                self.update_speeds(v_x, v_y)
                 self.measure()
             else:
                 noise = self.generate_noise(self._q_noise)
@@ -203,14 +225,31 @@ class Rover:
                     self._pose[0] = new_pose[0]  #No noise on x yet
                 else:
                     self._pose[0] = h[0]
-                self._control[0] = sqrt(v_x ** 2 + v_y ** 2)  # Update speed.
+                self.update_speeds(v_x, v_y)
                 self.measure()
 
     def halt(self):
         """
         Discard any ongoing action and halt immediately.
         """
-        self._control[0] = 0
+        self._control[2] = 0
+    
+    def x_multiplier(self, value):
+        if(value >= 0):
+            return 1
+        else:
+            return -1
+    
+    def ratio_speeds(self):
+        p = self._pose
+        target = self.goal
+        v = self._control[2]
+        x_diff = target[0] - p[0]
+        y_diff = target[1] - p[1]
+        angle = math.atan(y_diff/abs(x_diff))
+        
+        self._control[0] = round(self.x_multiplier(x_diff) * v * math.cos(angle), 3)
+        self._control[1] = round(v * math.sin(angle), 3)
 
     def apply_control(self, world):
         """
@@ -219,7 +258,7 @@ class Rover:
         if self.is_mission_terminated():
             pass
         else:
-            if self.is_goal_reached():
+            if self.is_final_goal_reached():
                 self.halt()
                 self.terminate()
                 self.terminate_in_world(world)
@@ -240,14 +279,22 @@ class Rover:
         """
         Move towards goal point.
         """
+        offset = 5
+
         controlled_object = self.measurement  # Controlled object is [x, y].
+        if(self._pose[1] > self.goal[1]-offset):   #if within offset of the y waypoint
+            self._goal_index += 1
+            self.speed_controller.set_ref(self.goal)
         control_input = self._speed_controller.execute(controlled_object)
+
         if control_input > MAXIMUM_SPEED:  # Control input saturation.
-            self._control[0] = MAXIMUM_SPEED
+            self._control[2] = MAXIMUM_SPEED
         elif control_input < MINIMUM_SPEED:
-            self._control[0] = MINIMUM_SPEED
+            self._control[2] = MINIMUM_SPEED
         else:
-            self._control[0] = control_input  # Assume changing linear velocity instantly.
+            self._control[2] = control_input  # Assume changing linear velocity instantly.
+
+        self.ratio_speeds()
 
 
     def passive_cooperation(self):
@@ -257,7 +304,7 @@ class Rover:
         Slowly push all_control values that haven't been recieved to 0.
         """
 
-        goal_driven_controller = PController(ref=self._goal, gain=[0, 1e-3])
+        goal_driven_controller = PController(ref=self._current_goal, gain=[0, 1e-3])
         controlled_object = self.measurement
         control_input = goal_driven_controller.execute(controlled_object)
         
@@ -268,7 +315,7 @@ class Rover:
         else:
             p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation 
 
-        self._all_control[0] = p_control
+        self._all_control[2] = p_control
 
         neighbour_poses = self.get_neighbour_pose()
         if neighbour_poses.count(None) < self._num_rovers:
@@ -302,11 +349,11 @@ class Rover:
         #all incremented by 1
         
         if control_input > MAXIMUM_SPEED:  # Control input saturation.
-            self._control[0] = MAXIMUM_SPEED
+            self._control[2] = MAXIMUM_SPEED
         elif control_input < MINIMUM_SPEED:
-            self._control[0] = MINIMUM_SPEED
+            self._control[2] = MINIMUM_SPEED
         else:
-            self._control[0] = control_input  # Assume changing linear velocity instantly.    
+            self._control[2] = control_input  # Assume changing linear velocity instantly.    
 
         self._radio.reset_neighbour_register()
         self._radio.reset_buffer()
@@ -318,7 +365,7 @@ class Rover:
         Start with P controller then only change speed when neighbour info recieved again.
         """
 
-        goal_driven_controller = PController(ref=self._goal, gain=[0, 1e-3])
+        goal_driven_controller = PController(ref=self._current_goal, gain=[0, 1e-3])
         controlled_object = self.measurement
         control_input = goal_driven_controller.execute(controlled_object)
         
@@ -329,7 +376,7 @@ class Rover:
         else:
             p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation 
 
-        self._all_control[0] = p_control
+        self._all_control[2] = p_control
 
         neighbour_poses = self.get_neighbour_pose()
         if neighbour_poses.count(None) < self._num_rovers:
@@ -361,11 +408,11 @@ class Rover:
             control_input = p_control*1  # Take 100% portion of goal_driven control.
         
         if control_input > MAXIMUM_SPEED:  # Control input saturation.
-            self._control[0] = MAXIMUM_SPEED
+            self._control[2] = MAXIMUM_SPEED
         elif control_input < MINIMUM_SPEED:
-            self._control[0] = MINIMUM_SPEED
+            self._control[2] = MINIMUM_SPEED
         else:
-            self._control[0] = control_input  # Assume changing linear velocity instantly.    
+            self._control[2] = control_input  # Assume changing linear velocity instantly.    
 
         self._radio.reset_neighbour_register()
         self._radio.reset_buffer()
@@ -378,7 +425,7 @@ class Rover:
         mean_control = 1
         if(mean_control):
             neighbour_mean = np.nanmean(self._all_control[1:])
-            return self._all_control[0] + neighbour_mean
+            return self._all_control[2] + neighbour_mean
 
     def time_decay(self, value):
         if(self._decay_type == 'exp'):
@@ -429,11 +476,11 @@ class Rover:
             else:
                 self._connectivity[i] = 0
 
-    def is_goal_reached(self):
+    def is_final_goal_reached(self):
         """
         See if the goal point is reached.
         """
-        return self._pose[1] >= self._goal[1]
+        return self._pose[1] >= self._waypoints[-1][1]
 
     def terminate(self):
         """
@@ -442,8 +489,8 @@ class Rover:
         self._termination_flag = True
         # If rover exceeds the goal point, still set the current state and measurement
         # to goal point in order to facilitate other rovers to complete their tasks.
-        self._pose = self._goal
-        self.measurement = self._goal
+        self._pose = self._current_goal
+        self.measurement = self._current_goal
 
         if self._q_noise is not None:
             self._q_noise = None

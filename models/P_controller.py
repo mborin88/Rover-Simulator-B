@@ -27,7 +27,7 @@ class PController:
         e = []                          # Error
         for i in range(len(x)):
             e.append(r[i] - x[i])
-        kp = self._gain                 # Gain
+        kp = self._gain                # Gain
         u = 0.0                         # Control input
         for j in range(len(e)):
             u += kp[j] * e[j]

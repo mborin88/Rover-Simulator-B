@@ -1,3 +1,8 @@
+#change the program to have multiple goals which are the waypoints and use the current goal
+#allow movement in the x-axis.
+#rover still needs to take in its own waypoint paths
+#speed is now made up of x and y check this isn't gnna break anything rover._control[0]
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
@@ -27,7 +32,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000      #432000      # Maximum iteration
+steps = 20000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 80   # Number of time slots between transmissions for one device.
@@ -40,17 +45,17 @@ user_cr = CR[3]   # Coding rate.
 user_txpw = 24    # Transmitting power, in dBm.
 
 # Configure control settings:
-Q = [0, 1]                                       # State noise.
+Q = None                                      # State noise.
 R = None                                        # Measurement noise.
 seed_value = dt.datetime.now().microsecond      #Seed value for noise 
 rand.seed(seed_value)
 
-ctrl_policy = 2
+ctrl_policy = 1
 # Control policy:
 # 0 - meaning no controller;
 
 # 1 - meaning goal-driven controller, if used:
-K_goal = [0, 1e-2]  # Control gain for goal-driven controller;
+K_goal = [1e-2, 1e-2]  # Control gain for goal-driven controller;
 
 # 2 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
@@ -58,14 +63,15 @@ decay = 'quad'
 zero_crossing = 25 * len_interval #25 communication cycles for it to fully decay
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '111'
+log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "State Noise Variance 1"
+log_title_tag = "Path Planned Rover Mission"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Full Exponential decay style'''            #Additional notes to be added to Log file if wished
+log_notes = '''Line sweeping with movement in x and y direction possible
+Movement of rovers dependent on user planned path'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
-waypoints = []
+init_waypoints = []
 num_of_waypoints = 10
 
 def main():
@@ -87,11 +93,17 @@ def main():
     world.config_engine(SlopePhysics(world))
 
     image, axis_range = render_rgb(map_landcover)
-    show_rgb_waypoints(image, axis_range, waypoints, x_offset, y_offset, goal_offset, rovers_sep, N, num_of_waypoints)
+    path_ax = show_rgb_waypoints(image, axis_range, init_waypoints, x_offset, y_offset, goal_offset, rovers_sep, N, num_of_waypoints)
 
+
+    for i in range(len(init_waypoints)):
+        for j in range(len(init_waypoints[i])):
+            init_waypoints[i][j] = init_waypoints[i][j][:2]
+
+    
     # Add rovers to the world.
     for i in range(N):
-        world.add_rover(waypoints[i][0][0], waypoints[i][0][1], q_noise=Q, r_noise=R, num_rovers=N,\
+        world.add_rover(init_waypoints[i][0][0], init_waypoints[i][0][1], init_waypoints[i], q_noise=Q, r_noise=R, num_rovers=N,\
                             decay_type= decay, decay_zero_crossing = zero_crossing)
 
     # Configure rovers' settings.
@@ -105,7 +117,7 @@ def main():
         starter.config_pose_logger(PoseLogger(starter))
 
         # Set goal point for each rover.
-        starter.set_goal([starter.pose[0], y_max - goal_offset])
+        starter.set_current_goal(starter.waypoints[1])
 
         # Configure controller.
         if ctrl_policy == 0:  # No controller
@@ -474,35 +486,35 @@ def main():
 
 
     #Individual connectvity of each rover
-    connectivity_fig = [0]*N
-    connectivity_ax = [0]*N
+    # connectivity_fig = [0]*N
+    # connectivity_ax = [0]*N
         
-    for b in range(N):
-        connectivity_fig[b], connectivity_ax[b] = plt.subplots(nrows=1, ncols=1, figsize=(6, 6)) 
-        connectivity_ax[b].set_ylim(0, ((log_step_interval/len_interval) + 1)) 
-        connectivity_ax[b].set_xlim(0.0, world.time/60)
-        connectivity_ax[b].set_xlabel('Time (min)')
-        connectivity_ax[b].set_ylabel('Numbers of times connected to in the minute')
-        connectivity_ax[b].set_title('Connection of rover {} (Time Elapse: {} min)'.format(str(b+1) ,str(round(world.time/60, 1))))
+    # for b in range(N):
+    #     connectivity_fig[b], connectivity_ax[b] = plt.subplots(nrows=1, ncols=1, figsize=(6, 6)) 
+    #     connectivity_ax[b].set_ylim(0, ((log_step_interval/len_interval) + 1)) 
+    #     connectivity_ax[b].set_xlim(0.0, world.time/60)
+    #     connectivity_ax[b].set_xlabel('Time (min)')
+    #     connectivity_ax[b].set_ylabel('Numbers of times connected to in the minute')
+    #     connectivity_ax[b].set_title('Connection of rover {} (Time Elapse: {} min)'.format(str(b+1) ,str(round(world.time/60, 1))))
 
-        connectivity_plotter = world.rovers[b].pose_logger
-        sum_connectivity = []
-        for c_step in range(0, step+1, log_step_interval):
-            if(c_step>=log_step_interval):
-                rover_connectivity_interval = np.array(connectivity_plotter.connectivity[(c_step-log_step_interval):c_step])
-                sum_connectivity.append(np.sum(rover_connectivity_interval, axis=0))
-            else:
-                sum_connectivity.append(np.array([0]*N))
+    #     connectivity_plotter = world.rovers[b].pose_logger
+    #     sum_connectivity = []
+    #     for c_step in range(0, step+1, log_step_interval):
+    #         if(c_step>=log_step_interval):
+    #             rover_connectivity_interval = np.array(connectivity_plotter.connectivity[(c_step-log_step_interval):c_step])
+    #             sum_connectivity.append(np.sum(rover_connectivity_interval, axis=0))
+    #         else:
+    #             sum_connectivity.append(np.array([0]*N))
 
-        labels = []
-        plot_connectivity = []
-        for z in range(N):
-            plot_connectivity.append([item[z] for item in sum_connectivity])
-            connectivity_ax[b].plot(plot_connectivity[z], linewidth=1.8)
-            labels.append('ID: ' + str(z + 1))
-        connectivity_ax[b].legend(labels)
-        if(int(log_control[2]) == 1):
-            plt.savefig(directory + 'Connection_of_rover_' + str(b+1) + '.png')
+    #     labels = []
+    #     plot_connectivity = []
+    #     for z in range(N):
+    #         plot_connectivity.append([item[z] for item in sum_connectivity])
+    #         connectivity_ax[b].plot(plot_connectivity[z], linewidth=1.8)
+    #         labels.append('ID: ' + str(z + 1))
+    #     connectivity_ax[b].legend(labels)
+    #     if(int(log_control[2]) == 1):
+    #         plt.savefig(directory + 'Connection_of_rover_' + str(b+1) + '.png')
 
     plt.show()
     plt.tight_layout()

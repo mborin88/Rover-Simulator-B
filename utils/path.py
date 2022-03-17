@@ -103,7 +103,10 @@ def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset,
     def onclick(event):
         global clicked
         if(not clicked):
-            path_info[0], path_info[1] = closestWaypoint(round(event.xdata), round(event.ydata))
+            try:
+                path_info[0], path_info[1] = closestWaypoint(round(event.xdata), round(event.ydata))
+            except TypeError:
+                print("Click was outside the map")
         else:
             waypoints[path_info[0]][path_info[1]][0] = round(event.xdata)
 
@@ -127,6 +130,7 @@ def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset,
     ax.imshow(im, extent=ax_range)
     plt.show()
     plt.ioff()
+    return ax
 
 
 if __name__ == '__main__':
