@@ -304,7 +304,7 @@ class Rover:
         Slowly push all_control values that haven't been recieved to 0.
         """
 
-        goal_driven_controller = PController(ref=self._current_goal, gain=[0, 1e-3])
+        goal_driven_controller = PController(ref=self._current_goal, gain=[1e-2, 1e-2])
         controlled_object = self.measurement
         control_input = goal_driven_controller.execute(controlled_object)
         
@@ -316,6 +316,7 @@ class Rover:
             p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation 
 
         self._all_control[2] = p_control
+        self.ratio_speeds()
 
         neighbour_poses = self.get_neighbour_pose()
         if neighbour_poses.count(None) < self._num_rovers:
@@ -345,9 +346,7 @@ class Rover:
                 control_input = self.weighted_control_calc()
         else:
             control_input = p_control*1  # Take 100% portion of goal_driven control.
-        
-        #all incremented by 1
-        
+                
         if control_input > MAXIMUM_SPEED:  # Control input saturation.
             self._control[2] = MAXIMUM_SPEED
         elif control_input < MINIMUM_SPEED:

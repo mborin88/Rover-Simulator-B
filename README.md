@@ -48,6 +48,7 @@ Third party library requirments: Numpy, Matplotlib, Pillow.
 
 'K' - Gain of controller.
 
+
 NOTE: Landcovers are loaded from top left to bottom right, so when we load landcover map columns
 and rows are inverted. e.g. if position = (x, y) 
 Then if we reference the data directly from the landcover map then we refernce .data(y, x)
