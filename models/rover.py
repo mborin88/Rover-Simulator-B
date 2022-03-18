@@ -21,6 +21,7 @@ class Rover:
     def __init__(self, rov_id, easting, northing, rov_waypoints, q_noise=None, r_noise=None, num_rovers=10, decay_type = 'quad', decay_zero_crossing=1200):
         self._rov_id = rov_id                 # Unique id for each rover.
         self._pose = [easting, northing]      # Pose: (x (m), y (m)).
+        self._angle = 0
         self._q_noise = q_noise               # The state noise, a random variable.
         self._r_noise = r_noise               # The measurement noise, a random variable.
         self.measurement = self._pose         # The measurement of pose, assumed noiseless at first.
@@ -52,6 +53,10 @@ class Rover:
     @property
     def pose(self):
         return self._pose
+    
+    @property
+    def angle(self):
+        return self._angle
 
     @property
     def q_noise(self):
@@ -247,6 +252,7 @@ class Rover:
         x_diff = target[0] - p[0]
         y_diff = target[1] - p[1]
         angle = math.atan(y_diff/abs(x_diff))
+        self._angle = angle
         
         self._control[0] = round(self.x_multiplier(x_diff) * v * math.cos(angle), 3)
         self._control[1] = round(v * math.sin(angle), 3)
@@ -315,8 +321,9 @@ class Rover:
         else:
             p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation 
 
-        self._all_control[2] = p_control
+        self._control[2] = p_control
         self.ratio_speeds()
+        self._all_control[0] = self._control[1]     #only want y speed to do line sweeping with
 
         neighbour_poses = self.get_neighbour_pose()
         if neighbour_poses.count(None) < self._num_rovers:
@@ -345,14 +352,16 @@ class Rover:
                 self.scale_all_control()
                 control_input = self.weighted_control_calc()
         else:
-            control_input = p_control*1  # Take 100% portion of goal_driven control.
-                
-        if control_input > MAXIMUM_SPEED:  # Control input saturation.
-            self._control[2] = MAXIMUM_SPEED
+            control_input = self._all_control[0] # Take 100% portion of goal_driven control.
+        
+        if control_input > MAXIMUM_SPEED:  # Control input saturation. Only control the vy
+            self._control[1] = MAXIMUM_SPEED
         elif control_input < MINIMUM_SPEED:
-            self._control[2] = MINIMUM_SPEED
+            self._control[1] = MINIMUM_SPEED
         else:
-            self._control[2] = control_input  # Assume changing linear velocity instantly.    
+            self._control[1] = control_input  # Assume changing linear velocity instantly.
+
+        self.update_speeds(self.control[1] / math.tan(self._angle), self._control[1])    
 
         self._radio.reset_neighbour_register()
         self._radio.reset_buffer()
@@ -364,7 +373,7 @@ class Rover:
         Start with P controller then only change speed when neighbour info recieved again.
         """
 
-        goal_driven_controller = PController(ref=self._current_goal, gain=[0, 1e-3])
+        goal_driven_controller = PController(ref=self._current_goal, gain=[1e-2, 1e-2])
         controlled_object = self.measurement
         control_input = goal_driven_controller.execute(controlled_object)
         
@@ -375,7 +384,7 @@ class Rover:
         else:
             p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation 
 
-        self._all_control[2] = p_control
+        self._all_control[0] = p_control
 
         neighbour_poses = self.get_neighbour_pose()
         if neighbour_poses.count(None) < self._num_rovers:
@@ -424,7 +433,7 @@ class Rover:
         mean_control = 1
         if(mean_control):
             neighbour_mean = np.nanmean(self._all_control[1:])
-            return self._all_control[2] + neighbour_mean
+            return self._all_control[0] + neighbour_mean
 
     def time_decay(self, value):
         if(self._decay_type == 'exp'):

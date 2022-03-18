@@ -50,7 +50,7 @@ def render_rgb(landcover_map, cmap=LCM2015_COLORMAP):
     return im, ax_range
 
 def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset, r_sep, N, num_waypoints):
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig0, ax0 = plt.subplots(figsize=(6, 6))
 
     #using 3D list here however in main program each rover will have its own list so it will
     #reduce to a 2D list
@@ -75,10 +75,10 @@ def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset,
     y_plt = [y_plt[i:i+num_waypoints] for i in range(0, len(y_plt), num_waypoints)]
 
     for i in range(N):
-        ax.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=1.8, color='white')
+        ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=1.8, color='white')
     
-    ax.set_xlabel('Easting (m)')
-    ax.set_ylabel('Northing (m)')
+    ax0.set_xlabel('Easting (m)')
+    ax0.set_ylabel('Northing (m)')
 
     global clicked
     clicked = False
@@ -113,24 +113,26 @@ def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset,
         x_plt = [x[0] for r in waypoints for x in r]
         x_plt = [x_plt[i:i+num_waypoints] for i in range(0, len(x_plt), num_waypoints)]
         plt.cla()
-        ax.imshow(im, extent=ax_range)
-        ax.set_xlabel('Easting (m)')
-        ax.set_ylabel('Northing (m)')
+        ax0.imshow(im, extent=ax_range)
+        ax0.set_xlabel('Easting (m)')
+        ax0.set_ylabel('Northing (m)')
         for i in range(N):
-            ax.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=1.8, color='white', zorder=2)
+            ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=1.8, color='white', zorder=2)
         if(not clicked):
-            ax.scatter([waypoints[path_info[0]][path_info[1]][0]], [waypoints[path_info[0]][path_info[1]][1]], color='cyan', s=[50], zorder=3)
+            ax0.scatter([waypoints[path_info[0]][path_info[1]][0]], [waypoints[path_info[0]][path_info[1]][1]], color='cyan', s=[50], zorder=3)
             clicked = True
         else:
             clicked = False
         plt.draw()
 
-    fig.canvas.mpl_connect('button_press_event', onclick)
+    fig0.canvas.mpl_connect('button_press_event', onclick)
 
-    ax.imshow(im, extent=ax_range)
+    ax0.imshow(im, extent=ax_range)
+
+    path_fig0 = plt.gcf()
     plt.show()
     plt.ioff()
-    return ax
+    return path_fig0
 
 
 if __name__ == '__main__':

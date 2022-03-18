@@ -31,12 +31,12 @@ class PathLoss:
         self._h_rx = self._physical_world.terrain.get_data(self._rx_pos[0], self._rx_pos[1]) + \
                      self._rx.ant_height  # Rx height, in meter.
         self._tx_surrounding = LCM2015_NAME[int(self._physical_world.landcover.
-                                                get_data(self._tx_pos[1],
-                                                         self._tx_pos[0]))]  # The transmitter's surrounding category.
+                                                get_data(self._tx_pos[0],
+                                                         self._tx_pos[1]))]  # The transmitter's surrounding category.
         self._rx_surrounding = LCM2015_NAME[int(self._physical_world.landcover.
-                                                get_data(self._rx_pos[1],
-                                                         self._rx_pos[0]))]  # The receiver's surrounding category.
-                                                                            #landcover map inverted y <-> x swapped over purposedully
+                                                get_data(self._rx_pos[0],
+                                                         self._rx_pos[1]))]  # The receiver's surrounding category.
+                                                                            
         self._f = self._tx.f  # Carrier wave frequency, in MHz.
         self._wavelength = LIGHT_SPEED / (self._f * pow(10, 6))  # Carrier wave wavelength, in meter.
 
@@ -105,7 +105,6 @@ class PathLoss:
         rx_clutter_type = None
         tx_loss = None
         rx_loss = None
-
         if (tx_surrounding == 'Default') \
                 or (tx_surrounding == 'Arable and Horticulture') or (tx_surrounding == 'Improved Grassland') \
                 or (tx_surrounding == 'Neutral Grassland') or (tx_surrounding == 'Calcareous Grassland') \

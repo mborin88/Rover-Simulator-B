@@ -26,13 +26,13 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20NE'     # Area to run simulation.
+area = 'SX27SW'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 20000      #432000      # Maximum iteration
+steps = 10000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 80   # Number of time slots between transmissions for one device.
@@ -63,12 +63,12 @@ decay = 'quad'
 zero_crossing = 25 * len_interval #25 communication cycles for it to fully decay
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '000'
+log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Path Planned Rover Mission"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Line sweeping with movement in x and y direction possible
-Movement of rovers dependent on user planned path'''            #Additional notes to be added to Log file if wished
+Movement of rovers dependent on user planned path with new correct logs'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 init_waypoints = []
@@ -92,9 +92,10 @@ def main():
     world = World(map_terrain, map_landcover, t_sampling)
     world.config_engine(SlopePhysics(world))
 
+    
     image, axis_range = render_rgb(map_landcover)
-    path_ax = show_rgb_waypoints(image, axis_range, init_waypoints, x_offset, y_offset, goal_offset, rovers_sep, N, num_of_waypoints)
-
+    fig0 = show_rgb_waypoints(image, axis_range, init_waypoints, x_offset, y_offset, \
+        goal_offset, rovers_sep, N, num_of_waypoints)
 
     for i in range(len(init_waypoints)):
         for j in range(len(init_waypoints[i])):
@@ -348,10 +349,10 @@ def main():
     X, Y = np.meshgrid(x, y)
     Z = prep_data(map_terrain)
     cmap = 'gist_earth'
-
+    
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     contf = ax.contourf(X, Y, Z, cmap=plt.get_cmap(cmap))
-    contf.set_clim(0, 110)
+    contf.set_clim(0, 375)   #Map with highest elevation is SX27SW, minus elevation capped to 0, as they are water bodies
     plt.colorbar(contf, label='Elevation (m)')
 
     for o in range(N):
@@ -374,6 +375,7 @@ def main():
     ax.set_ylabel('Northing (m)')
     ax.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
     if(int(log_control[2]) == 1):
+        fig0.savefig(directory + 'Path_Planned_Trajectory.png', dpi=100)
         plt.savefig(directory + 'Elevation.png')
     
     #RMSE of rovers position error over time

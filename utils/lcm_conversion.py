@@ -1,5 +1,6 @@
+import os
 
-dir = "C:\\Users\\borin\\Documents\\GitHub\\Rover-Simulator\\misc\\"
+dir = os.getcwd() + "\\misc\\"
 map_name = "CMap.asc"
 map = open(dir + map_name, "r")
 
@@ -7,7 +8,7 @@ contents  = map.read()
 array = contents.split()
 map.close()
 
-new_dir = "C:\\Users\\borin\\Documents\\GitHub\\Rover-Simulator\\maps\\"
+new_dir = os.getcwd() + "\\maps\\"
 the_map =   "SX17SE"
 new_map_name = the_map + "_landcover.asc"
 new_map = open(new_dir + new_map_name, "w")
