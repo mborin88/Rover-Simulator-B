@@ -310,7 +310,7 @@ class Rover:
         Slowly push all_control values that haven't been recieved to 0.
         """
 
-        goal_driven_controller = PController(ref=self._current_goal, gain=[1e-2, 1e-2])
+        goal_driven_controller = PController(ref=self._current_goal, gain=[0, 1e-2])
         controlled_object = self.measurement
         control_input = goal_driven_controller.execute(controlled_object)
         

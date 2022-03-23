@@ -50,12 +50,12 @@ R = None                                        # Measurement noise.
 seed_value = dt.datetime.now().microsecond      #Seed value for noise 
 rand.seed(seed_value)
 
-ctrl_policy = 1
+ctrl_policy = 2
 # Control policy:
 # 0 - meaning no controller;
 
 # 1 - meaning goal-driven controller, if used:
-K_goal = [1e-2, 1e-2]  # Control gain for goal-driven controller;
+K_goal = [1e-1, 1e-2]  # Control gain for goal-driven controller;
 
 # 2 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
@@ -396,17 +396,17 @@ def main():
         plt.savefig(directory + 'RMSE.png')
 
     #Velocity boxplots of each rover whiskers going from 0% - 100%
-    fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
-    labels = []
-    velocities = []
-    for p in range(N):
-        v_plotter = world.rovers[p].pose_logger
-        velocities.append(v_plotter.velocity)
-        labels.append('ID: ' + str(p + 1))
-    ax2.boxplot(velocities, autorange=True, showfliers=False, whis=(0,100))
-    ax2.set_xticklabels(labels)
-    ax2.set_title('Average Velocity Curve per minute (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
-    del velocities
+    # fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    # labels = []
+    # velocities = []
+    # for p in range(N):
+    #     v_plotter = world.rovers[p].pose_logger
+    #     velocities.append(v_plotter.velocity)
+    #     labels.append('ID: ' + str(p + 1))
+    # ax2.boxplot(velocities, autorange=True, showfliers=False, whis=(0,100))
+    # ax2.set_xticklabels(labels)
+    # ax2.set_title('Average Velocity Curve per minute (Time Elapse: {} min)'.format(str(round(world.time/60, 1))))
+    # del velocities
 
     if(int(log_control[2]) == 1):
         plt.savefig(directory + 'Velocity.png')

@@ -1,3 +1,5 @@
+import math
+
 class PController:
     """
     A proportional controller class.
@@ -24,11 +26,14 @@ class PController:
         """
         r = self._ref                   # Reference
         x = controlled_object           # State variable(s)
-        e = []                          # Error
-        for i in range(len(x)):
-            e.append(r[i] - x[i])
+        dist = math.sqrt((x[0] - r[0])**2 + (x[1] - r[1])**2)
         kp = self._gain                # Gain
-        u = 0.0                         # Control input
-        for j in range(len(e)):
-            u += kp[j] * e[j]
+        u = 0.0  
+        u = dist * kp[1]
+        # e = []                          # Error
+        # for i in range(len(x)):
+        #     e.append(r[i] - x[i])
+                       # Control input
+        # for j in range(len(e)):
+        #     u += kp[j] * e[j]
         return u
