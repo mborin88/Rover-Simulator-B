@@ -315,6 +315,9 @@ class Rover:
         Recieve all info scale old info to be less relevant. At certain time thershold old ignore old info.
         Slowly push all_control values that haven't been recieved to 0.
         """
+        offset = 30
+        if(self._pose[1] > self.goal[1]-offset):   #if within offset of the y waypoint
+            self._goal_index += 1
 
         goal_driven_controller = PController(ref=self._current_goal, gain=[0, 1e-2])
         controlled_object = self.measurement
@@ -363,8 +366,8 @@ class Rover:
         
         if control_input > self._control[1]:  # Control input saturation. Only control the vy
             self._control[1] = self._control[1]
-        elif control_input < MINIMUM_SPEED:     #Test out with 0 next but could leave dead in the water
-            self._control[1] = MINIMUM_SPEED
+        elif control_input < 0:     #Test out with 0 next but could leave dead in the water
+            self._control[1] = 0
         else:
             self._control[1] = control_input  # Assume changing linear velocity instantly.
 
