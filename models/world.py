@@ -107,6 +107,8 @@ class World:
         tn = self._tn
         if((dt*tn)%500 == 0):
             print('Time: {} (s)\n'.format(str(round(tn * dt, 1))))
+        # if((dt*tn)%2085.6 == 0):
+        #     print('Break Point')
 
         # Logically, this is the beginning of time slot.
         transmitter = None

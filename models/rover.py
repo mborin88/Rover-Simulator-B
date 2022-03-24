@@ -213,6 +213,12 @@ class Rover:
             elif h[1] >= (world.terrain.y_llcorner + world.terrain.y_range):
                 h[1] = world.terrain.y_llcorner + world.terrain.y_range - 1e-6
                 print('Cannot move beyond the upper boundary.')
+            elif h[0] < world.terrain.x_llcorner:
+                h[0] = world.terrain.x_llcorner
+                print('Cannot go off right side of map.')
+            elif h[0] >= (world.terrain.x_llcorner + world.terrain.x_range):
+                h[0] = world.terrain.x_llcorner + world.terrain.x_range - 1e-6
+                print('Cannot go off left side of map')
             if self._q_noise is None:
                 self._pose[0] = h[0]
                 self._pose[1] = h[1]  # Noiseless motion.
@@ -291,7 +297,7 @@ class Rover:
         if(self._pose[1] > self.goal[1]-offset):   #if within offset of the y waypoint
             self._goal_index += 1
             self.speed_controller.set_ref(self.goal)
-        control_input = self._speed_controller.execute(controlled_object)
+        control_input = self._speed_controller.execute2(controlled_object)
 
         if control_input > MAXIMUM_SPEED:  # Control input saturation.
             self._control[2] = MAXIMUM_SPEED
@@ -312,7 +318,7 @@ class Rover:
 
         goal_driven_controller = PController(ref=self._current_goal, gain=[0, 1e-2])
         controlled_object = self.measurement
-        control_input = goal_driven_controller.execute(controlled_object)
+        control_input = goal_driven_controller.execute2(controlled_object)
         
         if control_input > MAXIMUM_SPEED:  # Control input saturation.
             p_control = MAXIMUM_SPEED
@@ -324,6 +330,7 @@ class Rover:
         self._control[2] = p_control
         self.ratio_speeds()
         self._all_control[0] = self._control[1]     #only want y speed to do line sweeping with
+        x_mult = self.x_multiplier(self._control[0])
 
         neighbour_poses = self.get_neighbour_pose()
         if neighbour_poses.count(None) < self._num_rovers:
@@ -354,14 +361,14 @@ class Rover:
         else:
             control_input = self._all_control[0] # Take 100% portion of goal_driven control.
         
-        if control_input > MAXIMUM_SPEED:  # Control input saturation. Only control the vy
-            self._control[1] = MAXIMUM_SPEED
-        elif control_input < MINIMUM_SPEED:
+        if control_input > self._control[1]:  # Control input saturation. Only control the vy
+            self._control[1] = self._control[1]
+        elif control_input < MINIMUM_SPEED:     #Test out with 0 next but could leave dead in the water
             self._control[1] = MINIMUM_SPEED
         else:
             self._control[1] = control_input  # Assume changing linear velocity instantly.
 
-        self.update_speeds(self.control[1] / math.tan(self._angle), self._control[1])    
+        self.update_speeds(x_mult * self.control[1] / math.tan(self._angle), self._control[1])    
 
         self._radio.reset_neighbour_register()
         self._radio.reset_buffer()
@@ -375,7 +382,7 @@ class Rover:
 
         goal_driven_controller = PController(ref=self._current_goal, gain=[1e-2, 1e-2])
         controlled_object = self.measurement
-        control_input = goal_driven_controller.execute(controlled_object)
+        control_input = goal_driven_controller.execute2(controlled_object)
         
         if control_input > MAXIMUM_SPEED:  # Control input saturation.
             p_control = MAXIMUM_SPEED
@@ -415,12 +422,12 @@ class Rover:
         else:
             control_input = p_control*1  # Take 100% portion of goal_driven control.
         
-        if control_input > MAXIMUM_SPEED:  # Control input saturation.
-            self._control[2] = MAXIMUM_SPEED
+        if control_input > self._control[1]:  # Control input saturation.
+            self._control[1] = self._control[1]
         elif control_input < MINIMUM_SPEED:
-            self._control[2] = MINIMUM_SPEED
+            self._control[1] = MINIMUM_SPEED
         else:
-            self._control[2] = control_input  # Assume changing linear velocity instantly.    
+            self._control[1] = control_input  # Assume changing linear velocity instantly.    
 
         self._radio.reset_neighbour_register()
         self._radio.reset_buffer()
