@@ -65,7 +65,7 @@ zero_crossing = 25 * len_interval #25 communication cycles for it to fully decay
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Test Passive Control Run Test"
+log_title_tag = "Test Passive Control Partial Run Test"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Fixed issued of rover going to right in passive control 
 Due to no x multiplier making negative x movement possible.
