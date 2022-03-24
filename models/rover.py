@@ -219,6 +219,7 @@ class Rover:
             elif h[0] >= (world.terrain.x_llcorner + world.terrain.x_range):
                 h[0] = world.terrain.x_llcorner + world.terrain.x_range - 1e-6
                 print('Cannot go off left side of map')
+
             if self._q_noise is None:
                 self._pose[0] = h[0]
                 self._pose[1] = h[1]  # Noiseless motion.
@@ -243,7 +244,7 @@ class Rover:
         """
         Discard any ongoing action and halt immediately.
         """
-        self._control[2] = 0
+        self.update_speeds(0, 0)
     
     def x_multiplier(self, value):
         if(value >= 0):
@@ -316,7 +317,8 @@ class Rover:
         Slowly push all_control values that haven't been recieved to 0.
         """
         offset = 30
-        if(self._pose[1] > self.goal[1]-offset):   #if within offset of the y waypoint
+        if(self._pose[1] > self.goal[1]-offset) \
+            and (self._goal_index < len(self._waypoints)-1):   #if within offset of the y waypoint
             self._goal_index += 1
 
         goal_driven_controller = PController(ref=self._current_goal, gain=[0, 1e-2])
@@ -498,7 +500,7 @@ class Rover:
         """
         See if the goal point is reached.
         """
-        return self._pose[1] >= self._waypoints[-1][1]
+        return self._pose[1] >= (self._waypoints[-1][1] - 5)
 
     def terminate(self):
         """
@@ -507,8 +509,8 @@ class Rover:
         self._termination_flag = True
         # If rover exceeds the goal point, still set the current state and measurement
         # to goal point in order to facilitate other rovers to complete their tasks.
-        self._pose = self._current_goal
-        self.measurement = self._current_goal
+        self._pose = self._waypoints[-1]
+        self.measurement = self._waypoints[-1]
 
         if self._q_noise is not None:
             self._q_noise = None
