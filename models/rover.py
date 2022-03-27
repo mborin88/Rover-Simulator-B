@@ -33,9 +33,9 @@ class Rover:
         self._num_rovers = num_rovers
         self._initial_control = True          # Want to P controller until we get neighbouring positions
         self._control_policy = None
-        self._decay_type = decay_type
-        self._decay_zero_crossing = decay_zero_crossing
-        self._connectivity = [0] * num_rovers
+        self._decay_type = decay_type           #Decay style currently quadratic decay or exponential decay
+        self._decay_zero_crossing = decay_zero_crossing     #How many steps until speed position of neighbour rover ignored.
+        self._connectivity = [0] * num_rovers               
 
         # The control policy used by the rover.
         self._speed_controller = None
@@ -44,6 +44,7 @@ class Rover:
         self._goal_index = 1
         self._termination_flag = False  # The flag indicating that mission is terminated.
         self._termination_time = None   # The time when rover completes its task.
+        self._landcover_termination = False     #Flag to terminate mission if rover on invalid land(e.g. water)
         self.pose_logger = None         # The logger to record pose, a motion logger object.
 
     @property
@@ -126,6 +127,10 @@ class Rover:
     def termination_time(self):
         return self._termination_time
 
+    @property
+    def landcover_termination(self):
+        return self._landcover_termination
+
     def config_radio(self, f, bw, sf, cr, tx_pw):
         """
         Configure radio parameters.
@@ -178,9 +183,16 @@ class Rover:
         self._current_goal = goal
 
     def update_speeds(self, vx, vy):
-        self._control[0] = round(vx, 3)
-        self._control[1] = round(vy, 3)
-        self._control[2] = round(sqrt(vx ** 2 + vy ** 2), 3)  # Update speed.
+        self._control[0] = round(vx, 3)         #X direction speed 
+        self._control[1] = round(vy, 3)         #Y direction speed
+        self._control[2] = round(sqrt(vx ** 2 + vy ** 2), 3)  #Overall speed
+    
+    def check_invalid_landcover(self, world):
+        p = self._pose
+        surrounding = LCM2015_NAME[int(world.landcover.get_data(p[0], p[1]))]
+        if(surrounding == 'Saltwater') or (surrounding == 'Freshwater'):
+            self._landcover_termination = True
+
 
     def step_motion(self, world, dt):
         """
@@ -200,7 +212,7 @@ class Rover:
             a_x = world.dynamics_engine.generate_acceleration(slope_x)
             a_xf = world.dynamics_engine.generate_friction(slope_x)
             v_x = u[0] + a_x * dt + a_xf * dt
-            
+         
             if v_y < MINIMUM_SPEED:
                 v_y = MINIMUM_SPEED
 
@@ -223,8 +235,6 @@ class Rover:
             if self._q_noise is None:
                 self._pose[0] = h[0]
                 self._pose[1] = h[1]  # Noiseless motion.
-                self.update_speeds(v_x, v_y)
-                self.measure()
             else:
                 noise = self.generate_noise(self._q_noise)
                 new_pose = [h[0] + noise[0], h[1] + noise[1]]
@@ -237,8 +247,10 @@ class Rover:
                     self._pose[0] = new_pose[0]  #No noise on x yet
                 else:
                     self._pose[0] = h[0]
-                self.update_speeds(v_x, v_y)
-                self.measure()
+
+            self.update_speeds(v_x, v_y)
+            self.measure()
+            self.check_invalid_landcover(world)   
 
     def halt(self):
         """

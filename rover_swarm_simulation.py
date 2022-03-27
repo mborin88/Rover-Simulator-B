@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000       #432000      # Maximum iteration
+steps = 20000       #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 80   # Number of time slots between transmissions for one device.
@@ -62,12 +62,9 @@ zero_crossing = 25 * len_interval #25 communication cycles for it to fully decay
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Test Passive Control Full Run Test"
+log_title_tag = "Rover Entering Water Test Mission"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Fixed issued of rover going to right in passive control 
-Easting slope still affecting rover movement significantly.
-Maybe after this run test with storing previous easting slope and changing control speed with it.
-Also testing if the program can finish'''            #Additional notes to be added to Log file if wished
+log_notes = '''Testing if the program will stop the simulation when a rover enters water'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 init_waypoints = []
@@ -151,17 +148,32 @@ def main():
             world.rovers[l].pose_logger.log_pose()
             world.rovers[l].pose_logger.log_velocity()
             world.rovers[l].pose_logger.log_connectivity()
+
         error = 0.0
         for m in range(N - 1):  # Root mean square formation error
             error += (world.rovers[m + 1].pose_logger.y_pose[-1]
                       - world.rovers[m].pose_logger.y_pose[-1]) ** 2
         ee.append(sqrt(error / (N - 1)))
         step += 1
+
+        invalid_rov_pos = False
+        for n in range(N):
+            if(world.rovers[n].landcover_termination):
+                invalid_rov_pos = True
+                break
+        
+        termination_reason = -1
         if world.completed_rovers == N:
+            termination_reason = 0
+            break
+        elif invalid_rov_pos:
+            termination_reason = 1
             break
         elif steps is not None:
             if step == steps:
+                termination_reason = 2
                 break
+        
 
     # Simulation running time.
     end = time.time()
@@ -213,6 +225,16 @@ def main():
 
     # Print simulation running time.
     print('')
+    if termination_reason == -1:
+        termination_note = "Unknown"
+    elif termination_reason == 0:
+        termination_note = "Mission Completed"
+    elif termination_reason == 1:
+        termination_note = "Rover Entered Water Body"
+    elif termination_reason == 2:
+        termination_note = "Maximum Time Limit Reached"
+
+    print("Termination reason:", termination_note)
     print('Simulation running time: {} (s)'.format(str(round(end - start, 1))))
 
     #Logs directory creation if not created
@@ -294,6 +316,7 @@ def main():
 
         # Log simulation running time.
         log_summary_file.write('\n')
+        log_summary_file.write("Termination reason: " + termination_note)
         log_summary_file.write('\nSimulation running time: {} (s)'.format(str(round(end - start, 1))))
         log_summary_file.close()
     
