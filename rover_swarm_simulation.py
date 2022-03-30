@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 20000       #432000      # Maximum iteration
+steps = 432000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 80   # Number of time slots between transmissions for one device.
@@ -57,14 +57,14 @@ K_goal = [1e-1, 1e-2]  # Control gain for goal-driven controller;
 # 2 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
 decay = 'quad'
-zero_crossing = 25 * len_interval #25 communication cycles for it to fully decay
+zero_crossing = 15 * len_interval #25 communication cycles for it to fully decay
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Rover Entering Water Test Mission"
+log_title_tag = "Full Run - Decay Communication Cycle - 35"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Testing if the program will stop the simulation when a rover enters water'''            #Additional notes to be added to Log file if wished
+log_notes = '''Full Run Decay Communication Cycle - 35'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 init_waypoints = []
@@ -402,7 +402,7 @@ def main():
     
     #RMSE of rovers position error over time
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
-    ax1.set_ylim(0, 100)
+    ax1.set_ylim(0, 250)
     ax1.set_xlim(0.0, world.time/60)
     avg_ee = []
     for q in range(0, step+1, log_step_interval):
