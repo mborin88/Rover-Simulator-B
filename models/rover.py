@@ -1,11 +1,14 @@
 from msilib import RadioButtonGroup
 from random import *
 import statistics as stats
+from tkinter.tix import MAX
 import numpy as np
 import math
 
 from models.radio import *
 from models.P_controller import *
+from controllers.goal_driven import * 
+from controllers.passive import *
 
 STARTING_SPEED = 0.2       # m/s
 MAXIMUM_SPEED = 0.5        # m/s, which can be exceeded due to the effect of slope.
@@ -257,24 +260,6 @@ class Rover:
         Discard any ongoing action and halt immediately.
         """
         self.update_speeds(0, 0)
-    
-    def x_multiplier(self, value):
-        if(value >= 0):
-            return 1
-        else:
-            return -1
-    
-    def ratio_speeds(self):
-        p = self._pose
-        target = self.goal
-        v = self._control[2]
-        x_diff = target[0] - p[0]
-        y_diff = target[1] - p[1]
-        angle = math.atan(y_diff/abs(x_diff))
-        self._angle = angle
-        
-        self._control[0] = round(self.x_multiplier(x_diff) * v * math.cos(angle), 3)
-        self._control[1] = round(v * math.sin(angle), 3)
 
     def apply_control(self, world):
         """
@@ -294,192 +279,11 @@ class Rover:
                 elif self._control_policy is None:
                     pass
                 elif self._control_policy == 'Goal-driven':
-                    self.move2goal()
+                    move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif self._control_policy == 'Passive-cooperative':
-                    self.passive_cooperation()
+                    passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif self._control_policy == 'Simple Passive-cooperative':
-                    self.simple_passive_cooperation()
-
-    def move2goal(self):
-        """
-        Move towards goal point.
-        """
-        offset = 5
-
-        controlled_object = self.measurement  # Controlled object is [x, y].
-        if(self._pose[1] > self.goal[1]-offset):   #if within offset of the y waypoint
-            self._goal_index += 1
-            self.speed_controller.set_ref(self.goal)
-        control_input = self._speed_controller.execute2(controlled_object)
-
-        if control_input > MAXIMUM_SPEED:  # Control input saturation.
-            self._control[2] = MAXIMUM_SPEED
-        elif control_input < MINIMUM_SPEED:
-            self._control[2] = MINIMUM_SPEED
-        else:
-            self._control[2] = control_input  # Assume changing linear velocity instantly.
-
-        self.ratio_speeds()
-
-
-    def passive_cooperation(self):
-        """
-        Apply passive cooperative control, i.e. only adjust speed when neighbour(s)' info.
-        Recieve all info scale old info to be less relevant. At certain time thershold old ignore old info.
-        Slowly push all_control values that haven't been recieved to 0.
-        """
-        offset = 30
-        if(self._pose[1] > self.goal[1]-offset) \
-            and (self._goal_index < len(self._waypoints)-1):   #if within offset of the y waypoint
-            self._goal_index += 1
-
-        goal_driven_controller = PController(ref=self._current_goal, gain=[0, 1e-2])
-        controlled_object = self.measurement
-        control_input = goal_driven_controller.execute2(controlled_object)
-        
-        if control_input > MAXIMUM_SPEED:  # Control input saturation.
-            p_control = MAXIMUM_SPEED
-        elif control_input < MINIMUM_SPEED:
-            p_control = MINIMUM_SPEED
-        else:
-            p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation 
-
-        self._control[2] = p_control
-        self.ratio_speeds()
-        self._all_control[0] = self._control[1]     #only want y speed to do line sweeping with
-        x_mult = self.x_multiplier(self._control[0])
-
-        neighbour_poses = self.get_neighbour_pose()
-        if neighbour_poses.count(None) < self._num_rovers:
-            self._initial_control = False
-
-        self.connectivity_reset()
-        self.neighbour_connectivity(neighbour_poses)
-        
-        for i in range(1, len(self._steps_control_not_updated)):
-            self._steps_control_not_updated[i] += 1 #all incremented by 1
-
-        if not self._initial_control:
-            # Adjust speed according to neighbour(s)' info.
-            if neighbour_poses.count(None) < self._num_rovers:
-                control_index = 0
-                for pose in neighbour_poses:
-                    control_index += 1
-                    if pose is not None:
-                        self._steps_control_not_updated[control_index] = 0
-                        self._speed_controller.set_ref(pose)
-                        controlled_object = self.measurement
-                        self._all_control[control_index] = self._speed_controller.execute(controlled_object)
-                self.scale_all_control()
-                control_input = self.weighted_control_calc()
-            else:
-                self.scale_all_control()
-                control_input = self.weighted_control_calc()
-        else:
-            control_input = self._all_control[0] # Take 100% portion of goal_driven control.
-        
-        if control_input > self._control[1]:  # Control input saturation. Only control the vy
-            self._control[1] = self._control[1]
-        elif control_input < 0:     #Test out with 0 next but could leave dead in the water
-            self._control[1] = 0
-        else:
-            self._control[1] = control_input  # Assume changing linear velocity instantly.
-
-        self.update_speeds(x_mult * self.control[1] / math.tan(self._angle), self._control[1])    
-
-        self._radio.reset_neighbour_register()
-        self._radio.reset_buffer()
-    
-    def simple_passive_cooperation(self):
-        """
-        Apply passive cooperative control, i.e. only adjust speed when neighbour(s)' info is received,
-        otherwise do not apply any control effect.
-        Start with P controller then only change speed when neighbour info recieved again.
-        """
-
-        goal_driven_controller = PController(ref=self._current_goal, gain=[1e-2, 1e-2])
-        controlled_object = self.measurement
-        control_input = goal_driven_controller.execute2(controlled_object)
-        
-        if control_input > MAXIMUM_SPEED:  # Control input saturation.
-            p_control = MAXIMUM_SPEED
-        elif control_input < MINIMUM_SPEED:
-            p_control = MINIMUM_SPEED
-        else:
-            p_control = control_input  # Assume changing linear velocity instantly. #velocity changes at end of cooperation 
-
-        self._all_control[0] = p_control
-
-        neighbour_poses = self.get_neighbour_pose()
-        if neighbour_poses.count(None) < self._num_rovers:
-            self._initial_control = False
-
-        self.connectivity_reset()
-        self.neighbour_connectivity(neighbour_poses)
-        
-
-        for i in range(1, len(self._steps_control_not_updated)):
-            self._steps_control_not_updated[i] += 1 #all incremented by 1
-
-        if not self._initial_control:
-            # Adjust speed according to neighbour(s)' info.
-            if neighbour_poses.count(None) < self._num_rovers:
-                control_index = 0
-                for pose in neighbour_poses:
-                    control_index += 1
-                    if pose is not None:
-                        self._speed_controller.set_ref(pose)
-                        controlled_object = self.measurement
-                        self._all_control[control_index] = self._speed_controller.execute(controlled_object)
-                        self._steps_control_not_updated[control_index] = 0 
-                control_input = self.weighted_control_calc()
-                
-            else:
-                control_input = self.weighted_control_calc()
-        else:
-            control_input = p_control*1  # Take 100% portion of goal_driven control.
-        
-        if control_input > self._control[1]:  # Control input saturation.
-            self._control[1] = self._control[1]
-        elif control_input < MINIMUM_SPEED:
-            self._control[1] = MINIMUM_SPEED
-        else:
-            self._control[1] = control_input  # Assume changing linear velocity instantly.    
-
-        self._radio.reset_neighbour_register()
-        self._radio.reset_buffer()
-    
-    def weighted_control_calc(self):
-        """
-        Mean control of all the neighbouring velocities
-        Then summed with the P controller Speed.
-        """ 
-        mean_control = 1
-        if(mean_control):
-            neighbour_mean = np.nanmean(self._all_control[1:])
-            return self._all_control[0] + neighbour_mean
-
-    def time_decay(self, value):
-        if(self._decay_type == 'exp'):
-            scale = (-1/np.exp(-value + self._decay_zero_crossing)) + 1
-        elif (self._decay_type == 'quad'): 
-            scale = (-1/(self._decay_zero_crossing**2)) * (value-self._decay_zero_crossing) * (value + self._decay_zero_crossing)
-        else:
-            scale = 1
-
-        if(scale <= 0):
-            scale = 0
-
-        return scale
-
-    def scale_all_control(self):
-        """
-        Scale all control variable. 
-        """ 
-        multiplier = np.array([1.0]*len(self._all_control))
-        for i in range(1,len(self._all_control)):
-            multiplier[i] = self.time_decay(self._steps_control_not_updated[i])
-        self._all_control = self._all_control * multiplier
+                    simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
 
     def measure(self):
         """
