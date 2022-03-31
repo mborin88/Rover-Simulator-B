@@ -23,7 +23,7 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SX27SW'     # Area to run simulation.
+area = 'SP46NE'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
@@ -56,16 +56,15 @@ K_goal = [1e-1, 1e-2]  # Control gain for goal-driven controller;
 
 # 2 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
-decay = 'Quad'
+decay = 'quad'
 zero_crossing = 20 * len_interval #25 communication cycles for it to fully decay
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Full Run - P Control End Waypoint"
+log_title_tag = "Full Run"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Full Run Decay Communication Cycle - 15 With quadratic decay style
-P controller is now based on the final waypoint rather than individual waypoints'''            #Additional notes to be added to Log file if wished
+log_notes = '''Full Run'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 init_waypoints = []
