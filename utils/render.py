@@ -33,6 +33,7 @@ def render2d(terrain_map, cmap='gist_earth', window_size=(8, 8)):
     z = prep_data(terrain_map)
     fig, ax = plt.subplots(figsize=window_size)
     contf = ax.contourf(xx, yy, z, cmap=plt.get_cmap(cmap))
+    contf.set_clim(0, 375)      #Map with highest elevation is SX27SW, minus elevation capped to 0, as they are water bodies
     plt.colorbar(contf, label='Elevation (m)')
     ax.set_xlabel('Easting (m)')
     ax.set_ylabel('Northing (m)')
@@ -76,9 +77,9 @@ def render_rgb(landcover_map, cmap=LCM2015_COLORMAP):
     rgb = Image.new('RGB', (rows, cols))
     for i in range(rows):
         for j in range(cols):
-            rgb.putpixel((i, j), (cmap[int(landcover_map.data[i, j])][0],
-                                  cmap[int(landcover_map.data[i, j])][1],
-                                  cmap[int(landcover_map.data[i, j])][2]))
+            rgb.putpixel((i, j), (cmap[int(landcover_map.data[j, i])][0],
+                                  cmap[int(landcover_map.data[j, i])][1],
+                                  cmap[int(landcover_map.data[j, i])][2]))
     rgb.save(os.path.abspath(os.path.dirname(__file__)) + '\\temp.png')
     temp_im = os.path.abspath(os.path.dirname(__file__)) + '\\temp.png'
     im = mpimg.imread(temp_im)
@@ -101,10 +102,11 @@ def show_rgb(im, ax_range):
 if __name__ == '__main__':
     sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator')
     from utils.load_map import *
-    t_map = read_asc(locate_map('TL16NE.asc'))
-    # la_map = read_asc(locate_map('SU20NE_landcover.asc'))
-    render2d(t_map)
-    # image, axis_range = render_rgb(la_map)
-    # show_rgb(image, axis_range)
+    map_name = 'SX27SW'
+    t_map = read_asc(locate_map(map_name + '_elevation.asc'))
+    la_map = read_asc(locate_map(map_name + '_landcover.asc'))
+    #render2d(t_map)
+    image, axis_range = render_rgb(la_map)
+    show_rgb(image, axis_range)
     #render3d(t_map)
 

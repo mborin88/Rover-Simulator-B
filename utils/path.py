@@ -33,9 +33,9 @@ def render_rgb(landcover_map, cmap=LCM2015_COLORMAP):
     rgb = Image.new('RGB', (rows, cols))
     for i in range(rows):
         for j in range(cols):
-            rgb.putpixel((i, j), (cmap[int(landcover_map.data[i, j])][0],
-                                  cmap[int(landcover_map.data[i, j])][1],
-                                  cmap[int(landcover_map.data[i, j])][2]))
+            rgb.putpixel((i, j), (cmap[int(landcover_map.data[j, i])][0],
+                                  cmap[int(landcover_map.data[j, i])][1],
+                                  cmap[int(landcover_map.data[j, i])][2]))
     rgb.save(os.path.abspath(os.path.dirname(__file__)) + '\\temp.png')
     temp_im = os.path.abspath(os.path.dirname(__file__)) + '\\temp.png'
     im = mpimg.imread(temp_im)
@@ -46,38 +46,27 @@ def render_rgb(landcover_map, cmap=LCM2015_COLORMAP):
                    y_min + dy * landcover_map.n_rows
     ax_range = (x_min, x_max, y_min, y_max)
     os.remove(temp_im)
+
     return im, ax_range
 
+def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset, r_sep, N, num_waypoints):
+    fig0, ax0 = plt.subplots(figsize=(6, 6))
 
-def render2d_waypoints(terrain_map, cmap='gist_earth', window_size=(8, 8)):
-    """
-    Render a terrain map as a 2d contour plot.
-    """
-    x_min, y_min = terrain_map.x_llcorner, terrain_map.y_llcorner
-    x_max, y_max = x_min + terrain_map.resolution * terrain_map.n_cols, \
-                   y_min + terrain_map.resolution * terrain_map.n_rows
-    x, y = np.linspace(x_min, x_max, terrain_map.n_cols), \
-           np.linspace(y_min, y_max, terrain_map.n_rows)
-    xx, yy = np.meshgrid(x, y)
-    z = prep_data(terrain_map)
-    fig, ax = plt.subplots(figsize=window_size)
-    contf = ax.contourf(xx, yy, z, cmap=plt.get_cmap(cmap))
-
-    offset = 250
-    sep = 500
-    N = 10
     #using 3D list here however in main program each rover will have its own list so it will
     #reduce to a 2D list
-    waypoints = []
-    num_waypoints = 10
-    y_sep = (y_max- y_min) / (num_waypoints-1)
+    y_sep = (ax_range[3]- ax_range[2]) / (num_waypoints-1)
 
     for rover in range(N):
         waypoints.append([])
         for w_point in range(num_waypoints): #No. waypoints
             waypoints[rover].append([])
-            waypoints[rover][w_point].append(x_min + offset + (rover*sep))
-            waypoints[rover][w_point].append(y_min +(w_point*y_sep)) # waypoint difference.
+            waypoints[rover][w_point].append(ax_range[0] + x_offset + (rover*r_sep))
+            if(w_point==0):
+                waypoints[rover][w_point].append(ax_range[2] + y_offset +(w_point*y_sep)) # waypoint difference.
+            elif(w_point == num_waypoints):
+                waypoints[rover][w_point].append(ax_range[3] - goal_offset)
+            else:
+                waypoints[rover][w_point].append(ax_range[2] +(w_point*y_sep))
             waypoints[rover][w_point].append(0) # waypoint difference.
 
     x_plt = [x[0] for r in waypoints for x in r]
@@ -86,11 +75,10 @@ def render2d_waypoints(terrain_map, cmap='gist_earth', window_size=(8, 8)):
     y_plt = [y_plt[i:i+num_waypoints] for i in range(0, len(y_plt), num_waypoints)]
 
     for i in range(N):
-        ax.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=1.8, color='black')
+        ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=1.8, color='white')
     
-    plt.colorbar(contf, label='Elevation (m)')
-    ax.set_xlabel('Easting (m)')
-    ax.set_ylabel('Northing (m)')
+    ax0.set_xlabel('Easting (m)')
+    ax0.set_ylabel('Northing (m)')
 
     global clicked
     clicked = False
@@ -112,48 +100,52 @@ def render2d_waypoints(terrain_map, cmap='gist_earth', window_size=(8, 8)):
                     waypoint = j
         return rover, waypoint
                 
-
     def onclick(event):
         global clicked
         if(not clicked):
-            path_info[0], path_info[1] = closestWaypoint(event.xdata, event.ydata)
+            try:
+                path_info[0], path_info[1] = closestWaypoint(round(event.xdata), round(event.ydata))
+            except TypeError:
+                print("Click was outside the map")
         else:
-            waypoints[path_info[0]][path_info[1]][0] = event.xdata 
+            waypoints[path_info[0]][path_info[1]][0] = round(event.xdata)
 
         x_plt = [x[0] for r in waypoints for x in r]
         x_plt = [x_plt[i:i+num_waypoints] for i in range(0, len(x_plt), num_waypoints)]
         plt.cla()
-        ax.contourf(xx, yy, z, cmap=plt.get_cmap(cmap), zorder=1)
-        ax.set_xlabel('Easting (m)')
-        ax.set_ylabel('Northing (m)')
+        ax0.imshow(im, extent=ax_range)
+        ax0.set_xlabel('Easting (m)')
+        ax0.set_ylabel('Northing (m)')
         for i in range(N):
-            ax.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=1.8, color='black', zorder=2)
+            ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=1.8, color='white', zorder=2)
         if(not clicked):
-            ax.scatter([waypoints[path_info[0]][path_info[1]][0]], [waypoints[path_info[0]][path_info[1]][1]], color='red', s=[50], zorder=3)
+            ax0.scatter([waypoints[path_info[0]][path_info[1]][0]], [waypoints[path_info[0]][path_info[1]][1]], color='cyan', s=[50], zorder=3)
             clicked = True
         else:
             clicked = False
         plt.draw()
 
-    fig.canvas.mpl_connect('button_press_event', onclick)
-    plt.show()
-    plt.tight_layout()
+    fig0.canvas.mpl_connect('button_press_event', onclick)
 
-def show_rgb(im, ax_range):
-    plt.imshow(im, extent=ax_range)
-    plt.xlabel('Easting (m)')
-    plt.ylabel('Northing (m)')
+    ax0.imshow(im, extent=ax_range)
+
+    path_fig0 = plt.gcf()
     plt.show()
+    plt.ioff()
+    return path_fig0
 
 
 if __name__ == '__main__':
     sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator')
     from utils.load_map import *
-    t_map = read_asc(locate_map('TL16NE.asc'))
-    # la_map = read_asc(locate_map('SU20NE_landcover.asc'))
-    render2d_waypoints(t_map)
-    plt.close()
-    # image, axis_range = render_rgb(la_map)
-    # show_rgb(image, axis_range)
-    #render3d(t_map)
+    la_map = read_asc(locate_map('SU20NE_landcover.asc'))
+    image, axis_range = render_rgb(la_map)
+    waypoints = []
+    N = 10
+    rovers_sep = 450          # Distance between rovers, in meter.
+    x_off = 475      # Offset from left boundary in easting direction, in meter.
+    y_off = 5  
+    g_off = 5  
+    num_of_waypoints = 10
+    show_rgb_waypoints(image, axis_range, waypoints, x_off, y_off, g_off, rovers_sep, N, num_of_waypoints)
 

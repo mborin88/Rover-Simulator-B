@@ -21,7 +21,7 @@ class PoseLogger:
         """
         Record velocity.
         """
-        self.velocity.append(self.rover.control[0])
+        self.velocity.append(self.rover.control[2])
 
     def log_connectivity(self):
         """

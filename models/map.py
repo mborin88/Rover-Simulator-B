@@ -74,7 +74,7 @@ class Map:
         """
         e, n = int((easting - self._x_llcorner) / self._resolution), \
             int((northing - self._y_llcorner) / self._resolution)
-        row, col = self._n_rows - n - 1, e
+        row, col = self._n_rows - n - 1, e - 1
         if self.is_valid_index(row, col):
             return [row, col]
         elif self.is_valid_index(row, col) == -1:
