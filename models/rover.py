@@ -1,14 +1,11 @@
 from msilib import RadioButtonGroup
 from random import *
-import statistics as stats
 from tkinter.tix import MAX
 import numpy as np
-import math
 
 from models.radio import *
-from models.P_controller import *
-from controllers.goal_driven import * 
-from controllers.passive import *
+from controllers.advanced_line_sweep.goal_driven import advanced_move2goal 
+from controllers.advanced_line_sweep.passive import advanced_passive_cooperation, advanced_simple_passive_cooperation
 
 STARTING_SPEED = 0.2       # m/s
 MAXIMUM_SPEED = 0.5        # m/s, which can be exceeded due to the effect of slope.
@@ -44,7 +41,8 @@ class Rover:
         self._speed_controller = None
         # The speed controller, a specific type of controller object.
         self._radio = None              # The communication module, a radio object.
-        self._goal_index = 1
+        self._goal_index = 1            # Indicates index of active waypoint
+        self._goal_offset = 25
         self._termination_flag = False  # The flag indicating that mission is terminated.
         self._termination_time = None   # The time when rover completes its task.
         self._landcover_termination = False     #Flag to terminate mission if rover on invalid land(e.g. water)
@@ -77,6 +75,10 @@ class Rover:
     @property
     def goal_index(self):
         return self._goal_index
+    
+    @property
+    def goal_offset(self):
+        return self._goal_offset
 
     @property
     def control(self):
@@ -279,11 +281,11 @@ class Rover:
                 elif self._control_policy is None:
                     pass
                 elif self._control_policy == 'Goal-driven':
-                    move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    advanced_move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif self._control_policy == 'Passive-cooperative':
-                    passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    advanced_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif self._control_policy == 'Simple Passive-cooperative':
-                    simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    advanced_simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
 
     def measure(self):
         """

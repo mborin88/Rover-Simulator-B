@@ -1,4 +1,3 @@
-from operator import imod
 import math
 
 def x_direction(value):
@@ -20,14 +19,14 @@ def ratio_speeds(rov):
     rov._control[1] = round(v * math.sin(angle), 3)
 
 
-def move2goal(rov, v_max, v_min):
+def advanced_move2goal(rov, v_max, v_min):
     """
     Move towards goal point.
     """
-    offset = 5
 
     controlled_object = rov.measurement  # Controlled object is [x, y].
-    if(rov._pose[1] > rov.goal[1]-offset):   #if within offset of the y waypoint
+    if(rov._pose[1] > rov.goal[1]-rov._goal_offset) \
+        and (rov._goal_index < len(rov._waypoints)-1):   #if within offset of the y waypoint
         rov._goal_index += 1
         rov.speed_controller.set_ref(rov.goal)
     control_input = rov._speed_controller.execute2(controlled_object)
