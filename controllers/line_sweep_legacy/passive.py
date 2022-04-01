@@ -43,7 +43,7 @@ def legacy_passive_cooperation(rov, v_max, v_min):
     Slowly push all_control values that haven't been recieved to 0.
     """
 
-    goal_driven_controller = PController(ref=rov._goal, gain=[0, 1e-3])
+    goal_driven_controller = PController(ref=rov._current_goal, gain=[0, 1e-3])
     controlled_object = rov.measurement
     control_input = goal_driven_controller.execute(controlled_object)
     
@@ -104,7 +104,7 @@ def legacy_simple_passive_cooperation(rov, v_max, v_min):
     Start with P controller then only change speed when neighbour info recieved again.
     """
 
-    goal_driven_controller = PController(ref=rov._goal, gain=[0, 1e-3])
+    goal_driven_controller = PController(ref=rov._current_goal, gain=[0, 1e-3])
     controlled_object = rov.measurement
     control_input = goal_driven_controller.execute(controlled_object)
     

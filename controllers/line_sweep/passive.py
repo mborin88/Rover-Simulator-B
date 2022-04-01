@@ -46,7 +46,7 @@ def passive_cooperation(rov, v_max, v_min):
     if(rov._pose[1] > rov.goal[1]-rov._goal_offset) \
         and (rov._goal_index < len(rov._waypoints)-1):   #if within offset of the y waypoint
         rov._goal_index += 1
-    goal_driven_controller = PController(ref=rov._goal, gain=[0, 1e-3])
+    goal_driven_controller = PController(ref=rov._current_goal, gain=[0, 1e-3])
     controlled_object = rov.measurement
     control_input = goal_driven_controller.execute(controlled_object)
     
@@ -111,7 +111,7 @@ def simple_passive_cooperation(rov, v_max, v_min):
         and (rov._goal_index < len(rov._waypoints)-1):   #if within offset of the y waypoint
         rov._goal_index += 1
         
-    goal_driven_controller = PController(ref=rov._goal, gain=[0, 1e-3])
+    goal_driven_controller = PController(ref=rov._current_goal, gain=[0, 1e-3])
     controlled_object = rov.measurement
     control_input = goal_driven_controller.execute(controlled_object)
     
