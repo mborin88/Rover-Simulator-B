@@ -9,9 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LightSource
 import matplotlib.image as mpimg
 from PIL import Image
-sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator/models')
-#from models.landcover_spec import LCM2015_COLORMAP
-#from landcover_spec import LCM2015_COLORMAP
+
+sys.path.append(str(os.getcwd()) + '\\models')
 from landcover_spec import LCM2015_COLORMAP
 
 
@@ -136,7 +135,7 @@ def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset,
 
 
 if __name__ == '__main__':
-    sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator')
+    sys.path.append(os.getcwd())
     from utils.load_map import *
     la_map = read_asc(locate_map('SU20NE_landcover.asc'))
     image, axis_range = render_rgb(la_map)

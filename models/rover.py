@@ -283,11 +283,11 @@ class Rover:
                 elif self._control_policy is None:
                     pass
                 elif self._control_policy == 'Goal-driven':
-                    move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    advanced_move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif self._control_policy == 'Passive-cooperative':
-                    passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    advanced_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif self._control_policy == 'Simple Passive-cooperative':
-                    simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    advanced_simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
 
     def measure(self):
         """

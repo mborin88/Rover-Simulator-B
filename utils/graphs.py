@@ -16,7 +16,7 @@ def terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_int
     
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     contf = ax.contourf(X, Y, Z, cmap=plt.get_cmap(cmap))
-    contf.set_clim(0, 375)   #Map with highest elevation is SX27SW, minus elevation capped to 0, as they are water bodies
+    contf.set_clim(0, 150)   #Map with highest elevation is 150, minus elevation capped to 0, as they are water bodies
     plt.colorbar(contf, label='Elevation (m)')
 
     for o in range(N):
@@ -46,7 +46,7 @@ def RMSE_plot(world, step, log_step_interval, ee, graph_log, directory):
     """"
     Plots RMSE over time with upper limit set so that the graphs are comparable.
     """
-    upper_limit = 250
+    upper_limit = 150
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     ax1.set_ylim(0, upper_limit)
     ax1.set_xlim(0.0, world.time/60)

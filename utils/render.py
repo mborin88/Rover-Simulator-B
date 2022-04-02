@@ -20,7 +20,7 @@ def prep_data(map_object):
     return data_re
 
 
-def render2d(terrain_map, cmap='gist_earth', window_size=(8, 8)):
+def render2d(terrain_map, cmap='terrain', window_size=(8, 8)):
     """
     Render a terrain map as a 2d contour plot.
     """
@@ -33,7 +33,7 @@ def render2d(terrain_map, cmap='gist_earth', window_size=(8, 8)):
     z = prep_data(terrain_map)
     fig, ax = plt.subplots(figsize=window_size)
     contf = ax.contourf(xx, yy, z, cmap=plt.get_cmap(cmap))
-    contf.set_clim(0, 375)      #Map with highest elevation is SX27SW, minus elevation capped to 0, as they are water bodies
+    contf.set_clim(0, 150)      #Map with highest elevation is SX27SW, minus elevation capped to 0, as they are water bodies
     plt.colorbar(contf, label='Elevation (m)')
     ax.set_xlabel('Easting (m)')
     ax.set_ylabel('Northing (m)')
@@ -102,11 +102,11 @@ def show_rgb(im, ax_range):
 if __name__ == '__main__':
     sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator')
     from utils.load_map import *
-    map_name = 'SX27SW'
+    map_name = 'SX49SW'
     t_map = read_asc(locate_map(map_name + '_elevation.asc'))
     la_map = read_asc(locate_map(map_name + '_landcover.asc'))
-    #render2d(t_map)
-    image, axis_range = render_rgb(la_map)
-    show_rgb(image, axis_range)
+    render2d(t_map)
+    #image, axis_range = render_rgb(la_map)
+    #show_rgb(image, axis_range)
     #render3d(t_map)
 
