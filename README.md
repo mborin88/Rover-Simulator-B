@@ -29,13 +29,13 @@ The simulator requires external libraries which are reccomended to be downloaded
 To compile and run the sources of Rover-Simulator from Git, the following are needed:
 
 * A Microsoft Windows System (Unix compatability has not been tested yet)
-* Numpy >= v1.21.2 
+* _numpy_ >= v1.21.2 
   * ```conda install -c anaconda numpy```
  
-* Matplotlib >= v3.4.3
+* _matplotlib_ >= v3.4.3
   * ```conda install -c conda-forge matplotlib```
  
-* Pillow >= v8.3.1
+* _pillow_ >= v8.3.1
   * ```conda install -c anaconda pillow```
 
 ## Customisable Parameters
@@ -99,7 +99,7 @@ Maps added will also have to be in this format.
 
 ### Requirements
 To add new landcover maps to the simulator you will need the additionaly package(s) listed below with the following(s) command(s): 
-* gdal >= v3.0.2
+* _gdal_ >= v3.0.2
 
 ```conda install -c conda-forge gdal```
 
@@ -109,13 +109,13 @@ The landcover data is retrieved from the Digimap Environment section.
 A license is needed to access both.
 The data file should be placed in the ```\maps``` directory.
 
-Digimap Link: [Digimap](https://digimap.edina.ac.uk/)
+Digimap Link: [https://digimap.edina.ac.uk/](https://digimap.edina.ac.uk/)
 #### Terrain
 Locate and select the region of choice on Ordnance Survey, then select the OS Terrain 5 DTM option and add to basket, here the format of the file will be prompted to be specified, where the ASC will be the desired option.
 
 #### Landcover
 The .tif file is too big to be stored on GitHub so will have to be retrieved manually.
-The Environment section of digimap downloads the whole Great Britain, and will have to be subsectioned manually. The website gives the choice of landcover data from different years, the 2020 year has been used here. Within the year option we want the landcover data which has a 25m resolution. Ensure the ```LCM2020_25m.tif``` file is stored in the ```\misc``` directory. And now in this directory in the command line we run the following commands:
+The Environment section of digimap downloads the whole Great Britain, and will have to be subsectioned manually. The website gives the choice of landcover data from different years, the 2020 year has been used here. Within the year option we want the landcover data which has a 25m resolution. Ensure the ```LCM2020_25m.tif``` file is stored in the ```\misc``` directory. And now navigate to this directory via the virtual environment command line and run the following commands:
 
 ```gdal_translate -projwin x_left y_top x_right y_bottom LCM2020_25m.tif CMAP.tif```
 
@@ -131,7 +131,7 @@ Manual changes of the parameters in the first of the two commands are needed, th
 
 ```x_right``` = ```xllcorner + (ncols * cellsize)```
 
-Last beforee running the ```lcm_conversion.py``` change the ```the_map``` variable to the correct map name and run the file. The landcover map will be in the correct ```.asc``` format, covering the correct area, and will appear in the ```\maps``` directory.
+Lastly before running the ```lcm_conversion.py``` change the ```the_map``` variable to the correct map name and run the file. The landcover map will be in the correct ```.asc``` format, covering the correct area, and will appear in the ```\maps``` directory.
 
 NOTE: Landcovers are loaded from top left to bottom right, so when we load landcover map columns
 and rows are inverted. e.g. if position = (x, y) 
