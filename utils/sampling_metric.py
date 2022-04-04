@@ -7,8 +7,6 @@ import os
 import matplotlib.pyplot as plt
 from  scipy.stats import (multivariate_normal as mvn,norm)
 from  scipy.stats._multivariate import _squeeze_output
-sys.path.append(str(os.getcwd()))
-from load_map import *
 
 class Multivariate_skewnorm:
     """
@@ -20,7 +18,11 @@ class Multivariate_skewnorm:
         self.dim   = len(shape)
         self.shape = np.asarray(shape)
         self._multiplier = 1e7
-        self.mean  = mean
+        self._mean  = mean
+        self._x_min = x_min
+        self._x_max = x_max
+        self._y_min = y_min
+        self._y_max = y_max
         self._x_range, self._y_range = np.mgrid[x_min:x_max:1, y_min:y_max:1]
         self.cov   = np.eye(self.dim) if cov is None else np.asarray(cov)
 
@@ -29,7 +31,7 @@ class Multivariate_skewnorm:
         
     def logpdf(self, x):
         x    = mvn._process_quantiles(x, self.dim)
-        pdf  = mvn(self.mean, self.cov).logpdf(x)
+        pdf  = mvn(self._mean, self.cov).logpdf(x)
         cdf  = norm(0, 1).logcdf(np.dot(x, self.shape))
         return _squeeze_output(np.log(2) + pdf + cdf)
     
@@ -49,39 +51,94 @@ class  Sampling_Metric():
     Where the bivariate gaussian distirbution could represent greenhouse gases or temperature
     across a terrain.
     """
-    def __init__(self, mu, cov, x_min, x_max, y_min, y_max):
-        self._distribution = mvn(mu, cov)
+    def __init__(self, x_min, x_max, y_min, y_max):
+        self._x_min = x_min
+        self._x_max = x_max
+        self._y_min = y_min
+        self._y_max = y_max
+        self._mean  = None                                   # Mean of metric value
+        self._covariance = []                                   # Covariance of metric distribution (has to be positive semidefinite)
+        self._distribution = None
         self._x_range, self._y_range = np.mgrid[x_min:x_max:1, y_min:y_max:1]
         self._multiplier = 1e7
+
 
     @property
     def distribution(self):
         return self._distribution
 
+    @property
+    def mean(self):
+        return self._mean
+
+    @property
+    def covariance(self):
+        return self._covariance
+
+    def config_distribution(self):
+        if(self._mean is not None):
+            self._distribution = mvn(self._mean, self._covariance)
+
+
     def sample(self, x, y):
-        return self._multiplier * self.distribution.pdf([x, y])
+        if(self._mean is not None):
+            return self._multiplier * self.distribution.pdf([x, y])
 
 
     def visualise(self):
-        pos = np.dstack((self._x_range, self._y_range))
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        contf = ax.contourf(self._x_range, self._y_range, self._multiplier * self.distribution.pdf(pos))
-        plt.colorbar(contf, label='Measurement')
-        ax.set_xlabel('Easting (m)')
-        ax.set_ylabel('Northing (m)')
-        plt.show()
+        if(self._mean is not None):
+            pos = np.dstack((self._x_range, self._y_range))
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            contf = ax.contourf(self._x_range, self._y_range, self._multiplier * self.distribution.pdf(pos))
+            plt.colorbar(contf, label='Measurement')
+            ax.set_xlabel('Easting (m)')
+            ax.set_ylabel('Northing (m)')
+            plt.show()
+    
+
+    def config_mean(self, pseudo_mean):
+        mean_x_flag = True
+        if(pseudo_mean[0] == 'M'):
+            mean_x = int((self._x_min + self._x_max)/2)
+        elif(pseudo_mean[0] == 'R'):
+            mean_x = self._x_min + int(3*(self._x_max - self._x_min)/4)
+        elif(pseudo_mean[0] == 'L'):
+            mean_x = self._x_min + int(1*(self._x_max - self._x_min)/4)
+        else:
+            print("Invalid mean selection")
+            mean_x_flag = False
+        
+        mean_y_flag = True
+        if(pseudo_mean[1] == 'M'):
+            mean_y = int((self._y_min + self._y_max)/2)
+        elif(pseudo_mean[1] == 'T'):
+            mean_y = self._y_min + int(3*(self._y_max - self._y_min)/4)
+        elif(pseudo_mean[1] == 'B'):
+            mean_y = self._y_min + int(1*(self._y_max - self._y_min)/4)
+        else:
+            print("Invalid mean selection")
+            mean_y_flag = False
+        
+        if(mean_x_flag == True and mean_y_flag == True):
+            self._mean = [mean_x, mean_y]
+
+
+    def config_covariance(self, psuedo_covariance):
+        range = self._x_max - self._x_min
+        self._covariance = list(np.array(psuedo_covariance) * range * 100)      # multiplication here explicitly for 5000m x and y length. 
+        
 
 if __name__ == '__main__':
-    #print("Main")
-    area = 'TL16NE'
+    sys.path.append(str(os.getcwd()))
+    from load_map import *
+    area = 'SP46NE'
     map_terrain = read_asc(locate_map(area + '_elevation' + '.asc'))
     map_landcover = read_asc(locate_map(area + '_landcover' + '.asc'))
     x_min, x_max = map_terrain.x_llcorner, map_terrain.x_llcorner + map_terrain.x_range
     y_min, y_max = map_terrain.y_llcorner, map_terrain.y_llcorner + map_terrain.y_range
 
-    range = x_max - x_min 
-    mean = [int((x_min+x_max)/2), int((y_min+y_max)/2)]
+    mean = ['R', 'B']
     # [[1,0], [0,1]] Normal Unit
     # [[1, 0], [-1, 2]] --> \
     # [[2, 1], [0, 1]] --> -
@@ -89,11 +146,9 @@ if __name__ == '__main__':
     # [[1, 1], [0, 2]] --> |
     # covariance has to be a matrix that is positive semi-definite
     covariance = [[1, 1], [0, 2]]
-    covariance = list(np.array(covariance) * range * 100)      # multiplication here explicitly for 5000m x and y length. 
-    #stats.multivariate_normal.
-    distribution = Sampling_Metric(mean, covariance, x_min, x_max, y_min, y_max)
-    print(distribution.sample(mean[0], mean[1]))
+    distribution = Sampling_Metric(x_min, x_max, y_min, y_max)
+    distribution.config_mean(mean)
+    distribution.config_covariance(covariance)
+    distribution.config_distribution()
+    #print(distribution.sample(mean[0], mean[1]))
     distribution.visualise()
-    
-
-

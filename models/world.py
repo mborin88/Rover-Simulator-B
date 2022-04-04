@@ -8,14 +8,15 @@ class World:
     """
     def __init__(self, map_terrain, map_landcover, dt=0.1):  # Input two map objects and a time step in ms.
         if self.is_aligned(map_terrain, map_landcover):
-            self._terrain = map_terrain      # Terrain info, a map object.
-            self._landcover = map_landcover  # Land cover info, a map object.
-            self._tn = 0                     # Simulation time, represented by a sequence order.
-            self._dt = dt                    # Step time, in second.
-            self._rovers = []                # List of existing rovers.
-            self.channel = []                # List of existing transmissions.
-            self._dynamics_engine = None     # Dynamics engine.
-            self._completed_rovers = 0       # Number of rovers that have completed their tasks.
+            self._terrain = map_terrain                     # Terrain info, a map object.
+            self._landcover = map_landcover                 # Land cover info, a map object.
+            self._sample_metric = None                       
+            self._tn = 0                                    # Simulation time, represented by a sequence order.
+            self._dt = dt                                   # Step time, in second.
+            self._rovers = []                               # List of existing rovers.
+            self.channel = []                               # List of existing transmissions.
+            self._dynamics_engine = None                    # Dynamics engine.
+            self._completed_rovers = 0                      # Number of rovers that have completed their tasks.
         else:
             raise MapNotAligned()
 
@@ -26,6 +27,10 @@ class World:
     @property
     def landcover(self):
         return self._landcover
+
+    @property
+    def sample_metric(self):
+        return self._sample_metric
 
     @property
     def time(self):
@@ -56,6 +61,15 @@ class World:
         Configure dynamics engine of the world.
         """
         self._dynamics_engine = engine
+    
+    def config_sample_metric(self, distribution, mu, cov):
+        """
+        Configure Sampling Metric and it's distribution in the world.
+        """
+        self._sample_metric = distribution
+        self._sample_metric.config_mean(mu)
+        self._sample_metric.config_covariance(cov)
+        self._sample_metric.config_distribution()
 
     def is_aligned(self, map_1, map_2):
         """

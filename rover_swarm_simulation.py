@@ -15,6 +15,7 @@ from utils.load_map import *
 from utils.render import *
 from utils.path import *
 from utils.graphs import *
+from utils.sampling_metric import *
 
 
 BW = [125, 250, 500]                # Selectable bandwidth, in KHz.
@@ -22,7 +23,7 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SP46NE'     # Area to run simulation.
+area = 'TL16NE'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
@@ -66,8 +67,10 @@ log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Only updating y speed in passive control so that path is more predictable to high level planner.'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
-
 num_of_waypoints = 10
+
+metric_covariance = [[1, 1], [0, 2]]
+metric_mean = ['M', 'M']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 
 def main():
     """
@@ -84,8 +87,13 @@ def main():
     map_landcover = read_asc(locate_map(area + '_landcover' + '.asc'))
     x_min, x_max = map_terrain.x_llcorner, map_terrain.x_llcorner + map_terrain.x_range
     y_min, y_max = map_terrain.y_llcorner, map_terrain.y_llcorner + map_terrain.y_range
+
+
     world = World(map_terrain, map_landcover, t_sampling)
+    world.config_sample_metric(Sampling_Metric(x_min, x_max, y_min, y_max), metric_mean, metric_covariance)
     world.config_engine(SlopePhysics(world))
+
+    world.sample_metric.visualise()
 
     init_waypoints = []    
     image, axis_range = render_rgb(map_landcover)
