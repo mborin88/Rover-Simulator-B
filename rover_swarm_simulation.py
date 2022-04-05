@@ -145,6 +145,13 @@ def main():
             # The reference for passive-cooperative controller
             # dynamically changes when new packet from the neighbour is received.
             starter.config_control_policy('Simple Passive-cooperative')
+        elif ctrl_policy == 4:
+            speed_controller = PController(None, K_goal)
+            # The reference is goal point [x_g, y_g],
+            # which is set differently for each rover.
+            starter.config_speed_controller(speed_controller)
+            starter.speed_controller.set_ref(starter.goal)
+            starter.config_control_policy('Adaptive Sampling')
 
     # Step simulation and record data.
     ee = []  # To record formation error.

@@ -1,3 +1,4 @@
+#initial sample not taken
 import math
 
 def x_direction(value):
@@ -19,7 +20,7 @@ def ratio_speeds(rov):
     rov._control[1] = round(v * math.sin(angle), 3)
 
 
-def advanced_move2goal(rov, v_max, v_min):
+def move_along_path(rov, v_max, v_min):
     """
     Move towards goal point.
     """
@@ -39,3 +40,22 @@ def advanced_move2goal(rov, v_max, v_min):
         rov._control[2] = control_input  # Assume changing linear velocity instantly.
 
     ratio_speeds(rov)
+
+def waypoint_sampler(rov, world, v_max, v_min):
+    move_along_path(rov, v_max, v_min)
+
+    if((rov._pose[1] > rov.goal[1]-rov._goal_offset) and (rov._goal_index < len(rov._waypoints)-1) \
+            or (world._dt*world._tn) == 0):   #if within offset of the y waypoint
+        rov._is_sampling = True
+        rov._num_of_samples -= 1
+        print("Rover {} is taking a sample".format(str(rov._rov_id)))
+    
+    if(rov._sampling_steps == rov._sampling_steps_passed):
+        metric_measurement = world._sample_metric.sample(rov._pose[0], rov._pose[1])
+        rov._measured_samples.append([rov._pose[0], rov._pose[1], metric_measurement])
+        rov._is_sampling = False
+    elif(rov._is_sampling):
+        rov._sampling_steps_passed += 1
+    
+
+

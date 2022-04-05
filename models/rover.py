@@ -1,13 +1,15 @@
 from msilib import RadioButtonGroup
 from random import *
+from this import d
 from tkinter.tix import MAX
 import numpy as np
 
 from models.radio import *
-from controllers.advanced_line_sweep.goal_driven import advanced_move2goal 
-from controllers.advanced_line_sweep.passive import advanced_passive_cooperation, advanced_simple_passive_cooperation
 from controllers.line_sweep.goal_driven import move2goal 
 from controllers.line_sweep.passive import passive_cooperation, simple_passive_cooperation
+from controllers.advanced_line_sweep.goal_driven import advanced_move2goal 
+from controllers.advanced_line_sweep.passive import advanced_passive_cooperation, advanced_simple_passive_cooperation
+from controllers.adaptive_sampling.independent_1 import waypoint_sampler
 
 STARTING_SPEED = 0.2       # m/s
 MAXIMUM_SPEED = 0.5        # m/s, which can be exceeded due to the effect of slope.
@@ -35,9 +37,15 @@ class Rover:
         self._num_rovers = num_rovers
         self._initial_control = True          # Want to P controller until we get neighbouring positions
         self._control_policy = None
-        self._decay_type = decay_type           #Decay style currently quadratic decay or exponential decay
-        self._decay_zero_crossing = decay_zero_crossing     #How many steps until speed position of neighbour rover ignored.
-        self._connectivity = [0] * num_rovers               
+        self._decay_type = decay_type           # Decay style currently quadratic decay or exponential decay
+        self._decay_zero_crossing = decay_zero_crossing     # How many steps until speed position of neighbour rover ignored.
+        self._connectivity = [0] * num_rovers
+
+        self._mesasured_samples = []                    # Samples gathered
+        self._num_samples = 10
+        self._sampling_steps = 10                     # How many steps it takes to gather an accurate sample
+        self._sampling_steps_passed = 0                 # How long the rover has been sampling for
+        self._is_sampling = False                       # Is rover currently sampling.
 
         # The control policy used by the rover.
         self._speed_controller = None
@@ -200,6 +208,58 @@ class Rover:
         if(surrounding == 'Saltwater') or (surrounding == 'Freshwater'):
             self._landcover_termination = True
 
+    def motion(self, world, dt):
+        p = self._pose
+        u = self._control
+        slope_y = world.dynamics_engine.northing_slope(p[0], p[1])
+        a_y = world.dynamics_engine.generate_acceleration(slope_y)
+        a_yf = world.dynamics_engine.generate_friction(slope_y)
+        v_y = u[1] + a_y * dt + a_yf * dt
+
+        slope_x = world.dynamics_engine.easting_slope(p[0], p[1])
+        a_x = world.dynamics_engine.generate_acceleration(slope_x)
+        a_xf = world.dynamics_engine.generate_friction(slope_x)
+        v_x = u[0] + a_x * dt + a_xf * dt
+        
+        if v_y < MINIMUM_SPEED:
+            v_y = MINIMUM_SPEED
+
+        # Assume in the worst scenario rover can still maintain a minimum speed.
+        h = [p[0] + dt * v_x,
+                p[1] + dt * v_y]  # State transition.
+        if h[1] < world.terrain.y_llcorner:
+            h[1] = world.terrain.y_llcorner
+            print('Cannot back off behind the baseline.')
+        elif h[1] >= (world.terrain.y_llcorner + world.terrain.y_range):
+            h[1] = world.terrain.y_llcorner + world.terrain.y_range - 1e-6
+            print('Cannot move beyond the upper boundary.')
+        elif h[0] < world.terrain.x_llcorner:
+            h[0] = world.terrain.x_llcorner
+            print('Cannot go off right side of map.')
+        elif h[0] >= (world.terrain.x_llcorner + world.terrain.x_range):
+            h[0] = world.terrain.x_llcorner + world.terrain.x_range - 1e-6
+            print('Cannot go off left side of map')
+
+        if self._q_noise is None:
+            self._pose[0] = h[0]
+            self._pose[1] = h[1]  # Noiseless motion.
+        else:
+            noise = self.generate_noise(self._q_noise)
+            new_pose = [h[0] + noise[0], h[1] + noise[1]]
+            if((new_pose[1] > world.terrain.y_llcorner) and (new_pose[1] < (world.terrain.y_llcorner + world.terrain.y_range))):
+                self._pose[1] = new_pose[1]  # Noisy motion.
+            else:
+                self._pose[1] = h[1]
+            
+            if(new_pose[0] > world.terrain.x_llcorner and new_pose[0] < (world.terrain.x_llcorner + world.terrain.x_range)):
+                self._pose[0] = new_pose[0]  #No noise on x yet
+            else:
+                self._pose[0] = h[0]
+
+        self.update_speeds(v_x, v_y)
+        self.measure()
+        self.check_invalid_landcover(world)  
+
 
     def step_motion(self, world, dt):
         """
@@ -208,56 +268,11 @@ class Rover:
         if self.is_mission_terminated():
             pass
         else:
-            p = self._pose
-            u = self._control
-            slope_y = world.dynamics_engine.northing_slope(p[0], p[1])
-            a_y = world.dynamics_engine.generate_acceleration(slope_y)
-            a_yf = world.dynamics_engine.generate_friction(slope_y)
-            v_y = u[1] + a_y * dt + a_yf * dt
-
-            slope_x = world.dynamics_engine.easting_slope(p[0], p[1])
-            a_x = world.dynamics_engine.generate_acceleration(slope_x)
-            a_xf = world.dynamics_engine.generate_friction(slope_x)
-            v_x = u[0] + a_x * dt + a_xf * dt
-         
-            if v_y < MINIMUM_SPEED:
-                v_y = MINIMUM_SPEED
-
-            # Assume in the worst scenario rover can still maintain a minimum speed.
-            h = [p[0] + dt * v_x,
-                 p[1] + dt * v_y]  # State transition.
-            if h[1] < world.terrain.y_llcorner:
-                h[1] = world.terrain.y_llcorner
-                print('Cannot back off behind the baseline.')
-            elif h[1] >= (world.terrain.y_llcorner + world.terrain.y_range):
-                h[1] = world.terrain.y_llcorner + world.terrain.y_range - 1e-6
-                print('Cannot move beyond the upper boundary.')
-            elif h[0] < world.terrain.x_llcorner:
-                h[0] = world.terrain.x_llcorner
-                print('Cannot go off right side of map.')
-            elif h[0] >= (world.terrain.x_llcorner + world.terrain.x_range):
-                h[0] = world.terrain.x_llcorner + world.terrain.x_range - 1e-6
-                print('Cannot go off left side of map')
-
-            if self._q_noise is None:
-                self._pose[0] = h[0]
-                self._pose[1] = h[1]  # Noiseless motion.
-            else:
-                noise = self.generate_noise(self._q_noise)
-                new_pose = [h[0] + noise[0], h[1] + noise[1]]
-                if((new_pose[1] > world.terrain.y_llcorner) and (new_pose[1] < (world.terrain.y_llcorner + world.terrain.y_range))):
-                    self._pose[1] = new_pose[1]  # Noisy motion.
-                else:
-                    self._pose[1] = h[1]
-                
-                if(new_pose[0] > world.terrain.x_llcorner and new_pose[0] < (world.terrain.x_llcorner + world.terrain.x_range)):
-                    self._pose[0] = new_pose[0]  #No noise on x yet
-                else:
-                    self._pose[0] = h[0]
-
-            self.update_speeds(v_x, v_y)
-            self.measure()
-            self.check_invalid_landcover(world)   
+            if(self._control_policy != 'Adaptive Sampling'):
+                self.motion(world, dt)
+            elif(self._control_policy == 'Adaptive Sampling' and self._is_sampling == False):
+                self.motion(world, dt)                
+ 
 
     def halt(self):
         """
@@ -288,6 +303,9 @@ class Rover:
                     advanced_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif self._control_policy == 'Simple Passive-cooperative':
                     advanced_simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                elif self._control_policy == 'Adaptive Sampling':
+                    waypoint_sampler(self, world, MAXIMUM_SPEED, MINIMUM_SPEED)
+
 
     def measure(self):
         """
