@@ -105,10 +105,10 @@ def main():
         for j in range(len(init_waypoints[i])):
             init_waypoints[i][j] = init_waypoints[i][j][:2]
 
-    
+    sample_dist = (y_max-y_min) / num_r_samples
     # Add rovers to the world.
     for i in range(N):
-        world.add_rover(init_waypoints[i][0][0], init_waypoints[i][0][1], init_waypoints[i], num_r_samples, q_noise=Q, r_noise=R, num_rovers=N,\
+        world.add_rover(init_waypoints[i][0][0], init_waypoints[i][0][1], init_waypoints[i], sample_dist, q_noise=Q, r_noise=R, num_rovers=N,\
                             decay_type= decay, decay_zero_crossing = zero_crossing)
 
     # Configure rovers' settings.
@@ -153,7 +153,7 @@ def main():
             starter.config_speed_controller(speed_controller)
             starter.speed_controller.set_ref(starter.goal)
             starter.config_control_policy('Adaptive Sampling')
-            starter.config_sampling_points()
+            #starter.config_sampling_points()
 
     # Step simulation and record data.
     ee = []  # To record formation error.

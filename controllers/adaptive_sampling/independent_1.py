@@ -51,19 +51,19 @@ def waypoint_sampler(rov, world, v_max, v_min):
     Standard sampler sampling at regular intervals
     """
     sampling_waypoints = []
-    find_sampling_waypoints(sampling_waypoints)
-    if((rov._pose[1] > rov.goal[1]-rov._goal_offset) and (rov._goal_index < len(rov._waypoints)-1) \
-            or (world._dt*world._tn) == 0):
+    #find_sampling_waypoints(sampling_waypoints)
+    if((world._dt*world._tn == 0) or \
+            (len(rov._measured_samples) > 0 and rov._pose[1]-rov._measured_samples[-1][1] >= rov._sample_dist)):
         if(rov._num_samples < rov._max_num_samples):
             rov._is_sampling = True
             rov._num_samples += 1
             print("Rover {} is taking a sample.".format(str(rov._rov_id)))
 
     move_along_path(rov, v_max, v_min)
-    p = rov._pose.copy()
-    p[0], p[1] = round(p[0]), round(p[1])
 
     if(rov._sampling_steps == rov._sampling_steps_passed):
+        p = rov._pose.copy()
+        p[0], p[1] = round(p[0]), round(p[1])
         metric_measurement = round(world._sample_metric.sample(p[0], p[1]), 5)
         rov._sampling_steps_passed = 0
         rov._measured_samples.append([p[0], p[1], metric_measurement])
