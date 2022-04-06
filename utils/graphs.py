@@ -214,25 +214,27 @@ def generate_distribution(world, N, directory, graph_log):
     for i in range(N):
         samples.append(world.rovers[i]._measured_samples)
 
-    x = [data_x[0][0] for data_x in samples]
-    y = [data_y[0][1] for data_y in samples]
-    metric = [data_z[0][2] for data_z in samples]
+    x = [data[0] for waypoint in samples for data in waypoint]
+    y = [data[1] for waypoint in samples for data in waypoint]
+    metric = [data[2] for waypoint in samples for data in waypoint]
 
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
-    
-    cmap = 'gist_earth'
-    contf = ax.tricontourf(x, y, metric, cmap=plt.get_cmap(cmap))
-    # contf.set_clim(0, 150)
-    plt.colorbar(contf, label='Measurment')
-    if(int(graph_log) == 1):
-        plt.savefig(directory + 'Sampled Measurements.png')
+    try:
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+        cmap = 'gist_earth'
+        contf = ax.tricontourf(x, y, metric, cmap=plt.get_cmap(cmap))
+        # contf.set_clim(0, 150)
+        plt.colorbar(contf, label='Measurment')
+        if(int(graph_log) == 1):
+            plt.savefig(directory + 'Sampled Measurements.png')
+    except RuntimeError:
+        print("Can't infer a graph from the data")
 
 def real_metric_distribution(world, directory, graph_log):
-    if(world._sampling_metric._mean is not None):
-        pos = np.dstack((world._sampling_metric._x_range, world._sampling_metric._y_range))
+    if(world._sample_metric._mean is not None):
+        pos = np.dstack((world._sample_metric._x_range, world._sample_metric._y_range))
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
-        contf = ax.contourf(world._sampling_metric._x_range, world._sampling_metric._y_range, \
-                world._sampling_metric._multiplier * world._sampling_metric.distribution.pdf(pos))
+        contf = ax.contourf(world._sample_metric._x_range, world._sample_metric._y_range, \
+                world._sample_metric._multiplier * world._sample_metric.distribution.pdf(pos))
         plt.colorbar(contf, label='Measurement')
         ax.set_xlabel('Easting (m)')
         ax.set_ylabel('Northing (m)')

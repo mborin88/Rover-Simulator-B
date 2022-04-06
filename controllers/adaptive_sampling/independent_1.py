@@ -45,16 +45,17 @@ def move_along_path(rov, v_max, v_min):
     ratio_speeds(rov)
 
 def waypoint_sampler(rov, world, v_max, v_min):
-    move_along_path(rov, v_max, v_min)
-    p = rov._pose.copy()
-    p[0], p[1] = round(p[0]), round(p[1])
 
-    if((p[1] > rov.goal[1]-rov._goal_offset) and (rov._goal_index < len(rov._waypoints)-1) \
+    if((rov._pose[1] > rov.goal[1]-rov._goal_offset) and (rov._goal_index < len(rov._waypoints)-1) \
             or (world._dt*world._tn) == 0):   #if within offset of the y waypoint
         if(rov._num_samples > 0):
             rov._is_sampling = True
             rov._num_samples -= 1
             print("Rover {} is taking a sample.".format(str(rov._rov_id)))
+
+    move_along_path(rov, v_max, v_min)
+    p = rov._pose.copy()
+    p[0], p[1] = round(p[0]), round(p[1])
     
     if(rov._sampling_steps == rov._sampling_steps_passed):
         metric_measurement = round(world._sample_metric.sample(p[0], p[1]), 5)
