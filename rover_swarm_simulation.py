@@ -69,9 +69,9 @@ log_notes = '''Only updating y speed in passive control so that path is more pre
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 num_of_waypoints = 10
 
-metric_covariance = [[1, 1], [0, 2]]
-metric_mean = ['M', 'B']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
-num_r_samples = 20
+metric_covariance = [[1, 0], [-1, 2]]
+metric_mean = ['L', 'M']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
+num_r_samples = 6
 
 def main():
     """

@@ -1,4 +1,8 @@
-#initial sample not taken
+# now add to radio
+# add to rover samples taken array [rov1_num_samples, rov2_num_samples]
+# total samples taken for each rover
+# when one rover reaches the designated total stop
+# can we adaptive sample independently (ask danesh does y_concentration at another point affect another rovers sampling)
 import math
 
 def x_direction(value):
@@ -54,7 +58,7 @@ def waypoint_sampler(rov, world, v_max, v_min):
     #find_sampling_waypoints(sampling_waypoints)
     if((world._dt*world._tn == 0) or \
             (len(rov._measured_samples) > 0 and rov._pose[1]-rov._measured_samples[-1][1] >= rov._sample_dist)):
-        if(rov._num_samples < rov._max_num_samples):
+        if(rov._num_samples < rov._max_num_samples and rov._is_sampling == False):
             rov._is_sampling = True
             rov._num_samples += 1
             print("Rover {} is taking a sample.".format(str(rov._rov_id)))

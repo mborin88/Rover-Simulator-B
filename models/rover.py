@@ -316,7 +316,7 @@ class Rover:
         if self.is_mission_terminated():
             pass
         else:
-            if self.is_final_goal_reached():
+            if self.is_final_condition_achieved():
                 self.halt()
                 self.terminate()
                 self.terminate_in_world(world)
@@ -363,11 +363,16 @@ class Rover:
             else:
                 self._connectivity[i] = 0
 
-    def is_final_goal_reached(self):
+    def is_final_condition_achieved(self):
         """
-        See if the goal point is reached.
+        See if the goal point is reached or max samples reached
         """
-        return self._pose[1] >= (self._waypoints[-1][1] - 5)
+        if(self._pose[1] >= (self._waypoints[-1][1] - 5)):
+            return True
+        elif(self._num_samples >= self._max_num_samples):
+            return True
+        else:
+            return False
 
     def terminate(self):
         """
