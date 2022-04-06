@@ -12,7 +12,10 @@ def ratio_speeds(rov):
     v = rov._control[2]
     x_diff = target[0] - p[0]
     y_diff = target[1] - p[1]
-    angle = math.atan(y_diff/abs(x_diff))
+    try:
+        angle = math.atan(y_diff/abs(x_diff))
+    except ZeroDivisionError:
+        angle = math.pi / 2
     rov._angle = angle
     
     rov._control[0] = round(x_direction(x_diff) * v * math.cos(angle), 3)

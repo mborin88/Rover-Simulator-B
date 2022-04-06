@@ -1,3 +1,4 @@
+from tkinter import W
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.render import *
@@ -207,3 +208,33 @@ def individual_rover_connectivty(world, step, log_step_interval, len_interval, N
         connectivity_ax[b].legend(labels)
         if(int(graph_log) == 1):
             plt.savefig(directory + 'Connection_of_rover_' + str(b+1) + '.png')
+
+def generate_distribution(world, N, directory, graph_log):
+    samples = []
+    for i in range(N):
+        samples.append(world.rovers[i]._measured_samples)
+
+    x = [data_x[0][0] for data_x in samples]
+    y = [data_y[0][1] for data_y in samples]
+    metric = [data_z[0][2] for data_z in samples]
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    
+    cmap = 'gist_earth'
+    contf = ax.tricontourf(x, y, metric, cmap=plt.get_cmap(cmap))
+    # contf.set_clim(0, 150)
+    plt.colorbar(contf, label='Measurment')
+    if(int(graph_log) == 1):
+        plt.savefig(directory + 'Sampled Measurements.png')
+
+def real_metric_distribution(world, directory, graph_log):
+    if(world._sampling_metric._mean is not None):
+        pos = np.dstack((world._sampling_metric._x_range, world._sampling_metric._y_range))
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+        contf = ax.contourf(world._sampling_metric._x_range, world._sampling_metric._y_range, \
+                world._sampling_metric._multiplier * world._sampling_metric.distribution.pdf(pos))
+        plt.colorbar(contf, label='Measurement')
+        ax.set_xlabel('Easting (m)')
+        ax.set_ylabel('Northing (m)')
+        if(int(graph_log) == 1):
+            plt.savefig(directory + 'Real Metric Distribution.png')

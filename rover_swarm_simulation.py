@@ -23,13 +23,13 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'TL16NE'     # Area to run simulation.
+area = 'SU30NW'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 5000      #432000      # Maximum iteration
+steps = 432000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 80   # Number of time slots between transmissions for one device.
@@ -47,7 +47,7 @@ R = None                                        # Measurement noise.
 seed_value = dt.datetime.now().microsecond      #Seed value for noise 
 rand.seed(seed_value)
 
-ctrl_policy = 2
+ctrl_policy = 4
 # Control policy:
 # 0 - meaning no controller;
 
@@ -60,9 +60,9 @@ decay = 'quad'
 zero_crossing = 20 * len_interval #20 communication cycles for it to fully decay
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '000'
+log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Full Run - Seperated controller Y speed update"
+log_title_tag = "Sampling and generating own distirbution"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Only updating y speed in passive control so that path is more predictable to high level planner.'''            #Additional notes to be added to Log file if wished
 
@@ -70,7 +70,7 @@ waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 num_of_waypoints = 10
 
 metric_covariance = [[1, 1], [0, 2]]
-metric_mean = ['M', 'M']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
+metric_mean = ['M', 'B']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 
 def main():
     """
@@ -93,7 +93,7 @@ def main():
     world.config_sample_metric(Sampling_Metric(x_min, x_max, y_min, y_max), metric_mean, metric_covariance)
     world.config_engine(SlopePhysics(world))
 
-    world.sample_metric.visualise()
+    #world.sample_metric.visualise()
 
     init_waypoints = []    
     image, axis_range = render_rgb(map_landcover)
@@ -379,11 +379,12 @@ def main():
             log_raw_file.write(data)
         log_raw_file.close()
     
-
     #Plot and logging of graphs
     if(int(log_control[2]) == 1):
         fig0.savefig(directory + 'Path_Planned_Trajectory.png', dpi=100)
 
+    generate_distribution(world, N, directory, log_control[2])
+    real_metric_distribution(world, directory, log_control[2])
     terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
     RMSE_plot(world, step, log_step_interval, ee, log_control[2], directory)
     #velocity_plot(world, N, log_control[2], directory)

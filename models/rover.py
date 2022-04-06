@@ -41,7 +41,7 @@ class Rover:
         self._decay_zero_crossing = decay_zero_crossing     # How many steps until speed position of neighbour rover ignored.
         self._connectivity = [0] * num_rovers
 
-        self._mesasured_samples = []                    # Samples gathered
+        self._measured_samples = []                    # Samples gathered
         self._num_samples = 10
         self._sampling_steps = 10                     # How many steps it takes to gather an accurate sample
         self._sampling_steps_passed = 0                 # How long the rover has been sampling for
