@@ -87,12 +87,12 @@ class World:
         else:
             return False
 
-    def add_rover(self, easting, northing, r_path, q_noise=None, r_noise=None, num_rovers=10,\
+    def add_rover(self, easting, northing, r_path, max_samples, q_noise=None, r_noise=None, num_rovers=10,\
                         decay_type='quad', decay_zero_crossing=1200):
         """
         Add a rover to the world given its coordinates.
         """
-        self._rovers.append(Rover(len(self.rovers) + 1, easting, northing, r_path, q_noise, r_noise, num_rovers,\
+        self._rovers.append(Rover(len(self.rovers) + 1, easting, northing, r_path, max_samples, q_noise, r_noise, num_rovers,\
                                     decay_type, decay_zero_crossing))
 
     def rover_completes_task(self):

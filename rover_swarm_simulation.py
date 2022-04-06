@@ -71,6 +71,7 @@ num_of_waypoints = 10
 
 metric_covariance = [[1, 1], [0, 2]]
 metric_mean = ['M', 'B']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
+num_r_samples = 20
 
 def main():
     """
@@ -107,7 +108,7 @@ def main():
     
     # Add rovers to the world.
     for i in range(N):
-        world.add_rover(init_waypoints[i][0][0], init_waypoints[i][0][1], init_waypoints[i], q_noise=Q, r_noise=R, num_rovers=N,\
+        world.add_rover(init_waypoints[i][0][0], init_waypoints[i][0][1], init_waypoints[i], num_r_samples, q_noise=Q, r_noise=R, num_rovers=N,\
                             decay_type= decay, decay_zero_crossing = zero_crossing)
 
     # Configure rovers' settings.
@@ -152,6 +153,7 @@ def main():
             starter.config_speed_controller(speed_controller)
             starter.speed_controller.set_ref(starter.goal)
             starter.config_control_policy('Adaptive Sampling')
+            starter.config_sampling_points()
 
     # Step simulation and record data.
     ee = []  # To record formation error.
@@ -383,7 +385,7 @@ def main():
     if(int(log_control[2]) == 1):
         fig0.savefig(directory + 'Path_Planned_Trajectory.png', dpi=100)
 
-    generate_distribution(world, N, directory, log_control[2])
+    generate_distribution(world, N, x_min, x_max, y_min, y_max, directory, log_control[2])
     real_metric_distribution(world, directory, log_control[2])
     terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
     RMSE_plot(world, step, log_step_interval, ee, log_control[2], directory)

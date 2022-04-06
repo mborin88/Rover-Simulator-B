@@ -22,7 +22,7 @@ class Rover:
     decay_type = 'quad'
     zero_cross = 1200 #Decay = 0 at 2 minutes of silence from that rover.
     """
-    def __init__(self, rov_id, easting, northing, rov_waypoints, q_noise=None, r_noise=None, num_rovers=10, decay_type = 'quad', decay_zero_crossing=1200):
+    def __init__(self, rov_id, easting, northing, rov_waypoints, max_samples = 10, q_noise=None, r_noise=None, num_rovers=10, decay_type = 'quad', decay_zero_crossing=1200):
         self._rov_id = rov_id                 # Unique id for each rover.
         self._pose = [easting, northing]      # Pose: (x (m), y (m)).
         self._angle = 0
@@ -31,19 +31,21 @@ class Rover:
         self.measurement = self._pose         # The measurement of pose, assumed noiseless at first.
         self._waypoints = rov_waypoints
 
-        self._control = [0, STARTING_SPEED, STARTING_SPEED]      # Control input, linear velocity.
-        self._all_control = np.array([np.nan] * (num_rovers + 1)) #First control is p control then rovers
-        self._steps_control_not_updated = np.array([0.0] * (num_rovers + 1)) #Amount of steps since that control has been updated.
+        self._control = [0, STARTING_SPEED, STARTING_SPEED]                     # Control input, linear velocity.
+        self._all_control = np.array([np.nan] * (num_rovers + 1))               # First control is p control then rovers
+        self._steps_control_not_updated = np.array([0.0] * (num_rovers + 1))    # Amount of steps since that control has been updated.
         self._num_rovers = num_rovers
-        self._initial_control = True          # Want to P controller until we get neighbouring positions
+        self._initial_control = True                        # Want to P controller until we get neighbouring positions
         self._control_policy = None
-        self._decay_type = decay_type           # Decay style currently quadratic decay or exponential decay
+        self._decay_type = decay_type                       # Decay style currently quadratic decay or exponential decay
         self._decay_zero_crossing = decay_zero_crossing     # How many steps until speed position of neighbour rover ignored.
         self._connectivity = [0] * num_rovers
 
-        self._measured_samples = []                    # Samples gathered
-        self._num_samples = 10
-        self._sampling_steps = 10                     # How many steps it takes to gather an accurate sample
+        self._sampling_points = []                      # Current positions to sample at
+        self._measured_samples = []                     # Samples gathered
+        self._max_num_samples = max_samples                      # Max number of samples the rover can take
+        self._num_samples = 0                           # Number of samples taken by rover
+        self._sampling_steps = 10                       # How many steps it takes to gather an accurate sample
         self._sampling_steps_passed = 0                 # How long the rover has been sampling for
         self._is_sampling = False                       # Is rover currently sampling.
 
@@ -157,6 +159,27 @@ class Rover:
         Configure control policy.
         """
         self._control_policy = policy
+
+    def config_sampling_points(self):
+        """
+        Configure the sampling points.
+        """
+        if(self._max_num_samples == len(self._waypoints)):
+            self._sampling_points = self._waypoints.copy()
+        elif(self._max_num_samples < len(self._waypoints)):
+            num_points = int(len(self._waypoints)/self._max_num_samples)
+
+            for i in range(0, len(self._waypoints)-1, num_points):
+                self._sampling_points.append(self._waypoints[i])
+        elif(self._max_num_samples > len(self._waypoints)):
+            for i in range(self._max_num_samples-1):
+                if(i%2 == 0):
+                    self._sampling_points.append(self._waypoints[i/2])
+                elif(i%2 == 1):
+                    x_pos = (self._waypoints[i][0] + self._waypoints[i+1][0]) / 2
+                    y_pos = (self._waypoints[i][1] + self._waypoints[i+1][1]) / 2
+                    self._sampling_points.append([x_pos, y_pos])
+                
 
     def config_speed_controller(self, controller):
         """

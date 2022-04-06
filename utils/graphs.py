@@ -209,7 +209,7 @@ def individual_rover_connectivty(world, step, log_step_interval, len_interval, N
         if(int(graph_log) == 1):
             plt.savefig(directory + 'Connection_of_rover_' + str(b+1) + '.png')
 
-def generate_distribution(world, N, directory, graph_log):
+def generate_distribution(world, N, x_min, x_max, y_min, y_max, directory, graph_log):
     samples = []
     for i in range(N):
         samples.append(world.rovers[i]._measured_samples)
@@ -224,6 +224,8 @@ def generate_distribution(world, N, directory, graph_log):
         contf = ax.tricontourf(x, y, metric, cmap=plt.get_cmap(cmap))
         # contf.set_clim(0, 150)
         plt.colorbar(contf, label='Measurment')
+        plt.xlim([x_min, x_max])                        # Change to using the sampling distribution object from world
+        plt.ylim([y_min, y_max])
         if(int(graph_log) == 1):
             plt.savefig(directory + 'Sampled Measurements.png')
     except RuntimeError:
