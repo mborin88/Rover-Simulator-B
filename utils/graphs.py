@@ -220,7 +220,7 @@ def generate_distribution(world, N, directory, graph_log):
 
     try:
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
-        cmap = 'gist_earth'
+        cmap = 'viridis'
         contf = ax.tricontourf(x, y, metric, cmap=plt.get_cmap(cmap))
         # contf.set_clim(0, 150)
         plt.colorbar(contf, label='Measurment')
