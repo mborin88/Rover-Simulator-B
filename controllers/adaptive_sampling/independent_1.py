@@ -27,8 +27,17 @@ def ratio_speeds(rov):
     rov._control[1] = round(v * math.sin(angle), 3)
 
 
-def find_sampling_waypoints(sampl):
-    pass
+def find_sampling_waypoints(rov):
+    change_metric = []
+    if(len(rov._measured_samples)> 3):
+        change_metric.append(abs(rov._measured_samples[-3]/rov._measured_samples[-2]))
+        change_metric.append(abs(rov._measured_samples[-2]/rov._measured_samples[-1]))
+    
+    if(change_metric[1] > change_metric[0]):
+        rov._sample_dist += 50
+    else:
+        if(rov._sample_dist > 100):
+            rov._sample_dist -= 50
 
 def move_along_path(rov, v_max, v_min):
     """

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from utils.render import *
 
 
-def terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_interval, step, graph_log, directory):
+def terrain_plot(world, control_policy, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_interval, step, graph_log, directory):
     """
     Plots and logs the rover trajectories against terrain map with line test at every waypoint interval
     Also plots and logs user planned path
@@ -23,16 +23,24 @@ def terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_int
     for o in range(N):
         plotter = world.rovers[o].pose_logger
         ax.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='red')
-    
-    #Waypoint grapher on contour plot
-    for k in range(waypoint_interval, step, waypoint_interval):
-        x_waypoint = []
-        y_waypoint = []
-        for q in range(N):
-            plotter = world.rovers[q].pose_logger
-            x_waypoint.append(plotter.x_pose[k])
-            y_waypoint.append(plotter.y_pose[k])
-        ax.plot(x_waypoint, y_waypoint, linewidth=1.8, color='black')
+
+    if(control_policy == 4):
+        samples = []
+        for i in range(N):
+            samples.append(world.rovers[i]._measured_samples)
+        x = [data[0] for waypoint in samples for data in waypoint]
+        y = [data[1] for waypoint in samples for data in waypoint]
+        ax.scatter(x, y, 20, color='black')
+    elif(control_policy != 4):
+        # Waypoint grapher on contour plot
+        for k in range(waypoint_interval, step, waypoint_interval):
+            x_waypoint = []
+            y_waypoint = []
+            for q in range(N):
+                plotter = world.rovers[q].pose_logger
+                x_waypoint.append(plotter.x_pose[k])
+                y_waypoint.append(plotter.y_pose[k])
+            ax.plot(x_waypoint, y_waypoint, linewidth=1.8, color='black')
 
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
@@ -85,7 +93,7 @@ def velocity_plot(world, N, graph_log, directory):
         plt.savefig(directory + 'Velocity.png')
     
 
-def landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint_interval, step, graph_log, directory):
+def landcover_plot(world, control_policy, map_landcover, x_min, x_max, y_min, y_max, N, waypoint_interval, step, graph_log, directory):
     """
     Plots and logs the rover trajectories agaisnt landcover map with line test at every waypoint interval 
     """
@@ -97,15 +105,23 @@ def landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint
         plotter = world.rovers[o].pose_logger
         ax3.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='cyan')
     
-    #Waypoint grapher for landcover map
-    for k1 in range(waypoint_interval, step, waypoint_interval):
-        x1_waypoint = []
-        y1_waypoint = []
-        for q1 in range(N):
-            plotter = world.rovers[q1].pose_logger
-            x1_waypoint.append(plotter.x_pose[k1])
-            y1_waypoint.append(plotter.y_pose[k1])
-        ax3.plot(x1_waypoint, y1_waypoint, linewidth=1.8, color='white')
+    if(control_policy == 4):
+        samples = []
+        for i in range(N):
+            samples.append(world.rovers[i]._measured_samples)
+        x = [data[0] for waypoint in samples for data in waypoint]
+        y = [data[1] for waypoint in samples for data in waypoint]
+        ax3.scatter(x, y, 20, color='white')
+    elif(control_policy != 4):
+        #Waypoint grapher for landcover map
+        for k1 in range(waypoint_interval, step, waypoint_interval):
+            x1_waypoint = []
+            y1_waypoint = []
+            for q1 in range(N):
+                plotter = world.rovers[q1].pose_logger
+                x1_waypoint.append(plotter.x_pose[k1])
+                y1_waypoint.append(plotter.y_pose[k1])
+            ax3.plot(x1_waypoint, y1_waypoint, linewidth=1.8, color='white')
 
     ax3.set_xlim(x_min, x_max)
     ax3.set_ylim(y_min, y_max)
