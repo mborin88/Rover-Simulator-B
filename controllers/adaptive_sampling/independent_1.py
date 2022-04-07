@@ -58,11 +58,11 @@ def proportional_sampling_waypoints(rov):
         change_metric.append(abs(rov._measured_samples[-3]/rov._measured_samples[-2]))
         change_metric.append(abs(rov._measured_samples[-2]/rov._measured_samples[-1]))
     
-    if(change_metric[1] > change_metric[0]):
-        rov._sample_dist = rov._sample_dist *(change_metric[1]/change_metric[0])
-    else:
-        if(rov._sample_dist > 100):
-            rov._sample_dist = rov._sample_dist * (change_metric[0]/change_metric[1])
+        if(change_metric[1] > change_metric[0]):
+            rov._sample_dist = rov._sample_dist *(change_metric[1]/change_metric[0])
+        else:
+            if(rov._sample_dist > 100):
+                rov._sample_dist = rov._sample_dist * (change_metric[0]/change_metric[1])
 
 def move_along_path(rov, v_max, v_min):
     """

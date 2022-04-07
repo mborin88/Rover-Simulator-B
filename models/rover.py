@@ -10,7 +10,7 @@ from controllers.line_sweep.goal_driven import move2goal
 from controllers.line_sweep.passive import passive_cooperation, simple_passive_cooperation
 from controllers.advanced_line_sweep.goal_driven import advanced_move2goal 
 from controllers.advanced_line_sweep.passive import advanced_passive_cooperation, advanced_simple_passive_cooperation
-from controllers.adaptive_sampling.independent_1 import waypoint_sampler
+from controllers.adaptive_sampling.independent_1 import waypoint_sampler, adjusted_waypoint_sampler
 
 STARTING_SPEED = 0.2       # m/s
 MAXIMUM_SPEED = 0.5        # m/s, which can be exceeded due to the effect of slope.
@@ -334,7 +334,7 @@ class Rover:
                 elif self._control_policy == 'Simple Passive-cooperative':
                     advanced_simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif self._control_policy == 'Adaptive Sampling':
-                    waypoint_sampler(self, world, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    adjusted_waypoint_sampler(self, world, MAXIMUM_SPEED, MINIMUM_SPEED)
 
 
     def measure(self):

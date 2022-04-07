@@ -13,6 +13,7 @@ class World:
             self._sample_metric = None                       
             self._tn = 0                                    # Simulation time, represented by a sequence order.
             self._dt = dt                                   # Step time, in second.
+            #self._mission = mission
             self._rovers = []                               # List of existing rovers.
             self.channel = []                               # List of existing transmissions.
             self._dynamics_engine = None                    # Dynamics engine.
@@ -126,7 +127,6 @@ class World:
         transmitter = None
         for rover in self._rovers:
             rover.step_motion(self, dt)
-            # print(tn, rover.radio.next_tx)
             if rover.radio is None:
                 pass
             else:

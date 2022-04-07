@@ -29,10 +29,22 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000      #432000      # Maximum iteration
+steps = 20000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 80   # Number of time slots between transmissions for one device.
+
+Q = None                                      # State noise.
+R = None                                        # Measurement noise.
+seed_value = dt.datetime.now().microsecond      #Seed value for noise 
+rand.seed(seed_value)
+
+# Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
+log_control = '111'
+log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
+log_title_tag = "Proportional Sampling partial run"
+log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
+log_notes = '''Only updating y speed in passive control so that path is more predictable to high level planner.'''            #Additional notes to be added to Log file if wished
 
 # Configure communication settings:
 user_f = 869.525  # Carrier center frequency, in MHz.
@@ -42,15 +54,9 @@ user_cr = CR[3]   # Coding rate.
 user_txpw = 24    # Transmitting power, in dBm.
 
 # Configure control settings:
-Q = None                                      # State noise.
-R = None                                        # Measurement noise.
-seed_value = dt.datetime.now().microsecond      #Seed value for noise 
-rand.seed(seed_value)
-
 ctrl_policy = 4
 # Control policy:
-# 0 - meaning no controller;
-
+# 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
 K_goal = [1e-1, 1e-2]  # Control gain for goal-driven controller;
 
@@ -59,19 +65,15 @@ K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
 decay = 'quad'
 zero_crossing = 20 * len_interval #20 communication cycles for it to fully decay
 
-# Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '000'
-log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Proportional Sampling partial run"
-log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Only updating y speed in passive control so that path is more predictable to high level planner.'''            #Additional notes to be added to Log file if wished
-
+# Advance Line Sweeping Parameter
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 num_of_waypoints = 10
 
+# Adaptive Sampling Parameters
 metric_mean = ['L', 'B']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[1, 0], [-1, 2]]
 num_r_samples = 5
+
 
 def main():
     """
@@ -79,6 +81,11 @@ def main():
     """
     print('')
     print('Simulating...')
+    
+    if(ctrl_policy == 4):
+        mission = 'AS'
+    else:
+        mission = 'LS'
 
     start = time.time()
 
