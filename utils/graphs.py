@@ -225,27 +225,31 @@ def individual_rover_connectivty(world, step, log_step_interval, len_interval, N
         if(int(graph_log) == 1):
             plt.savefig(directory + 'Connection_of_rover_' + str(b+1) + '.png')
 
-def generate_distribution(world, N, x_min, x_max, y_min, y_max, directory, graph_log):
-    samples = []
-    for i in range(N):
-        samples.append(world.rovers[i]._measured_samples)
+def generate_distribution(world, control_policy, N, x_min, x_max, y_min, y_max, directory, graph_log):
+    if(control_policy == 4):
+        samples = []
+        for i in range(N):
+            samples.append(world.rovers[i]._measured_samples)
 
-    x = [data[0] for waypoint in samples for data in waypoint]
-    y = [data[1] for waypoint in samples for data in waypoint]
-    metric = [data[2] for waypoint in samples for data in waypoint]
+        x = [data[0] for waypoint in samples for data in waypoint]
+        y = [data[1] for waypoint in samples for data in waypoint]
+        metric = [data[2] for waypoint in samples for data in waypoint]
 
-    try:
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
-        cmap = 'viridis'
-        contf = ax.tricontourf(x, y, metric, cmap=plt.get_cmap(cmap))
-        # contf.set_clim(0, 150)
-        plt.colorbar(contf, label='Measurment')
-        plt.xlim([x_min, x_max])                        # Change to using the sampling distribution object from world
-        plt.ylim([y_min, y_max])
-        if(int(graph_log) == 1):
-            plt.savefig(directory + 'Sampled Measurements.png')
-    except RuntimeError:
-        print("Can't infer a graph from the data")
+        try:
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+            cmap = 'viridis'
+            contf = ax.tricontourf(x, y, metric, cmap=plt.get_cmap(cmap), zorder=1)
+            ax.scatter(x, y, 20, color='white', zorder=2)
+            plt.colorbar(contf, label='Measurment')
+            plt.xlim([x_min, x_max])                        # Change to using the sampling distribution object from world
+            plt.ylim([y_min, y_max])
+            
+            if(int(graph_log) == 1):
+                plt.savefig(directory + 'Sampled Measurements.png')
+        except RuntimeError:
+            print("Can't infer a graph from the data")
+    else:
+        print("Can't generate distribution as sampling policy not chosen")
 
 def real_metric_distribution(world, directory, graph_log):
     if(world._sample_metric._mean is not None):

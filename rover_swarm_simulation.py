@@ -60,17 +60,17 @@ decay = 'quad'
 zero_crossing = 20 * len_interval #20 communication cycles for it to fully decay
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '111'
+log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Sampling and generating own distirbution"
+log_title_tag = "Proportional Sampling partial run"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Only updating y speed in passive control so that path is more predictable to high level planner.'''            #Additional notes to be added to Log file if wished
 
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 num_of_waypoints = 10
 
+metric_mean = ['L', 'B']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[1, 0], [-1, 2]]
-metric_mean = ['R', 'T']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 num_r_samples = 5
 
 def main():
@@ -275,10 +275,12 @@ def main():
         log_summary_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
             \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
-            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
+            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}
+            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nNumber of Samples = {}'''\
             .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
                     str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
-                    str(len_interval), str(K_goal), str(K_neighbour)))
+                    str(len_interval), str(K_goal), str(K_neighbour), str(metric_mean[0]), str(metric_mean[1]), str(metric_covariance[0][1]), \
+                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples)))
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
         log_summary_file.write('\n')
@@ -346,11 +348,13 @@ def main():
         log_raw_file.write('\nParameters:\n')
         log_raw_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
             \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
-            \nMeasurement Noise(R) = {}\nDistance between Rovers(rovers_sep) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
-            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nLog Interval = {}\nTime Sampling = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}'''\
+            \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
+            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}
+            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nNumber of Samples = {}'''\
             .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
-                    str(seed_value) ,str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), str(len_interval), \
-                    str(log_step_interval), str(t_sampling),str(K_goal), str(K_neighbour)))
+                    str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
+                    str(len_interval), str(K_goal), str(K_neighbour), str(metric_mean[0]), str(metric_mean[1]), str(metric_covariance[0][1]), \
+                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples)))
         log_raw_file.write('\n')
         log_raw_file.write('=' * 50)
         log_raw_file.write("\t\t Rover\n")
@@ -392,7 +396,7 @@ def main():
     landcover_plot(world, ctrl_policy, map_landcover, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
     y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
     mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
-    generate_distribution(world, N, x_min, x_max, y_min, y_max, directory, log_control[2])
+    generate_distribution(world, ctrl_policy, N, x_min, x_max, y_min, y_max, directory, log_control[2])
     real_metric_distribution(world, directory, log_control[2])
 
     plt.show()

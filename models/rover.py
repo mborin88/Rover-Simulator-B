@@ -47,7 +47,7 @@ class Rover:
 
         #self._sampling_points = []                      # Current positions to sample at
         self._measured_samples = []                     # Samples gathered
-        self._max_num_samples = 50                      # Max number of samples the rover can take
+        self._max_num_samples = 5                      # Max number of samples the rover can take
         self._num_samples = 0                           # Number of samples taken by rover
         self._sampling_steps = 10                       # How many steps it takes to gather an accurate sample
         self._sampling_steps_passed = 0                 # How long the rover has been sampling for
@@ -370,7 +370,7 @@ class Rover:
         """
         if(self._pose[1] >= (self._waypoints[-1][1] - 5)):
             return True
-        elif(self._num_samples >= self._max_num_samples):
+        elif((self._num_samples >= self._max_num_samples) and (self._is_sampling == False)):
             return True
         else:
             return False

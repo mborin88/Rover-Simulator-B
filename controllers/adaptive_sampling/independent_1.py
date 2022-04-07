@@ -59,10 +59,10 @@ def proportional_sampling_waypoints(rov):
         change_metric.append(abs(rov._measured_samples[-2]/rov._measured_samples[-1]))
     
     if(change_metric[1] > change_metric[0]):
-        rov._sample_dist += 50
+        rov._sample_dist = rov._sample_dist *(change_metric[1]/change_metric[0])
     else:
         if(rov._sample_dist > 100):
-            rov._sample_dist -= 50
+            rov._sample_dist = rov._sample_dist * (change_metric[0]/change_metric[1])
 
 def move_along_path(rov, v_max, v_min):
     """
@@ -113,7 +113,6 @@ def adjusted_waypoint_sampler(rov, world, v_max, v_min):
     Linear or proportional adjustment of distance to next waypoint
     """
 
-    linear_sampling_waypoints(rov)
     if((world._dt*world._tn == 0) or \
             (len(rov._measured_samples) > 0 and rov._pose[1]-rov._measured_samples[-1][1] >= rov._sample_dist)):
         if(rov._num_samples < rov._max_num_samples and rov._is_sampling == False):
@@ -130,5 +129,6 @@ def adjusted_waypoint_sampler(rov, world, v_max, v_min):
         rov._sampling_steps_passed = 0
         rov._measured_samples.append([p[0], p[1], metric_measurement])
         rov._is_sampling = False
+        proportional_sampling_waypoints(rov)
     elif(rov._is_sampling):
         rov._sampling_steps_passed += 1
