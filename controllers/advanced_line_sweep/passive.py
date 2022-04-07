@@ -46,6 +46,9 @@ def x_direction(value):
         return -1
 
 def ratio_speeds(rov):
+    """
+    Adjusts x and y speed so that rover is going in right direction
+    """
     p = rov._pose
     target = rov.goal
     v = rov._control[2]

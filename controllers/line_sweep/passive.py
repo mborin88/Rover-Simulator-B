@@ -14,6 +14,9 @@ def weighted_control_calc(rov):
         return rov._all_control[0] + neighbour_mean
 
 def time_decay(rov, value):
+    """
+    Reduces inferred speed adjustment based on neighbouring rovers
+    """
     if(rov._decay_type == 'exp'):
         scale = (-1/np.exp(-value + rov._decay_zero_crossing)) + 1
     elif (rov._decay_type == 'quad'): 

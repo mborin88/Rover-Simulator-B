@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 20000      #432000      # Maximum iteration
+steps = 432000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 80   # Number of time slots between transmissions for one device.
@@ -71,7 +71,7 @@ num_of_waypoints = 10
 
 metric_covariance = [[1, 0], [-1, 2]]
 metric_mean = ['R', 'T']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
-num_r_samples = 20
+num_r_samples = 5
 
 def main():
     """
@@ -105,7 +105,7 @@ def main():
         for j in range(len(init_waypoints[i])):
             init_waypoints[i][j] = init_waypoints[i][j][:2]
 
-    sample_dist = (y_max-y_min) / num_r_samples
+    sample_dist = (y_max-y_min) / (num_r_samples-1)
     # Add rovers to the world.
     for i in range(N):
         world.add_rover(init_waypoints[i][0][0], init_waypoints[i][0][1], init_waypoints[i], sample_dist, q_noise=Q, r_noise=R, num_rovers=N,\

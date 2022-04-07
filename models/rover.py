@@ -42,6 +42,7 @@ class Rover:
         self._decay_zero_crossing = decay_zero_crossing     # How many steps until speed position of neighbour rover ignored.
         self._connectivity = [0] * num_rovers
 
+        self._avg_sample_dsit = sampling_dist
         self._sample_dist = sampling_dist
 
         #self._sampling_points = []                      # Current positions to sample at

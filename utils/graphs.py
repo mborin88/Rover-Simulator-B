@@ -22,7 +22,7 @@ def terrain_plot(world, control_policy, map_terrain, x_min, x_max, y_min, y_max,
 
     for o in range(N):
         plotter = world.rovers[o].pose_logger
-        ax.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='red')
+        ax.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='red', zorder=1)
 
     if(control_policy == 4):
         samples = []
@@ -30,7 +30,7 @@ def terrain_plot(world, control_policy, map_terrain, x_min, x_max, y_min, y_max,
             samples.append(world.rovers[i]._measured_samples)
         x = [data[0] for waypoint in samples for data in waypoint]
         y = [data[1] for waypoint in samples for data in waypoint]
-        ax.scatter(x, y, 20, color='black')
+        ax.scatter(x, y, 20, color='black', zorder=2)
     elif(control_policy != 4):
         # Waypoint grapher on contour plot
         for k in range(waypoint_interval, step, waypoint_interval):
@@ -103,7 +103,7 @@ def landcover_plot(world, control_policy, map_landcover, x_min, x_max, y_min, y_
 
     for o in range(N):
         plotter = world.rovers[o].pose_logger
-        ax3.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='cyan')
+        ax3.plot(plotter.x_pose, plotter.y_pose, linewidth=1.8, color='cyan', zorder=1)
     
     if(control_policy == 4):
         samples = []
@@ -111,7 +111,7 @@ def landcover_plot(world, control_policy, map_landcover, x_min, x_max, y_min, y_
             samples.append(world.rovers[i]._measured_samples)
         x = [data[0] for waypoint in samples for data in waypoint]
         y = [data[1] for waypoint in samples for data in waypoint]
-        ax3.scatter(x, y, 20, color='white')
+        ax3.scatter(x, y, 20, color='white', zorder=2)
     elif(control_policy != 4):
         #Waypoint grapher for landcover map
         for k1 in range(waypoint_interval, step, waypoint_interval):
