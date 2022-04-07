@@ -40,7 +40,7 @@ seed_value = dt.datetime.now().microsecond      #Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '111'
+log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Proportional Sampling partial run"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
@@ -60,7 +60,7 @@ ctrl_policy = 4
 # 1 - meaning goal-driven controller, if used:
 K_goal = [1e-1, 1e-2]  # Control gain for goal-driven controller;
 
-# 2 - meaning passive-cooperative controller, if used:
+# 2/3 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
 decay = 'quad'
 zero_crossing = 20 * len_interval #20 communication cycles for it to fully decay
@@ -69,10 +69,10 @@ zero_crossing = 20 * len_interval #20 communication cycles for it to fully decay
 waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 num_of_waypoints = 10
 
-# Adaptive Sampling Parameters
+# 4 Adaptive Sampling Parameters
 metric_mean = ['L', 'B']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[1, 0], [-1, 2]]
-num_r_samples = 5
+num_r_samples = 20
 
 
 def main():
@@ -97,7 +97,7 @@ def main():
     y_min, y_max = map_terrain.y_llcorner, map_terrain.y_llcorner + map_terrain.y_range
 
 
-    world = World(map_terrain, map_landcover, t_sampling)
+    world = World(map_terrain, map_landcover, mission, t_sampling)
     world.config_sample_metric(Sampling_Metric(x_min, x_max, y_min, y_max), metric_mean, metric_covariance)
     world.config_engine(SlopePhysics(world))
 
@@ -397,13 +397,11 @@ def main():
         fig0.savefig(directory + 'Path_Planned_Trajectory.png', dpi=100)
 
 
-    terrain_plot(world, ctrl_policy,map_terrain, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
+    terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
     RMSE_plot(world, step, log_step_interval, ee, log_control[2], directory)
-    #velocity_plot(world, N, log_control[2], directory)
-    landcover_plot(world, ctrl_policy, map_landcover, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
+    landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
     y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
     mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
-    generate_distribution(world, ctrl_policy, N, x_min, x_max, y_min, y_max, directory, log_control[2])
     real_metric_distribution(world, directory, log_control[2])
 
     plt.show()

@@ -6,14 +6,14 @@ class World:
     """
     A world class.
     """
-    def __init__(self, map_terrain, map_landcover, dt=0.1):  # Input two map objects and a time step in ms.
+    def __init__(self, map_terrain, map_landcover, mission='LS', dt=0.1):  # Input two map objects and a time step in ms.
         if self.is_aligned(map_terrain, map_landcover):
             self._terrain = map_terrain                     # Terrain info, a map object.
             self._landcover = map_landcover                 # Land cover info, a map object.
             self._sample_metric = None                       
             self._tn = 0                                    # Simulation time, represented by a sequence order.
             self._dt = dt                                   # Step time, in second.
-            #self._mission = mission
+            self._mission = mission
             self._rovers = []                               # List of existing rovers.
             self.channel = []                               # List of existing transmissions.
             self._dynamics_engine = None                    # Dynamics engine.
@@ -44,6 +44,10 @@ class World:
     @property
     def dt(self):
         return self._dt
+    
+    @property
+    def mission(self):
+        return self._mission
 
     @property
     def rovers(self):
