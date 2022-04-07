@@ -28,7 +28,7 @@ The simulator requires external libraries which are reccomended to be downloaded
 
 To compile and run the sources of Rover-Simulator from Git, the following are needed:
 
-* A Microsoft Windows System (Unix compatability has not been tested yet)
+* A Microsoft Windows 10 System (Unix compatability has not been tested yet)
 * _numpy_ >= v1.21.2 
   * ```conda install -c anaconda numpy```
  
@@ -39,35 +39,66 @@ To compile and run the sources of Rover-Simulator from Git, the following are ne
   * ```conda install -c anaconda pillow```
 
 ## Customisable Parameters
+All parameters are set at the top of ```rover_swarm_simulation.py```` program.
+
+There are no defaults as these are variables set. So if not changed program runs last configuration.
+### Simulation Parameters
 Variable | Type | Description
 --- | --- | ---
 area| STRING | Simulation area (6 letter code from downloaded list)
 N | INTEGER | Total rover numbers.
-dist| INTEGER | Distance between rovers. 
 x_offset| INTEGER | Distance from the left boundary which is the location of the first rover. 
 y_offset| INTEGER | Distance from the baseline which is the location of the first rover.
 goal_offset| INTEGER | Distance to the goal below which the goal is assumed reached. 
 steps| INTEGER | Maximum time steps, for the missison.
-t_sampling| FLOAT | Sampling period.
-len_interval| FLOAT | Interval between transmissions.
+t_sampling| FLOAT | Simulation Sampling period.
+Q| FLOAT ARRAY | The state noise. (Array length of 2 )
+R| FLOAT ARRAY | The measurement noise. (Array length of 2 )
+ctrl_policy| INTEGER | The control policy used (1, 2, 3, 4).
+log_control| STRING | Controls if and what parts of the mission are logged. Treated as a binary string where each bit has control over a different part.
+log_step_interval| INTEGER | To reduce data storage size some logs and plots are taken as an average over this interval. (Interval is specified in steps)
+log_title_tag| STRING | User specified custom title for the logs.
+log_notes| STRING | More detailed notes of a mission taken before running, and is where post mission notes can be added.
+
+
+### Communication Parameters
+Parameters needed to be configured for the LoRa Communication
+Variable | Type | Description
+--- | --- | ---
 user_f| FLOAT | Center frequency of carrier.
 user_bw| INTEGER | Bandwidth.
 user_sf| INTEGER | Spreading factor.
 user_cr| FLOAT | Coding rate.
 user_txpw| INTEGER | Transmitting power.
-Q| FLOAT ARRAY | The state noise. (Array length of 2 )
-R| FLOAT ARRAY | The measurement noise. (Array length of 2 )
-ctrl_policy| INTEGER | The control policy used (0, 1, 2).
+len_interval| FLOAT | Interval between transmissions.
+
+
+### Line Sweep Parameters
+Parameters needed to be configured for a line sweeping mission
+Variable | Type | Description
+--- | --- | ---
 K| FLOAT ARRAY | Gain of controller. (**K_goal** for control policy 1 and **K_neighbour** for control policy 2 and 3) (Array length of 2 )
 rover_sep| INTEGER | Distance between rovers in meters.
 decay| INTEGER | Mathematic style of the decay of rovers speed position, over time. (control policy 2)
 zero_crossing| INTEGER | How many time slots the adjustment speed of a neighbouring rover is valid for (control policy 2)
-log_control| STRING | Controls if and what parts of the mission are logged. Treated as a binary string where each bit has control over a different part.
-log_step_interval| INTEGER | To reduce data storage size some logs and plots are taken as an average over this interval. (Interval is specified in steps)
-log_title_tag| STRING | User specified custom title for the logs.
-log_notes| STRING | More detailed notes of a mission taken before running, and is where post mission notes can be added.
+
+
+### Advance Line Sweep Parameters
+These paramters are needed in addition to the ones stated for line sweep.
+Variable | Type | Description
+--- | --- | ---
 waypoint_interval | INTEGER | Interval for how often to see rover line organisation on plots. (Interval done in steps)
 num_of_waypoints| INTEGER | Number of waypoints between starting and proposed end position(including) of each rover.
+
+
+### Adaptive Sampling
+Parameters needed to be configured for an Adaptive Sampling Mission.
+Variable | Type | Description
+--- | --- | ---
+metric_mean| STRING ARRAY | Position of where mean of sampling metric will be located. ([0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom)
+metric_covariance|2D FLOAT ARRAY | Covariance matrix for generating sampling metric
+num_r_samples| INTEGER | Number of base samples to be used if using a fixed sampler. (No. samples adjsuted from this point automatically)
+
 
 ## Missions
 ### Line Sweep
