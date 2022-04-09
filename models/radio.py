@@ -42,7 +42,7 @@ class Radio:
     de = DE     # The presence of low data rate optimisation.
     ant_gain = ANT_GAIN         # The antenna gain， in dBi.
     ant_height = ANT_HEIGHT     # The antenna height, in meter.
-    pl = 4                      # The length of payload, in byte.
+    pl = 10                      # The length of payload, in byte.
 
     def __init__(self, rover, f, bw, sf, cr, tx_pw, t_slot=0.1):
         self._rover = rover                     # A rover object which the radio is attached to.

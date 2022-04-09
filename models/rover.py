@@ -49,7 +49,7 @@ class Rover:
         self._measured_samples = []                     # Samples gathered
         self._max_num_samples = 5                      # Max number of samples the rover can take
         self._num_samples = 0                           # Number of samples taken by rover
-        self._sampling_steps = 10                       # How many steps it takes to gather an accurate sample
+        self._sampling_steps = 10                       # Default 6000 steps, how many steps it takes to gather an accurate sample 10 
         self._sampling_steps_passed = 0                 # How long the rover has been sampling for
         self._is_sampling = False                       # Is rover currently sampling.
 
@@ -162,31 +162,7 @@ class Rover:
         """
         Configure control policy.
         """
-        self._control_policy = policy
-
-    # def config_sampling_points(self):
-    #     """
-    #     Configure the sampling points.
-    #     This method aims to preselect checkpoints at the beginning
-    #     And with adaptive sampling change these checkpoints over time
-    #     """
-    #     if(self._max_num_samples == len(self._waypoints)):
-    #         self._sampling_points = self._waypoints.copy()
-    #     elif(self._max_num_samples < len(self._waypoints)):
-    #         num_points = int(len(self._waypoints)/self._max_num_samples)
-
-    #         for i in range(0, len(self._waypoints)-1, num_points):
-    #             self._sampling_points.append(self._waypoints[i])
-    #     elif(self._max_num_samples > len(self._waypoints)):
-    #         divisor = int(self._max_num_samples/len(self._waypoints))
-    #         for i in range(self._max_num_samples-1):
-    #             if(i%divisor == 0):
-    #                 self._sampling_points.append(self._waypoints[int(i/2)])
-    #             elif(i%2 == 1):
-    #                 x_pos = (self._waypoints[i][0] + self._waypoints[i+1][0]) / 2
-    #                 y_pos = (self._waypoints[i][1] + self._waypoints[i+1][1]) / 2
-    #                 self._sampling_points.append([x_pos, y_pos])
-                
+        self._control_policy = policy         
 
     def config_speed_controller(self, controller):
         """

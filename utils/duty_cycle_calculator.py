@@ -1,25 +1,26 @@
 bw = 125  # Bandwidth, in KHz
-sf = 9    # Spreading factor
+sf = 12    # Spreading factor
 cr_num = 4
 cr_den = 8
 cr = cr_num / cr_den  # Coding rate
 ps = 8                # Preamble symbol
-pl = 12   # Payload, in byte
+pl = 10   # Payload, in byte
 crc = 1  # Cyclic redundancy check
 is_crc = {1: 'Yes',
           0: 'No'}
 hd = 1  # Header
 is_hd = {1: 'No',
          0: 'Yes'}
-de = 0  # Low data rate optimisation
+de = 1  # Low data rate optimisation
 is_de = {1: 'Yes',
          0: 'No'}
-dc = 1  # Duty cycle
 
+len_interval = 6000 # Steps to next transmission
+dt = 0.1    # Simulation step time
 
-def main():
+def airtime_calc():
     """
-    Calculate airtime & silent time of a packet given relevant parameters.
+    Calculate the airtime needed for each transmission.
     """
     t_symbol = (2 ** sf) / (bw * 1000)
     t_preamble = (ps + 4.25) * t_symbol
@@ -28,8 +29,16 @@ def main():
         term = 0
     n_payload = 8 + term
     t_payload = n_payload * t_symbol
-    airtime = t_preamble + t_payload
-    silent_time = airtime / dc - airtime
+    return t_preamble + t_payload
+
+
+def main():
+    """
+    Calculate airtime & silent time of a packet given relevant parameters.
+    """
+    airtime = airtime_calc()
+    silent_time =  len_interval * dt
+    dc_calc = airtime / (airtime+silent_time)
     print('=' * 50)
     print('Bandwidth: {} (KHz)'.format(str(bw)))
     print('Spreading factor: {}'.format(str(sf)))
@@ -40,11 +49,9 @@ def main():
     print('Header: {}'.format(is_hd[hd]))
     print('Low data rate optimisation: {}'.format(is_de[de]))
     print('-' * 50)
-    print('Symbol time (T_s): {} (s)'.format(str(round(t_symbol, 6))))
-    print('Preamble time (T_preamble): {} (s)'.format(str(round(t_preamble, 6))))
-    print('Payload time (T_payload): {} (s)'.format(str(round(t_payload, 6))))
     print('Airtime: {} (s)'.format(str(round(airtime, 6))))
     print('Silent time: {} (s)'.format(round(silent_time, 6)))
+    print('Duty Cycle: {}%'.format(round(dc_calc*100, 6)))
     print('=' * 50)
 
 

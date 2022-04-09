@@ -29,10 +29,10 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 20000      #432000      # Maximum iteration
+steps = 1000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
-len_interval = 80   # Number of time slots between transmissions for one device.
+len_interval = 120   # Number of time slots between transmissions for one device.
 
 Q = None                                      # State noise.
 R = None                                        # Measurement noise.
@@ -54,7 +54,7 @@ user_cr = CR[3]   # Coding rate.
 user_txpw = 24    # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = 4
+ctrl_policy = 2
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
