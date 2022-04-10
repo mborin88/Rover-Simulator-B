@@ -54,7 +54,7 @@ user_cr = CR[3]   # Coding rate.
 user_txpw = 24    # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = 2
+ctrl_policy = 4
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -172,11 +172,13 @@ def main():
             world.rovers[l].pose_logger.log_velocity()
             world.rovers[l].pose_logger.log_connectivity()
 
-        error = 0.0
-        for m in range(N - 1):  # Root mean square formation error
-            error += (world.rovers[m + 1].pose_logger.y_pose[-1]
-                      - world.rovers[m].pose_logger.y_pose[-1]) ** 2
-        ee.append(sqrt(error / (N - 1)))
+        if(mission == 'LS'):
+            error = 0.0
+            for m in range(N - 1):  # Root mean square formation error
+                error += (world.rovers[m + 1].pose_logger.y_pose[-1]
+                        - world.rovers[m].pose_logger.y_pose[-1]) ** 2
+            ee.append(sqrt(error / (N - 1)))
+            
         step += 1
 
         invalid_rov_pos = False

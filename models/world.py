@@ -128,26 +128,22 @@ class World:
             print('Time: {} (s)\n'.format(str(round(tn * dt, 1))))
 
         # Logically, this is the beginning of time slot.
-        if(self._mission == 'LS'):
-            transmitter = None
-            for rover in self._rovers:
-                rover.step_motion(self, dt)
-                if rover.radio is None:
-                    pass
-                else:
+        transmitter = None
+        for rover in self._rovers:
+            rover.step_motion(self, dt)
+            if rover.radio is None:
+                pass
+            else:
+                if(self._mission == 'LS'):
                     if tn == rover.radio.next_tx:
                         transmitter = rover
-                        transmitter.radio.transmit(self)
-        elif(self._mission):
-            transmitter = None
-            for rover in self._rovers:
-                rover.step_motion(self, dt)
-                if rover.radio is None:
-                    pass
-                else:
-                    if tn == rover.radio.next_tx:
+                        transmitter.radio.transmit_pos(self)
+                elif(self._mission == 'AS'):
+                    if rover.transmit == True and tn%rover.num_rovers == rover.rov_id:
                         transmitter = rover
-                        transmitter.radio.transmit(self)            
+                        rover.update_transmission_flag()
+                        transmitter.radio.transmit_change_metric(self)   
+
 
         #Slowing down simulation
         #if len(self.channel) > 0:

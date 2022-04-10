@@ -10,7 +10,8 @@ from controllers.line_sweep.goal_driven import move2goal
 from controllers.line_sweep.passive import passive_cooperation, simple_passive_cooperation
 from controllers.advanced_line_sweep.goal_driven import advanced_move2goal 
 from controllers.advanced_line_sweep.passive import advanced_passive_cooperation, advanced_simple_passive_cooperation
-from controllers.adaptive_sampling.independent_1 import waypoint_sampler, adjusted_waypoint_sampler
+from controllers.adaptive_sampling.linear_adjustment import linear_adjusted_sampler
+from controllers.adaptive_sampling.proportional_adjustment import proportional_adjustment_sampler
 
 STARTING_SPEED = 0.2       # m/s
 MAXIMUM_SPEED = 0.5        # m/s, which can be exceeded due to the effect of slope.
@@ -42,11 +43,12 @@ class Rover:
         self._decay_zero_crossing = decay_zero_crossing     # How many steps until speed position of neighbour rover ignored.
         self._connectivity = [0] * num_rovers
 
-        self._avg_sample_dsit = sampling_dist
+        self._transmit = False
+        self._avg_sample_dist = sampling_dist
         self._sample_dist = sampling_dist
 
-        #self._sampling_points = []                      # Current positions to sample at
         self._measured_samples = []                     # Samples gathered
+        self._change_metric = 1                        # Most recent change metric 
         self._max_num_samples = 5                      # Max number of samples the rover can take
         self._num_samples = 0                           # Number of samples taken by rover
         self._sampling_steps = 10                       # Default 6000 steps, how many steps it takes to gather an accurate sample 10 
@@ -131,6 +133,42 @@ class Rover:
     @property
     def connectivity(self):
         return self._connectivity
+    
+    @property
+    def transmit(self):
+        return self._transmit    
+
+    @property
+    def avg_sample_dist(self):
+        return self._avg_sample_dist
+
+    @property
+    def sample_dist(self):
+        return self._sample_dist
+
+    @property
+    def measured_samples(self):
+        return self._measured_samples
+
+    @property
+    def max_num_samples(self):
+        return self._max_num_samples
+
+    @property
+    def num_samples(self):
+        return self._num_samples
+
+    @property
+    def sample_steps(self):
+        return self._sampling_steps
+
+    @property
+    def sampling_steps_passed(self):
+        return self._sampling_steps_passed
+
+    @property
+    def is_sampling(self):
+        return self._is_sampling
 
     @property
     def speed_controller(self):
@@ -187,6 +225,15 @@ class Rover:
         Set measurement noise.
         """
         self._r_noise = new_r
+    
+    def update_transmission_flag(self):
+        self._transmit = False
+    
+    def update_change_metric(self, value):
+        self._change_metric = value
+    
+    def update_sample_dist(self, value):
+        self._sample_dist = value
 
     def generate_noise(self, sigma):
         """
@@ -215,6 +262,10 @@ class Rover:
             self._landcover_termination = True
 
     def motion(self, world, dt):
+        """
+        Motion of rover after dynamics of environment have been added.
+        Updates position and speed. 
+        """
         p = self._pose
         u = self._control
         slope_y = world.dynamics_engine.northing_slope(p[0], p[1])
@@ -310,7 +361,7 @@ class Rover:
                 elif self._control_policy == 'Simple Passive-cooperative':
                     advanced_simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif self._control_policy == 'Adaptive Sampling':
-                    adjusted_waypoint_sampler(self, world, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    proportional_adjustment_sampler(self, world, MAXIMUM_SPEED, MINIMUM_SPEED)
 
 
     def measure(self):

@@ -200,8 +200,25 @@ class Radio:
         Get the measured pose info ready for packet formation.
         """
         return self._rover.measurement
+    
+    def get_change_metric(self):
+        """
+        Get the measured pose info ready for packet formation.
+        """
+        return self._rover.measurement
 
-    def transmit(self, world):
+    def transmit_change_metric(self, world):
+        """
+        Place a new transmission into the channel.
+        """
+        pose_msred = self.get_change_metric()
+        payload = [self._radio_id, pose_msred[0], pose_msred[1]]
+        packet = Packet(self, payload)
+        self._num_transmitted += 1
+        world.add_packet(packet)
+        self._next_tx += self._interval
+
+    def transmit_pos(self, world):
         """
         Place a new transmission into the channel.
         """
