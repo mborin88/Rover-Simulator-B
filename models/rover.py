@@ -17,6 +17,9 @@ STARTING_SPEED = 0.2       # m/s
 MAXIMUM_SPEED = 0.5        # m/s, which can be exceeded due to the effect of slope.
 MINIMUM_SPEED = 0.05       # m/s, which depicts the worst scenario and cannot be decreased any more.
 
+MAXIMUM_SAMPLE_DIST = 750
+MINIMUM_SAMPLE_DIST = 100
+
 
 class Rover:
     """
@@ -24,7 +27,7 @@ class Rover:
     decay_type = 'quad'
     zero_cross = 1200 #Decay = 0 at 2 minutes of silence from that rover.
     """
-    def __init__(self, rov_id, easting, northing, rov_waypoints, sampling_dist = 500, q_noise=None, r_noise=None, num_rovers=10, decay_type = 'quad', decay_zero_crossing=1200):
+    def __init__(self, rov_id, easting, northing, rov_waypoints, q_noise=None, r_noise=None, num_rovers=10):
         self._rov_id = rov_id                 # Unique id for each rover.
         self._pose = [easting, northing]      # Pose: (x (m), y (m)).
         self._angle = 0
@@ -39,19 +42,20 @@ class Rover:
         self._num_rovers = num_rovers
         self._initial_control = True                        # Want to P controller until we get neighbouring positions
         self._control_policy = None
-        self._decay_type = decay_type                       # Decay style currently quadratic decay or exponential decay
-        self._decay_zero_crossing = decay_zero_crossing     # How many steps until speed position of neighbour rover ignored.
+        self._decay_type = 'quad'                       # Decay style currently quadratic decay or exponential decay
+        self._decay_zero_crossing = 1200     # How many steps until speed position of neighbour rover ignored.
         self._connectivity = [0] * num_rovers
 
         self._transmit = False
-        self._avg_sample_dist = sampling_dist
-        self._sample_dist = sampling_dist
+        #self._avg_sample_dist = sampling_dist
+        self._sample_dist = 500
 
+        self._K_sampler = [1, 1, 1]                           #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain
         self._measured_samples = []                     # Samples gathered
-        self._change_metric = 1                        # Most recent change metric 
-        self._max_num_samples = 5                      # Max number of samples the rover can take
+        self._change_metric = [0] * num_rovers                         # Most recent change metric 
+        self._max_num_samples = 80                      # Max number of samples the rover can take
         self._num_samples = 0                           # Number of samples taken by rover
-        self._sampling_steps = 10                       # Default 6000 steps, how many steps it takes to gather an accurate sample 10 
+        self._req_sampling_steps = 3000                       # Default 6000 steps, how many steps it takes to gather an accurate sample 10 
         self._sampling_steps_passed = 0                 # How long the rover has been sampling for
         self._is_sampling = False                       # Is rover currently sampling.
 
@@ -138,9 +142,9 @@ class Rover:
     def transmit(self):
         return self._transmit    
 
-    @property
-    def avg_sample_dist(self):
-        return self._avg_sample_dist
+    # @property
+    # def avg_sample_dist(self):
+    #     return self._avg_sample_dist
 
     @property
     def sample_dist(self):
@@ -159,8 +163,8 @@ class Rover:
         return self._num_samples
 
     @property
-    def sample_steps(self):
-        return self._sampling_steps
+    def req_sampling_steps(self):
+        return self._req_sampling_steps
 
     @property
     def sampling_steps_passed(self):
@@ -208,6 +212,30 @@ class Rover:
         """
         self._speed_controller = controller
 
+    def config_decay_type(self, decay):
+        """
+        Configure pose logger.
+        """
+        self._decay_type = decay
+
+    def config_decay_zero_crossing(self, zc):
+        """
+        Configure pose logger.
+        """
+        self._decay_zero_crossing = zc
+
+    def config_adaptive_sampler_gains(self, gains):
+        """
+        Configure the type of controller used to control velocity.
+        """
+        self._K_sampler = gains
+
+    def config_sample_dist(self, dist):
+        """
+        Configure the type of controller used to control velocity.
+        """
+        self._sample_dist = dist
+
     def config_pose_logger(self, logger):
         """
         Configure pose logger.
@@ -230,10 +258,7 @@ class Rover:
         self._transmit = False
     
     def update_change_metric(self, value):
-        self._change_metric = value
-    
-    def update_sample_dist(self, value):
-        self._sample_dist = value
+        self._change_metric[0] = round(self._K_sampler[0] * value, 5)
 
     def generate_noise(self, sigma):
         """
@@ -361,7 +386,8 @@ class Rover:
                 elif self._control_policy == 'Simple Passive-cooperative':
                     advanced_simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif self._control_policy == 'Adaptive Sampling':
-                    proportional_adjustment_sampler(self, world, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    advanced_move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    proportional_adjustment_sampler(self, world, MAXIMUM_SAMPLE_DIST, MINIMUM_SAMPLE_DIST)
 
 
     def measure(self):

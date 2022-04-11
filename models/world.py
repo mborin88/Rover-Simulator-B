@@ -92,13 +92,11 @@ class World:
         else:
             return False
 
-    def add_rover(self, easting, northing, r_path, s_dist, q_noise=None, r_noise=None, num_rovers=10,\
-                        decay_type='quad', decay_zero_crossing=1200):
+    def add_rover(self, easting, northing, r_path, q_noise=None, r_noise=None, num_rovers=10):
         """
         Add a rover to the world given its coordinates.
         """
-        self._rovers.append(Rover(len(self.rovers) + 1, easting, northing, r_path, s_dist, q_noise, r_noise, num_rovers,\
-                                    decay_type, decay_zero_crossing))
+        self._rovers.append(Rover(len(self.rovers) + 1, easting, northing, r_path, q_noise, r_noise, num_rovers))
 
     def rover_completes_task(self):
         """
@@ -138,11 +136,11 @@ class World:
                     if tn == rover.radio.next_tx:
                         transmitter = rover
                         transmitter.radio.transmit_pos(self)
-                elif(self._mission == 'AS'):
-                    if rover.transmit == True and tn%rover.num_rovers == rover.rov_id:
-                        transmitter = rover
-                        rover.update_transmission_flag()
-                        transmitter.radio.transmit_change_metric(self)   
+                # elif(self._mission == 'AS'):
+                #     # if rover.transmit == True and tn%rover.num_rovers == rover.rov_id:
+                #     #     transmitter = rover
+                #     #     rover.update_transmission_flag()
+                #     #     transmitter.radio.transmit_change_metric(self)   
 
 
         #Slowing down simulation

@@ -205,7 +205,7 @@ class Radio:
         """
         Get the measured pose info ready for packet formation.
         """
-        return self._rover.measurement
+        return self._rover.change_metric[self._radio_id]     
 
     def transmit_change_metric(self, world):
         """

@@ -60,7 +60,7 @@ class  Sampling_Metric():
         self._covariance = []                                   # Covariance of metric distribution (has to be positive semidefinite)
         self._distribution = None
         self._x_range, self._y_range = np.mgrid[x_min:x_max:1, y_min:y_max:1]
-        self._multiplier = 1e7
+        self._multiplier = 1e8
 
 
     @property

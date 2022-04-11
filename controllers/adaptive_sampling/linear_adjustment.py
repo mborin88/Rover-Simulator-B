@@ -42,10 +42,10 @@ def linear_sampling_waypoints(rov):
         rov._change_metric.append(abs(rov.measured_samples[-2]/rov.measured_samples[-1]))
     
     if(rov._change_metric[1] > rov._change_metric[0]):
-        rov.sample_dist += 50
+        rov._sample_dist += 50
     else:
         if(rov.sample_dist > 100):
-            rov.sample_dist -= 50
+            rov._sample_dist -= 50
 
 def sample_difference(rov):
     """
@@ -86,20 +86,20 @@ def linear_adjusted_sampler(rov, world, v_max, v_min):
     if((world._dt*world._tn == 0) or \
             (len(rov.measured_samples) > 0 and rov.pose[1]-rov.measured_samples[-1][1] >= rov.sample_dist)):
         if(rov.num_samples < rov.max_num_samples and rov.is_sampling == False):
-            rov.is_sampling = True
-            rov.num_samples += 1
+            rov._is_sampling = True
+            rov._num_samples += 1
             print("Rover {} is taking a sample.".format(str(rov._rov_id)))
 
     move_along_path(rov, v_max, v_min)
 
-    if(rov.sampling_steps == rov.sampling_steps_passed):
+    if(rov.req_sampling_steps == rov.sampling_steps_passed):
         p = rov.pose.copy()
         p[0], p[1] = round(p[0]), round(p[1])
         metric_measurement = round(world._sample_metric.sample(p[0], p[1]), 5)
-        rov.sampling_steps_passed = 0
-        rov.measured_samples.append([p[0], p[1], metric_measurement])
+        rov._sampling_steps_passed = 0
+        rov._measured_samples.append([p[0], p[1], metric_measurement])
         # sample_difference(rov)
         rov.update_sample_dist()
-        rov.is_sampling = False
+        rov._is_sampling = False
     elif(rov.is_sampling):
         rov.sampling_steps_passed += 1

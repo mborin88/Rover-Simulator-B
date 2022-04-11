@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 1000      #432000      # Maximum iteration
+steps = 100000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 120   # Number of time slots between transmissions for one device.
@@ -42,9 +42,10 @@ rand.seed(seed_value)
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Proportional Sampling partial run"
+log_title_tag = "Min and Max Limit on Sampler"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Only updating y speed in passive control so that path is more predictable to high level planner.'''            #Additional notes to be added to Log file if wished
+log_notes = '''Partial Run adaptive sampler no neighbours considered. 60 percent increase.
+Decaying too fast not growing enough'''            #Additional notes to be added to Log file if wished
 
 # Configure communication settings:
 user_f = 869.525  # Carrier center frequency, in MHz.
@@ -54,7 +55,7 @@ user_cr = CR[3]   # Coding rate.
 user_txpw = 24    # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = 4
+ctrl_policy = 2
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -72,6 +73,7 @@ num_of_waypoints = 10
 # 4 Adaptive Sampling Parameters
 metric_mean = ['L', 'B']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[1, 0], [-1, 2]]
+K_sampler = [500, 2, 1]                           #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain
 num_r_samples = 20
 
 
@@ -112,11 +114,10 @@ def main():
         for j in range(len(init_waypoints[i])):
             init_waypoints[i][j] = init_waypoints[i][j][:2]
 
-    sample_dist = (y_max-y_min) / (num_r_samples-1)
+    s_dist = (y_max-y_min) / (num_r_samples-1)
     # Add rovers to the world.
     for i in range(N):
-        world.add_rover(init_waypoints[i][0][0], init_waypoints[i][0][1], init_waypoints[i], sample_dist, q_noise=Q, r_noise=R, num_rovers=N,\
-                            decay_type= decay, decay_zero_crossing = zero_crossing)
+        world.add_rover(init_waypoints[i][0][0], init_waypoints[i][0][1], init_waypoints[i], q_noise=Q, r_noise=R, num_rovers=N)
 
     # Configure rovers' settings.
     for starter in world.rovers:
@@ -144,6 +145,8 @@ def main():
         elif ctrl_policy == 2:  # Passive-cooperative controller
             speed_controller = PController(None, K_neighbour)
             starter.config_speed_controller(speed_controller)
+            starter.config_decay_type(decay)
+            starter.config_decay_zero_crossing(zero_crossing)
             # The reference for passive-cooperative controller
             # dynamically changes when new packet from the neighbour is received.
             starter.config_control_policy('Passive-cooperative')
@@ -160,6 +163,8 @@ def main():
             starter.config_speed_controller(speed_controller)
             starter.speed_controller.set_ref(starter.goal)
             starter.config_control_policy('Adaptive Sampling')
+            starter.config_adaptive_sampler_gains(K_sampler)
+            starter.config_sample_dist(s_dist)
             #starter.config_sampling_points()
 
     # Step simulation and record data.
@@ -172,12 +177,11 @@ def main():
             world.rovers[l].pose_logger.log_velocity()
             world.rovers[l].pose_logger.log_connectivity()
 
-        if(mission == 'LS'):
-            error = 0.0
-            for m in range(N - 1):  # Root mean square formation error
-                error += (world.rovers[m + 1].pose_logger.y_pose[-1]
-                        - world.rovers[m].pose_logger.y_pose[-1]) ** 2
-            ee.append(sqrt(error / (N - 1)))
+        error = 0.0
+        for m in range(N - 1):  # Root mean square formation error
+            error += (world.rovers[m + 1].pose_logger.y_pose[-1]
+                    - world.rovers[m].pose_logger.y_pose[-1]) ** 2
+        ee.append(sqrt(error / (N - 1)))
             
         step += 1
 
@@ -244,8 +248,11 @@ def main():
             print('Transmitted Packets: {}'.format(str(transceiver.num_tx)))
             print('Received Packets: {}'.format(str(transceiver.num_rx)))
             print('Discarded Packets: {}'.format(str(transceiver.num_disc)))
-            print('Packet Loss Ratio: {}%'.format(str(round(transceiver.num_disc
-                                                            / (transceiver.num_rx + transceiver.num_disc) * 100, 2))))
+            try:
+                print('Packet Loss Ratio: {}%'.format(str(round(transceiver.num_disc
+                                                                / (transceiver.num_rx + transceiver.num_disc) * 100, 2))))
+            except ZeroDivisionError:
+                print('Packet Loss Ratio: N/A%')
     print('=' * 50)
 
     # Print simulation running time.
@@ -336,8 +343,11 @@ def main():
                 log_summary_file.write('\nTransmitted Packets: {}'.format(str(transceiver.num_tx)))
                 log_summary_file.write('\nReceived Packets: {}'.format(str(transceiver.num_rx)))
                 log_summary_file.write('\nDiscarded Packets: {}'.format(str(transceiver.num_disc)))
-                log_summary_file.write('\nPacket Loss Ratio: {}%'.format(str(round(transceiver.num_disc
-                                                                / (transceiver.num_rx + transceiver.num_disc) * 100, 2))))
+                try:
+                    log_summary_file.write('\nPacket Loss Ratio: {}%'.format(str(round(transceiver.num_disc
+                                                                    / (transceiver.num_rx + transceiver.num_disc) * 100, 2))))
+                except ZeroDivisionError:
+                    log_summary_file.write('\nPacket Loss Ratio: N/A%')
         log_summary_file.write('\n')                                                        
         log_summary_file.write('=' * 50)
 
