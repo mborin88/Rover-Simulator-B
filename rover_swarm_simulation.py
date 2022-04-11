@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 100000      #432000      # Maximum iteration
+steps = 432000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 120   # Number of time slots between transmissions for one device.
@@ -40,11 +40,11 @@ seed_value = dt.datetime.now().microsecond      #Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '000'
+log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Min and Max Limit on Sampler"
+log_title_tag = "Balanced multivariate Gaussian"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Partial Run adaptive sampler no neighbours considered. 60 percent increase.
+log_notes = '''Partial Run adaptive sampler no neighbours considered. 200 percent increase.
 Decaying too fast not growing enough'''            #Additional notes to be added to Log file if wished
 
 # Configure communication settings:
@@ -55,7 +55,7 @@ user_cr = CR[3]   # Coding rate.
 user_txpw = 24    # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = 2
+ctrl_policy = 4
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -71,10 +71,11 @@ waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
 num_of_waypoints = 10
 
 # 4 Adaptive Sampling Parameters
-metric_mean = ['L', 'B']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
+metric_mean = ['M', 'M']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[1, 0], [-1, 2]]
-K_sampler = [500, 2, 1]                           #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain
+K_sampler = [150, 1.5, 1]                           #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain
 num_r_samples = 20
+sampling_time = 6000
 
 
 def main():
@@ -165,6 +166,7 @@ def main():
             starter.config_control_policy('Adaptive Sampling')
             starter.config_adaptive_sampler_gains(K_sampler)
             starter.config_sample_dist(s_dist)
+            starter.config_req_sample_steps(sampling_time)
             #starter.config_sampling_points()
 
     # Step simulation and record data.
@@ -202,7 +204,12 @@ def main():
             if step == steps:
                 termination_reason = 2
                 break
-        
+
+    total_samples = 0
+    if(mission == 'AS'):
+        for m in range(N):
+            total_samples += world.rovers[m].num_samples
+
 
     # Simulation running time.
     end = time.time()
@@ -215,6 +222,7 @@ def main():
     print('Motion information: ')
     print('\nMax RMSE: {} (m) @ {}s'.format(str(round(max(ee), 2)), str(round(ee.index(max(ee))*t_sampling, 2))))
     print('Mean RMSE: {} (m)'.format(str(round(stats.mean(ee), 2))))
+    print('Total No. Samples: {}'.format(str(total_samples)))
     for k in range(N):
         logger = world.rovers[k].pose_logger
         print('-' * 50)
@@ -292,11 +300,11 @@ def main():
             \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}
-            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nNumber of Samples = {}'''\
+            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nNumber of Samples = {}\nSampler Gain = {}'''\
             .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
                     str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
                     str(len_interval), str(K_goal), str(K_neighbour), str(metric_mean[0]), str(metric_mean[1]), str(metric_covariance[0][1]), \
-                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples)))
+                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples), str(K_sampler)))
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
         log_summary_file.write('\n')
@@ -307,6 +315,7 @@ def main():
         log_summary_file.write('\nMotion information: ')
         log_summary_file.write('\nMax RMSE: {} (m) @ {}s'.format(str(round(max(ee), 2)), str(round(ee.index(max(ee))*t_sampling, 2))))
         log_summary_file.write('\nMean RMSE: {} (m)'.format(str(round(stats.mean(ee), 2))))
+        log_summary_file.write('\nTotal No. Samples: {}'.format(str(total_samples)))
         for k in range(N):
             logger = world.rovers[k].pose_logger
             log_summary_file.write('\n')
@@ -369,11 +378,11 @@ def main():
             \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}
-            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nNumber of Samples = {}'''\
+            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nNumber of Samples = {}\nSampler Gain = {}'''\
             .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
                     str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
                     str(len_interval), str(K_goal), str(K_neighbour), str(metric_mean[0]), str(metric_mean[1]), str(metric_covariance[0][1]), \
-                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples)))
+                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples), str(K_sampler)))
         log_raw_file.write('\n')
         log_raw_file.write('=' * 50)
         log_raw_file.write("\t\t Rover\n")

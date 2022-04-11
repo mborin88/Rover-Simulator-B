@@ -55,7 +55,7 @@ class Rover:
         self._change_metric = [0] * num_rovers                         # Most recent change metric 
         self._max_num_samples = 80                      # Max number of samples the rover can take
         self._num_samples = 0                           # Number of samples taken by rover
-        self._req_sampling_steps = 3000                       # Default 6000 steps, how many steps it takes to gather an accurate sample 10 
+        self._req_sampling_steps = 6000                       # Default 6000 steps, how many steps it takes to gather an accurate sample 10 
         self._sampling_steps_passed = 0                 # How long the rover has been sampling for
         self._is_sampling = False                       # Is rover currently sampling.
 
@@ -235,6 +235,12 @@ class Rover:
         Configure the type of controller used to control velocity.
         """
         self._sample_dist = dist
+
+    def config_req_sample_steps(self, dist):
+        """
+        Configure the type of controller used to control velocity.
+        """
+        self._req_sampling_steps = dist
 
     def config_pose_logger(self, logger):
         """
