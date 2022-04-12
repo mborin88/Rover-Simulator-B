@@ -1,9 +1,20 @@
 # now add to radio
 # add to rover samples taken array [rov1_num_samples, rov2_num_samples]
-# total samples taken for each rover
-# when one rover reaches the designated total stop
-# can we adaptive sample independently (ask danesh does y_concentration at another point affect another rovers sampling)
 import math
+
+def linear_sampling_waypoints(rov):
+    """
+    Linear Sampler where sampling positions adjusted depending flux
+    """
+    if(len(rov.measured_samples)> 3):
+        rov._change_metric.append(abs(rov.measured_samples[-3]/rov.measured_samples[-2]))
+        rov._change_metric.append(abs(rov.measured_samples[-2]/rov.measured_samples[-1]))
+    
+    if(rov._change_metric[1] > rov._change_metric[0]):
+        rov._sample_dist += 50
+    else:
+        if(rov.sample_dist > 100):
+            rov._sample_dist -= 50
 
 def gradient_calc(rov, i):
     dist_x = rov.measured_samples[-i+1][0] - rov.measured_samples[-i][0]
@@ -27,7 +38,7 @@ def difference_calc(rov):
 def update_sample_dist(rov, max_sample_dist, min_sample_dist):
     if(len(rov.measured_samples)>= 3):
         n = rov._change_metric[0]
-        temp_sample_dist = rov.sample_dist * (rov._K_sampler[1]/(n+1))
+        temp_sample_dist = rov.avg_sample_dist * (rov._K_sampler[1]/(n+1))
 
         if(temp_sample_dist < min_sample_dist):
             rov._sample_dist = min_sample_dist

@@ -40,40 +40,39 @@ seed_value = dt.datetime.now().microsecond      #Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '111'
+log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Balanced multivariate Gaussian"
+log_title_tag = "Forward Slant multivariate Gaussian"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Partial Run adaptive sampler no neighbours considered. 200 percent increase.
-Decaying too fast not growing enough'''            #Additional notes to be added to Log file if wished
+log_notes = '''Working Well good enough for full runs it seems. Possible tweaking of sampler gains'''            #Additional notes to be added to Log file if wished
 
 # Configure communication settings:
-user_f = 869.525  # Carrier center frequency, in MHz.
-user_bw = BW[0]   # Bandwidth, in kHz.
-user_sf = SF[3]   # Spreading factor.
-user_cr = CR[3]   # Coding rate.
-user_txpw = 24    # Transmitting power, in dBm.
+user_f = 869.525                                    # Carrier center frequency, in MHz.
+user_bw = BW[0]                                     # Bandwidth, in kHz.
+user_sf = SF[3]                                     # Spreading factor.
+user_cr = CR[3]                                     # Coding rate.
+user_txpw = 24                                      # Transmitting power, in dBm.
 
 # Configure control settings:
 ctrl_policy = 4
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
-K_goal = [1e-1, 1e-2]  # Control gain for goal-driven controller;
+K_goal = [1e-1, 1e-2]                               # Control gain for goal-driven controller;
 
 # 2/3 - meaning passive-cooperative controller, if used:
-K_neighbour = [0, 1e-1]  # Control gain for passive-cooperative controller;
+K_neighbour = [0, 1e-1]                             # Control gain for passive-cooperative controller;
 decay = 'quad'
-zero_crossing = 20 * len_interval #20 communication cycles for it to fully decay
+zero_crossing = 20 * len_interval                   #20 communication cycles for it to fully decay
 
 # Advance Line Sweeping Parameter
-waypoint_interval = 18000  #Log every 30 minutes = 18000 steps
+waypoint_interval = 18000                           #Log every 30 minutes = 18000 steps
 num_of_waypoints = 10
 
 # 4 Adaptive Sampling Parameters
-metric_mean = ['M', 'M']    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
-metric_covariance = [[1, 0], [-1, 2]]
-K_sampler = [150, 1.5, 1]                           #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain
+metric_mean = ['L', 'B']                            #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
+metric_covariance = [[2, 1], [0, 0.75]]
+K_sampler = [500, 4, 1]                             #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain
 num_r_samples = 20
 sampling_time = 6000
 
@@ -260,7 +259,7 @@ def main():
                 print('Packet Loss Ratio: {}%'.format(str(round(transceiver.num_disc
                                                                 / (transceiver.num_rx + transceiver.num_disc) * 100, 2))))
             except ZeroDivisionError:
-                print('Packet Loss Ratio: N/A%')
+                print('Packet Loss Ratio: N/A')
     print('=' * 50)
 
     # Print simulation running time.
@@ -356,7 +355,7 @@ def main():
                     log_summary_file.write('\nPacket Loss Ratio: {}%'.format(str(round(transceiver.num_disc
                                                                     / (transceiver.num_rx + transceiver.num_disc) * 100, 2))))
                 except ZeroDivisionError:
-                    log_summary_file.write('\nPacket Loss Ratio: N/A%')
+                    log_summary_file.write('\nPacket Loss Ratio: N/A')
         log_summary_file.write('\n')                                                        
         log_summary_file.write('=' * 50)
 
@@ -421,8 +420,8 @@ def main():
     terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
     RMSE_plot(world, step, log_step_interval, ee, log_control[2], directory)
     landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
-    y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
-    mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
+    #y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
+    #mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
     real_metric_distribution(world, directory, log_control[2])
 
     plt.show()

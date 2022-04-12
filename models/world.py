@@ -136,11 +136,11 @@ class World:
                     if tn == rover.radio.next_tx:
                         transmitter = rover
                         transmitter.radio.transmit_pos(self)
-                # elif(self._mission == 'AS'):
-                #     # if rover.transmit == True and tn%rover.num_rovers == rover.rov_id:
-                #     #     transmitter = rover
-                #     #     rover.update_transmission_flag()
-                #     #     transmitter.radio.transmit_change_metric(self)   
+                elif(self._mission == 'AS'):
+                    if rover.transmit == True and tn%rover.num_rovers == rover.rov_id:
+                        transmitter = rover
+                        rover.update_transmission_flag()
+                        transmitter.radio.transmit_change_metric(self)   
 
 
         #Slowing down simulation

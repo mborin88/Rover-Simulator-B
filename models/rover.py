@@ -10,8 +10,7 @@ from controllers.line_sweep.goal_driven import move2goal
 from controllers.line_sweep.passive import passive_cooperation, simple_passive_cooperation
 from controllers.advanced_line_sweep.goal_driven import advanced_move2goal 
 from controllers.advanced_line_sweep.passive import advanced_passive_cooperation, advanced_simple_passive_cooperation
-from controllers.adaptive_sampling.linear_adjustment import linear_adjusted_sampler
-from controllers.adaptive_sampling.proportional_adjustment import proportional_adjustment_sampler
+from controllers.adaptive_sampling.independent_AS import proportional_adjustment_sampler
 
 STARTING_SPEED = 0.2       # m/s
 MAXIMUM_SPEED = 0.5        # m/s, which can be exceeded due to the effect of slope.
@@ -47,7 +46,7 @@ class Rover:
         self._connectivity = [0] * num_rovers
 
         self._transmit = False
-        #self._avg_sample_dist = sampling_dist
+        self._avg_sample_dist = 500
         self._sample_dist = 500
 
         self._K_sampler = [1, 1, 1]                           #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain
@@ -142,9 +141,9 @@ class Rover:
     def transmit(self):
         return self._transmit    
 
-    # @property
-    # def avg_sample_dist(self):
-    #     return self._avg_sample_dist
+    @property
+    def avg_sample_dist(self):
+        return self._avg_sample_dist
 
     @property
     def sample_dist(self):
@@ -235,6 +234,7 @@ class Rover:
         Configure the type of controller used to control velocity.
         """
         self._sample_dist = dist
+        self._avg_sample_dist = dist
 
     def config_req_sample_steps(self, dist):
         """
