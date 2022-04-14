@@ -10,7 +10,8 @@ from controllers.line_sweep.goal_driven import move2goal
 from controllers.line_sweep.passive import passive_cooperation, simple_passive_cooperation
 from controllers.advanced_line_sweep.goal_driven import advanced_move2goal 
 from controllers.advanced_line_sweep.passive import advanced_passive_cooperation, advanced_simple_passive_cooperation
-from controllers.adaptive_sampling.independent_AS import proportional_adjustment_sampler
+from controllers.adaptive_sampling.independent_AS import independent_sampler
+from controllers.adaptive_sampling.co_operative_AS import co_op_sampler
 
 STARTING_SPEED = 0.2       # m/s
 MAXIMUM_SPEED = 0.5        # m/s, which can be exceeded due to the effect of slope.
@@ -51,11 +52,13 @@ class Rover:
 
         self._K_sampler = [1, 1, 1]                           #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain
         self._measured_samples = []                     # Samples gathered
-        self._change_metric = [0] * num_rovers                         # Most recent change metric 
+        self._metric = [[0] * 3 for _ in range(num_rovers)]                         # Most recent change metric
+        self._weighted_metric  = np.array([np.nan] * (num_rovers))   
         self._max_num_samples = 80                      # Max number of samples the rover can take
         self._num_samples = 0                           # Number of samples taken by rover
         self._req_sampling_steps = 6000                       # Default 6000 steps, how many steps it takes to gather an accurate sample 10 
         self._sampling_steps_passed = 0                 # How long the rover has been sampling for
+        self._sample_metric_order = 0
         self._is_sampling = False                       # Is rover currently sampling.
 
         # The control policy used by the rover.
@@ -150,8 +153,16 @@ class Rover:
         return self._sample_dist
 
     @property
+    def K_sampler(self):
+        return self._K_sampler
+
+    @property
     def measured_samples(self):
         return self._measured_samples
+
+    @property
+    def metric(self):
+        return self._metric
 
     @property
     def max_num_samples(self):
@@ -172,6 +183,10 @@ class Rover:
     @property
     def is_sampling(self):
         return self._is_sampling
+
+    @property
+    def sample_metric_order(self):
+        return self._sample_metric_order
 
     @property
     def speed_controller(self):
@@ -213,34 +228,40 @@ class Rover:
 
     def config_decay_type(self, decay):
         """
-        Configure pose logger.
+        Configure style of decay
         """
         self._decay_type = decay
 
     def config_decay_zero_crossing(self, zc):
         """
-        Configure pose logger.
+        Configure point when decay of communication should reach 0.
         """
         self._decay_zero_crossing = zc
 
     def config_adaptive_sampler_gains(self, gains):
         """
-        Configure the type of controller used to control velocity.
+        Configure gains for the adaptive sampler
         """
         self._K_sampler = gains
 
     def config_sample_dist(self, dist):
         """
-        Configure the type of controller used to control velocity.
+        Congigure initial sampling distance and avg_sampling distance.
         """
         self._sample_dist = dist
         self._avg_sample_dist = dist
 
     def config_req_sample_steps(self, dist):
         """
-        Configure the type of controller used to control velocity.
+        Sampling steps required for successful sample to be taken.
         """
         self._req_sampling_steps = dist
+
+    def config_sample_order_metric(self, order):
+        """
+        What derivative or absolute value to measure of the metric
+        """
+        self._sample_metric_order = order
 
     def config_pose_logger(self, logger):
         """
@@ -260,11 +281,19 @@ class Rover:
         """
         self._r_noise = new_r
     
-    def update_transmission_flag(self):
+    def reset_transmission_flag(self):
+        """
+        Reset transmission flag to Flalse
+        """
         self._transmit = False
     
-    def update_change_metric(self, value):
-        self._change_metric[0] = round(self._K_sampler[0] * value, 5)
+    def update_metric(self, r_id, x_pos, y_pos, value):
+        """
+        Updates metric with position and value.
+        """
+        self._metric[r_id-1][0] = x_pos
+        self._metric[r_id-1][1] = y_pos
+        self._metric[r_id-1][2] = round(value, 5)
 
     def generate_noise(self, sigma):
         """
@@ -282,11 +311,17 @@ class Rover:
         self._current_goal = goal
 
     def update_speeds(self, vx, vy):
+        """
+        Updates te x velocity, y velocity and absolute velocity.
+        """
         self._control[0] = round(vx, 3)         #X direction speed 
         self._control[1] = round(vy, 3)         #Y direction speed
         self._control[2] = round(sqrt(vx ** 2 + vy ** 2), 3)  #Overall speed
     
     def check_invalid_landcover(self, world):
+        """
+        Flag to terminate program if rover entered water.
+        """
         p = self._pose
         surrounding = LCM2015_NAME[int(world.landcover.get_data(p[0], p[1]))]
         if(surrounding == 'Saltwater') or (surrounding == 'Freshwater'):
@@ -356,9 +391,9 @@ class Rover:
         if self.is_mission_terminated():
             pass
         else:
-            if(self._control_policy != 'Adaptive Sampling'):
+            if(world.mission != 'AS'):
                 self.motion(world, dt)
-            elif(self._control_policy == 'Adaptive Sampling' and self._is_sampling == False):
+            elif(world.mission == 'AS' and self._is_sampling == False):
                 self.motion(world, dt)                
  
 
@@ -391,9 +426,12 @@ class Rover:
                     advanced_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif self._control_policy == 'Simple Passive-cooperative':
                     advanced_simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
-                elif self._control_policy == 'Adaptive Sampling':
+                elif self._control_policy == 'Independent Adaptive Sampling':
                     advanced_move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
-                    proportional_adjustment_sampler(self, world, MAXIMUM_SAMPLE_DIST, MINIMUM_SAMPLE_DIST)
+                    independent_sampler(self, world, MAXIMUM_SAMPLE_DIST, MINIMUM_SAMPLE_DIST)
+                elif self._control_policy == 'Co-op Adaptive Sampling':
+                    advanced_move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    co_op_sampler(self, world, MAXIMUM_SAMPLE_DIST, MINIMUM_SAMPLE_DIST)
 
 
     def measure(self):
@@ -482,6 +520,19 @@ class Rover:
             else:
                 poses.append(info.payload[2:])
         return poses
+    
+    def get_neighbour_data(self):
+        """
+        Get neighbour(s)' pose info.
+        """
+        neighbour_info = self.get_neighbour_info()
+        data = []
+        for info in neighbour_info:
+            if info is None:
+                data.append(None)
+            else:
+                data.append(info.payload[1:])
+        return data
 
     def get_interval(self):
         """

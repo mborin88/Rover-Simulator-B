@@ -133,14 +133,16 @@ class World:
                 pass
             else:
                 if(self._mission == 'LS'):
-                    if tn == rover.radio.next_tx:
-                        transmitter = rover
-                        transmitter.radio.transmit_pos(self)
+                    if(rover.control_policy != 'Goal-driven'):
+                        if tn == rover.radio.next_tx:
+                            transmitter = rover
+                            transmitter.radio.transmit_pos(self)
                 elif(self._mission == 'AS'):
-                    if rover.transmit == True and tn%rover.num_rovers == rover.rov_id:
-                        transmitter = rover
-                        rover.update_transmission_flag()
-                        transmitter.radio.transmit_change_metric(self)   
+                    if(rover.control_policy != 'Independent Adaptive Sampling'):
+                        if rover.transmit == True and tn%rover.num_rovers == rover.rov_id:
+                            transmitter = rover
+                            transmitter.radio.transmit_metric(self)   
+                            rover.reset_transmission_flag()
 
 
         #Slowing down simulation
@@ -154,7 +156,12 @@ class World:
             elif receiver == transmitter:
                 pass
             else:
-                receiver.radio.receive(self)
+                if(self._mission == 'LS'):
+                    if(rover.control_policy != 'Goal-driven'):
+                        receiver.radio.receive_pos(self)
+                elif(self._mission == 'AS'):
+                    if(rover.control_policy != 'Independent Adaptive Sampling'):
+                        receiver.radio.receive_metric(self)
 
         self.clear_channel()
 

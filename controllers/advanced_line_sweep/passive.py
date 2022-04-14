@@ -32,7 +32,7 @@ def scale_all_control(rov):
     Scale all control variable. 
     """ 
     multiplier = np.array([1.0]*len(rov._all_control))
-    for i in range(1,len(rov._all_control)):
+    for i in range(1, len(rov._all_control)):
         multiplier[i] = time_decay(rov, rov._steps_control_not_updated[i])
     rov._all_control = rov._all_control * multiplier
 

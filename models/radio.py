@@ -67,7 +67,7 @@ class Radio:
         self._num_discarded = 0         # The number of discarded packets.
         self._receiver_buffer = None    # The buffer to store the most recent packet received.
         self._neighbour_register = [None, None]
-        # The memory to store the most packets received from neighbours (at most 2).
+        # The memory to store the most packets received from neighbours.
 
     @property
     def radio_id(self):
@@ -201,22 +201,38 @@ class Radio:
         """
         return self._rover.measurement
     
-    def get_change_metric(self):
+    def get_metric(self):
         """
         Get the measured pose info ready for packet formation.
         """
-        return self._rover.change_metric[self._radio_id]     
+        return self._rover.metric[self._radio_id-1]     
 
-    def transmit_change_metric(self, world):
+    def transmit_metric(self, world):
         """
         Place a new transmission into the channel.
         """
-        pose_msred = self.get_change_metric()
-        payload = [self._radio_id, pose_msred[0], pose_msred[1]]
+        metric_data = self.get_metric()
+        payload = [self._radio_id, metric_data[2], metric_data[0], metric_data[1]]
         packet = Packet(self, payload)
         self._num_transmitted += 1
         world.add_packet(packet)
         self._next_tx += self._interval
+
+    def receive_metric(self, world):
+        """
+        Receive a packet which can be successfully demodulated from the channel.
+        """
+        threshold = self._sensitivity
+        if len(world.channel) > 0:
+            packet = world.channel[-1]
+            if self.rx_power(packet, world) >= threshold:
+                self._num_received += 1
+                self._receiver_buffer = packet
+                self.update_neighbour_metric_register()
+            else:
+                self._num_discarded += 1
+        else:
+            pass
 
     def transmit_pos(self, world):
         """
@@ -230,7 +246,7 @@ class Radio:
         world.add_packet(packet)
         self._next_tx += self._interval
 
-    def receive(self, world):
+    def receive_pos(self, world):
         """
         Receive a packet which can be successfully demodulated from the channel.
         """
@@ -258,6 +274,14 @@ class Radio:
     def update_neighbour_register(self):
         """
         Update neighbour register.
+        """
+        packet = self._receiver_buffer
+        tx_id = packet.tx.radio_id
+        self._neighbour_register[tx_id - 1] = packet
+    
+    def update_neighbour_metric_register(self):
+        """
+        Update neighbour metric register.
         """
         packet = self._receiver_buffer
         tx_id = packet.tx.radio_id

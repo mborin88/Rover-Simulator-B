@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000      #432000      # Maximum iteration
+steps = 100000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 120   # Number of time slots between transmissions for one device.
@@ -42,19 +42,19 @@ rand.seed(seed_value)
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Forward Slant multivariate Gaussian"
+log_title_tag = "Absolute Value"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Working Well good enough for full runs it seems. Possible tweaking of sampler gains'''            #Additional notes to be added to Log file if wished
+log_notes = '''Seems to be working well.'''            #Additional notes to be added to Log file if wished
 
 # Configure communication settings:
 user_f = 869.525                                    # Carrier center frequency, in MHz.
 user_bw = BW[0]                                     # Bandwidth, in kHz.
-user_sf = SF[3]                                     # Spreading factor.
+user_sf = SF[6]                                     # Spreading factor.
 user_cr = CR[3]                                     # Coding rate.
 user_txpw = 24                                      # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = 4
+ctrl_policy = 5
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -72,9 +72,10 @@ num_of_waypoints = 10
 # 4 Adaptive Sampling Parameters
 metric_mean = ['L', 'B']                            #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[2, 1], [0, 0.75]]
-K_sampler = [500, 4, 1]                             #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain
-num_r_samples = 20
-sampling_time = 6000
+K_sampler = [0.2, 2, 1]                             #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain # 500 4
+num_r_samples = 10
+sampling_time = 1000
+metric_order = 0
 
 
 def main():
@@ -84,7 +85,7 @@ def main():
     print('')
     print('Simulating...')
     
-    if(ctrl_policy == 4):
+    if(ctrl_policy >= 4):
         mission = 'AS'
     else:
         mission = 'LS'
@@ -162,11 +163,22 @@ def main():
             # which is set differently for each rover.
             starter.config_speed_controller(speed_controller)
             starter.speed_controller.set_ref(starter.goal)
-            starter.config_control_policy('Adaptive Sampling')
+            starter.config_control_policy('Independent Adaptive Sampling')
             starter.config_adaptive_sampler_gains(K_sampler)
             starter.config_sample_dist(s_dist)
             starter.config_req_sample_steps(sampling_time)
-            #starter.config_sampling_points()
+            starter.config_sample_order_metric(metric_order)
+        elif ctrl_policy == 5:
+            speed_controller = PController(None, K_goal)
+            # The reference is goal point [x_g, y_g],
+            # which is set differently for each rover.
+            starter.config_speed_controller(speed_controller)
+            starter.speed_controller.set_ref(starter.goal)
+            starter.config_control_policy('Co-op Adaptive Sampling')
+            starter.config_adaptive_sampler_gains(K_sampler)
+            starter.config_sample_dist(s_dist)
+            starter.config_req_sample_steps(sampling_time)
+            starter.config_sample_order_metric(metric_order)
 
     # Step simulation and record data.
     ee = []  # To record formation error.
@@ -299,11 +311,12 @@ def main():
             \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}
-            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nNumber of Samples = {}\nSampler Gain = {}'''\
+            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nDefault Number of Samples = {}\nDefault Sampling Distance = {}
+            Sampler Gain = {}\nRequired Time for Sampling = {}\nNth Order of derivative measure = {}'''\
             .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
                     str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
                     str(len_interval), str(K_goal), str(K_neighbour), str(metric_mean[0]), str(metric_mean[1]), str(metric_covariance[0][1]), \
-                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples), str(K_sampler)))
+                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples), str(s_dist), str(K_sampler), str(metric_order)))
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
         log_summary_file.write('\n')
@@ -377,11 +390,12 @@ def main():
             \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
             \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
             \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}
-            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nNumber of Samples = {}\nSampler Gain = {}'''\
+            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nDefault Number of Samples = {}\nDefault Sampling Distance = {}
+            Sampler Gain = {}\nRequired Time for Sampling = {}\nNth Order of derivative measure = {}'''\
             .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
                     str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
                     str(len_interval), str(K_goal), str(K_neighbour), str(metric_mean[0]), str(metric_mean[1]), str(metric_covariance[0][1]), \
-                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples), str(K_sampler)))
+                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples), str(s_dist), str(K_sampler), str(metric_order)))
         log_raw_file.write('\n')
         log_raw_file.write('=' * 50)
         log_raw_file.write("\t\t Rover\n")
