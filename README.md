@@ -3,11 +3,11 @@
 Rover-Simulator is the further developement of Rover-Simulator-Zero by Yishi Fu.
 Rover-Simulator is a simulator for sparse robot swarms in hilly nature environments where swarm members communicate via LoRa PHY.
 Where different controllers have been developed to allow the swarm to perform different tasks. The tasks the rover can perform are:
-* Line Sweep - rovers traverse across a map keeping a line.
+* Line Sweep - Rovers traverse across a map keeping a line.
 
-* Advancced Line Sweep - further developement of line sweep where each rover follows a pre-determined path by the user.
+* Advanced Line Sweep - Further developement of line sweep where each rover follows a pre-determined path by the user.
 
-* Adaptive Sampling - (ADD DETAILS HERE LATER)
+* Adaptive Sampling - Rovers take optimal measurments of the land using an efficient method to reduce total number of samples taken.
 
 ## Downloading and Running Rover-Simulator
 The standard way of downloading Rover-Simulator is by downloaidng the development sources via Git.
@@ -77,7 +77,8 @@ len_interval| FLOAT | Interval between transmissions.
 Parameters needed to be configured for a line sweeping mission
 Variable | Type | Description
 --- | --- | ---
-K| FLOAT ARRAY | Gain of controller. (**K_goal** for control policy 1 and **K_neighbour** for control policy 2 and 3) (Array length of 2 )
+K_goal| FLOAT ARRAY | Gain of controller. (Array length of 2)
+K_neighbour | FLOAT ARRAY | Gain of controller.(Array length of 2)
 rover_sep| INTEGER | Distance between rovers in meters.
 decay| INTEGER | Mathematic style of the decay of rovers speed position, over time. (control policy 2)
 zero_crossing| INTEGER | How many time slots the adjustment speed of a neighbouring rover is valid for (control policy 2)
@@ -98,6 +99,11 @@ Variable | Type | Description
 metric_mean| STRING ARRAY | Position of where mean of sampling metric will be located. ([0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom)
 metric_covariance|2D FLOAT ARRAY | Covariance matrix for generating sampling metric
 num_r_samples| INTEGER | Number of base samples to be used if using a fixed sampler. (No. samples adjsuted from this point automatically)
+K_sampler[0] | FLOAT | Gain for the rovers own sampling metric measure
+K_sampler[1] | FLOAT | Gain for the neighbouring rovers sampling metrics. Affects how significant the neighbouring rovers metrics are.
+K_smapler[2] | FLOAT | Gain for natural increase of sampling distance if insignificant metric recieved. 
+sampling_time | INTEGER | Number of steps required for successful sample to be taken. (Steps rover will be stationary for)
+metric_order | INTEGER | Whether to take absolute, first order or second order derivative of the metric.
 
 
 ## Missions
@@ -108,17 +114,18 @@ The line sweep mission entails the swarm of rovers maintaining a line as they tr
 * Passive
 
 ### Advanced Line Sweep
-The advanced line sweep differs from the original line sweep in that the rovers take multiple waypoints between the starting and endpoint, with each of these waypoints being able to be manually adjusted from the user. This allows this line sweep to now avoid certain regions such as water bodies which couldn't be done by the original line sweeping missions. Controllers available for this type of misssion:s
+The advanced line sweep differs from the original line sweep in that the rovers take multiple waypoints between the starting and endpoint, with each of these waypoints being able to be manually adjusted from the user. This allows this line sweep to now avoid certain regions such as water bodies which couldn't be done by the original line sweeping missions. Controllers available for this type of misssion:
 * Goal-Driven
 * Simple Passive
 * Passive
 
 ### Adaptive Sampling
-Adaptive sampling is a mission where the swarm ultimately hopes to take samples at the most important points during a sweep to build up an accurate depiction of a distribution of a metric (e.g. greenhoouse gases, temperature...)
-ADD MORE DETAILS
+Adaptive sampling is a mission where the swarm ultimately hopes to take samples at the most important points during a sweep to build up an accurate depiction of a distribution of a metric (e.g. greenhoouse gases, temperature...) Controllers available for this type of misssion:
+* Independent
+* Co-operative
 
 ## LoRa Communication
-**Notes:** The communication parameters aren't forced to abide the LoRa Regulations for any particular area, so after running manual check has to be done to see if the LoRa parameters in your area have been abided to. 
+**Notes:** The communication parameters aren't defaulted to abide to a LoRa Regulations for any particular region, so after running manual check has to be done to see if the LoRa parameters in your region have been abided to. 
 
 After running a mission more details of the LoRa communications are shown such as the duty cycle, this can be found in the ```SSS Summary Data.txt``` log files.
 
