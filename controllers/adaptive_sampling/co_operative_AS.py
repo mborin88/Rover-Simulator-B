@@ -101,7 +101,7 @@ def update_sample_dist(rov, max_sample_dist, min_sample_dist):
             w, neighbour_metrics = weight_neighbours(rov)
             neighbour_mean = np.average(neighbour_metrics, weights=w)
 
-            neighbour_multiplier = 1 / (neighbour_mean + 1)
+            neighbour_multiplier = 1 / (rov.K_sampler[0] * neighbour_mean + 1)
             rov_multiplier = 1 / (rov.K_sampler[0] * rov.metric[rov.rov_id-1][2] + 1)
             diff = rov_multiplier - neighbour_multiplier
     

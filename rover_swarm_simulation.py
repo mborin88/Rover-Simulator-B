@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000      #432000      # Maximum iteration
+steps = 100000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 3000   # Number of time slots between transmissions for one device.
@@ -40,9 +40,9 @@ seed_value = dt.datetime.now().microsecond      #Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '111'
+log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Absolute Value"
+log_title_tag = "Full Run - Absolute, K[2] 0.25 "
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Seems to be working well.'''            #Additional notes to be added to Log file if wished
 
@@ -72,7 +72,7 @@ num_of_waypoints = 10
 # 4 Adaptive Sampling Parameters
 metric_mean = ['L', 'B']                            #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[2, 1], [0, 0.75]]
-K_sampler = [0.2, 2, 1]                             #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain # 500 4
+K_sampler = [0.2, 3.25, 0.25]                             #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain # 500 4
 num_r_samples = 20
 sampling_time = 6000
 metric_order = 0
@@ -142,7 +142,8 @@ def main():
             # which is set differently for each rover.
             starter.config_speed_controller(speed_controller)
             starter.speed_controller.set_ref(starter.goal)
-            starter.config_control_policy('Goal-driven')
+            full_mission_name = 'Goal-driven'
+            starter.config_control_policy(full_mission_name)
         elif ctrl_policy == 2:  # Passive-cooperative controller
             speed_controller = PController(None, K_neighbour)
             starter.config_speed_controller(speed_controller)
@@ -150,20 +151,23 @@ def main():
             starter.config_decay_zero_crossing(zero_crossing)
             # The reference for passive-cooperative controller
             # dynamically changes when new packet from the neighbour is received.
-            starter.config_control_policy('Passive-cooperative')
+            full_mission_name = 'Passive-cooperative'
+            starter.config_control_policy(full_mission_name)
         elif ctrl_policy == 3:
             speed_controller = PController(None, K_neighbour)
             starter.config_speed_controller(speed_controller)
             # The reference for passive-cooperative controller
             # dynamically changes when new packet from the neighbour is received.
-            starter.config_control_policy('Simple Passive-cooperative')
+            full_mission_name = 'Simple Passive-cooperative'
+            starter.config_control_policy(full_mission_name)
         elif ctrl_policy == 4:
             speed_controller = PController(None, K_goal)
             # The reference is goal point [x_g, y_g],
             # which is set differently for each rover.
             starter.config_speed_controller(speed_controller)
             starter.speed_controller.set_ref(starter.goal)
-            starter.config_control_policy('Independent Adaptive Sampling')
+            full_mission_name = 'Independent Adaptive Sampling'
+            starter.config_control_policy(full_mission_name)
             starter.config_adaptive_sampler_gains(K_sampler)
             starter.config_sample_dist(s_dist)
             starter.config_req_sample_steps(sampling_time)
@@ -174,11 +178,14 @@ def main():
             # which is set differently for each rover.
             starter.config_speed_controller(speed_controller)
             starter.speed_controller.set_ref(starter.goal)
-            starter.config_control_policy('Co-op Adaptive Sampling')
+            full_mission_name = 'Co-op Adaptive Sampling'
+            starter.config_control_policy(full_mission_name)
             starter.config_adaptive_sampler_gains(K_sampler)
             starter.config_sample_dist(s_dist)
             starter.config_req_sample_steps(sampling_time)
             starter.config_sample_order_metric(metric_order)
+        else:
+            full_mission_name = 'NA'
 
     # Step simulation and record data.
     ee = []  # To record formation error.
@@ -324,6 +331,7 @@ def main():
         log_summary_file = open(directory + log_summary_file_name+'.txt', 'w')
         log_summary_file.write(log_summary_file_name + ': ' + log_title + '\n')
         log_summary_file.write("\nNotes: " + log_notes)
+        log_summary_file.write("\nMission: " + full_mission_name)
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
         log_summary_file.write('\n')
@@ -431,7 +439,8 @@ def main():
     RMSE_plot(world, step, log_step_interval, ee, log_control[2], directory)
     landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
     y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
-    mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
+    # mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
+    generate_distribution(world, N, x_min, x_max, y_min, y_max, directory, log_control[2])
     real_metric_distribution(world, directory, log_control[2])
 
     plt.show()

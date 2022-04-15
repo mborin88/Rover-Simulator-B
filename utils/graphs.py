@@ -31,7 +31,7 @@ def terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_int
         x = [data[0] for waypoint in samples for data in waypoint]
         y = [data[1] for waypoint in samples for data in waypoint]
         metric = [data[2] for waypoint in samples for data in waypoint]
-        ax.scatter(x, y, c=metric, cmap='YlOrBr', zorder=2)
+        ax.scatter(x, y, c=metric, cmap='YlOrBr',s=10, zorder=2)
     elif(world.mission == 'LS'):
         # Waypoint grapher on contour plot
         for k in range(waypoint_interval, step, waypoint_interval):
@@ -114,7 +114,7 @@ def landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint
         x = [data[0] for waypoint in samples for data in waypoint]
         y = [data[1] for waypoint in samples for data in waypoint]
         metric = [data[2] for waypoint in samples for data in waypoint]
-        ax.scatter(x, y, c=metric, cmap='YlOrBr', zorder=2)
+        ax.scatter(x, y, c=metric, cmap='YlOrBr', s=10, zorder=2)
     elif(world.mission == 'LS'):
         #Waypoint grapher for landcover map
         for k1 in range(waypoint_interval, step, waypoint_interval):
@@ -246,7 +246,7 @@ def generate_distribution(world, N, x_min, x_max, y_min, y_max, directory, graph
             fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
             cmap = 'viridis'
             contf = ax.tricontourf(x, y, metric, cmap=plt.get_cmap(cmap), zorder=1)
-            ax.scatter(x, y, 20, color='white', zorder=2)
+            ax.scatter(x, y, color='white', s=10, zorder=2)
             plt.colorbar(contf, label='Measurment')
             plt.xlim([x_min, x_max])                        # Change to using the sampling distribution object from world
             plt.ylim([y_min, y_max])
@@ -275,7 +275,7 @@ def real_metric_distribution(world, directory, graph_log):
         contf = ax.contourf(world._sample_metric._x_range, world._sample_metric._y_range, \
                 world._sample_metric._multiplier * world._sample_metric.distribution.pdf(pos), \
                 cmap=plt.get_cmap(cmap), zorder=1)
-        ax.scatter(x, y, 20, color='black', zorder=2)
+        ax.scatter(x, y, color='black', s=10, zorder=2)
         plt.colorbar(contf, label='Measurement')
         ax.set_xlabel('Easting (m)')
         ax.set_ylabel('Northing (m)')

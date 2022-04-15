@@ -17,7 +17,7 @@ STARTING_SPEED = 0.2       # m/s
 MAXIMUM_SPEED = 0.5        # m/s, which can be exceeded due to the effect of slope.
 MINIMUM_SPEED = 0.05       # m/s, which depicts the worst scenario and cannot be decreased any more.
 
-MAXIMUM_SAMPLE_DIST = 750
+MAXIMUM_SAMPLE_DIST = 1000
 MINIMUM_SAMPLE_DIST = 100
 
 
