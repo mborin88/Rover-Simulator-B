@@ -70,8 +70,8 @@ def second_derivative(rov):
 
 def update_sample_dist(rov, max_sample_dist, min_sample_dist):
     if(len(rov.measured_samples)>= rov.sample_metric_order):
-        n = rov._metric[rov.rov_id-1][2]
-        temp_sample_dist = rov.avg_sample_dist * (rov._K_sampler[1]/(n+1))
+        n = 1/(rov.K_sampler[0] * rov.metric[rov.rov_id-1][2] + 1)
+        temp_sample_dist = rov.avg_sample_dist * rov.K_sampler[1] * n
 
         if(temp_sample_dist < min_sample_dist):
             rov._sample_dist = min_sample_dist
