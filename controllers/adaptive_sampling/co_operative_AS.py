@@ -34,7 +34,10 @@ def avg_pos(rov, i, xY):
     Average position for gradient and second derivative metric
     """
     #change to for loop for adding the different x's as -2, -1, will caused IndexError
-    return (rov.measured_samples[-i+2][xY] + rov.measured_samples[-i+1][xY] + rov.measured_samples[-i][xY]) / i
+    total = 0
+    for n in range(i):
+        total += rov.measured_samples[-i+n][xY]
+    return total / i
 
 def euclidean_dist(x1, x2, y1, y2):
     dist_x =  x1 - x2 
@@ -70,44 +73,44 @@ def first_derivative(rov):
     Difference calc of the samples measured
     """
     sample_difference = []
-    if(len(rov.measured_samples)>= rov.sample_metric_order + 1):
-        sample_difference.append(gradient_calc(rov, 2))
+    sample_difference.append(gradient_calc(rov, 2))
 
-        avg_x = avg_pos(rov, 2, 0)
-        avg_y = avg_pos(rov, 2, 1)
+    avg_x = avg_pos(rov, 2, 0)
+    avg_y = avg_pos(rov, 2, 1)
 
-        rov.update_metric(rov.rov_id, avg_x, avg_y, abs(sample_difference[0]))
+    rov.update_metric(rov.rov_id, avg_x, avg_y, abs(sample_difference[0]))
 
 def second_derivative(rov):
     """
     Difference calc of the samples measured
     """
     sample_difference = []
-    if(len(rov.measured_samples)>= rov.sample_metric_order + 1):
-        sample_difference.append(gradient_calc(rov, 3))
-        sample_difference.append(gradient_calc(rov, 2))
+    sample_difference.append(gradient_calc(rov, 3))
+    sample_difference.append(gradient_calc(rov, 2))
 
-        avg_x = avg_pos(rov, 3, 0)
-        avg_y = avg_pos(rov, 3, 1)
+    avg_x = avg_pos(rov, 3, 0)
+    avg_y = avg_pos(rov, 3, 1)
 
-        rov.update_metric(rov.rov_id, avg_x, avg_y, abs(sample_difference[1] - sample_difference[0]))
+    rov.update_metric(rov.rov_id, avg_x, avg_y, abs(sample_difference[1] - sample_difference[0]))
 
 def update_sample_dist(rov, max_sample_dist, min_sample_dist):
     """
     Update sampling distance based on the metric of itself and neighbours
     """
     if(len(rov.measured_samples)>= rov.sample_metric_order):
+
+        rov_multiplier = 1 / (rov.K_sampler[0] * rov.metric[rov.rov_id-1][2] + 1)
+
         if(rov.metric.count([0, 0, 0]) < len(rov.metric)-1):
             w, neighbour_metrics = weight_neighbours(rov)
             neighbour_mean = np.average(neighbour_metrics, weights=w)
 
             neighbour_multiplier = 1 / (rov.K_sampler[0] * neighbour_mean + 1)
-            rov_multiplier = 1 / (rov.K_sampler[0] * rov.metric[rov.rov_id-1][2] + 1)
             diff = rov_multiplier - neighbour_multiplier
     
             n = rov_multiplier + (rov.K_sampler[2] * diff)
         else:
-            n = 1/(rov.K_sampler[0] * rov.metric[rov.rov_id-1][2] + 1)
+            n = rov_multiplier
         
         if(n < 0):
             n = 0
@@ -148,23 +151,22 @@ def co_op_sampler(rov, world, s_max, s_min):
         rov._sampling_steps_passed = 0
         rov.measured_samples.append([p[0], p[1], metric_measurement])
 
-        if(rov.sample_metric_order==0):
-            absolute_value(rov)
-        elif(rov.sample_metric_order==1):
-            first_derivative(rov)
-        elif(rov.sample_metric_order==2):
-            second_derivative(rov)
-        
-        if(neighbour_metrics.count(None)< len(neighbour_metrics)):
-            for i in range(len(neighbour_metrics)):
-                if(neighbour_metrics[i] is not None):
-                    rov.update_metric(i+1, neighbour_metrics[i][1], neighbour_metrics[i][2], neighbour_metrics[i][0])
+        if(len(rov.measured_samples)> rov.sample_metric_order):
+            if(rov.sample_metric_order==0):
+                absolute_value(rov)
+            elif(rov.sample_metric_order==1):
+                first_derivative(rov)
+            elif(rov.sample_metric_order==2):
+                second_derivative(rov)
+            
+            if(neighbour_metrics.count(None)< len(neighbour_metrics)):
+                for i in range(len(neighbour_metrics)):
+                    if(neighbour_metrics[i] is not None):
+                        rov.update_metric(i+1, neighbour_metrics[i][1], neighbour_metrics[i][2], neighbour_metrics[i][0])
 
-        update_sample_dist(rov, s_max, s_min)
-
-        rov._is_sampling = False
-        if(len(rov.measured_samples) >= rov.sample_metric_order):
+            update_sample_dist(rov, s_max, s_min)
             rov._transmit = True
+        rov._is_sampling = False
 
     elif(rov.is_sampling):
         rov._sampling_steps_passed += 1

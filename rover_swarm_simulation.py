@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 100000      #432000      # Maximum iteration
+steps = 432000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 3000   # Number of time slots between transmissions for one device.
@@ -42,7 +42,7 @@ rand.seed(seed_value)
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Full Run - Absolute, K[2] 0.25 "
+log_title_tag = "Full Run - Gradient"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Seems to be working well.'''            #Additional notes to be added to Log file if wished
 
@@ -72,10 +72,10 @@ num_of_waypoints = 10
 # 4 Adaptive Sampling Parameters
 metric_mean = ['L', 'B']                            #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[2, 1], [0, 0.75]]
-K_sampler = [0.2, 3.25, 0.25]                             #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain # 500 4
+K_sampler = [200, 3.25, 0.25]                             #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain # 500 4, [0.2, 3.25, 0.25]
 num_r_samples = 20
 sampling_time = 6000
-metric_order = 0
+metric_order = 1
 
 
 def main():
@@ -440,7 +440,7 @@ def main():
     landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
     y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
     # mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
-    generate_distribution(world, N, x_min, x_max, y_min, y_max, directory, log_control[2])
+    # generate_distribution(world, N, x_min, x_max, y_min, y_max, directory, log_control[2])
     real_metric_distribution(world, directory, log_control[2])
 
     plt.show()
