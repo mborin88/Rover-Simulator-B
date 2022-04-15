@@ -2,22 +2,22 @@
 
 import math
 import numpy as np
-import warnings
 
-# def linear_sampling_waypoints(rov):
-#     """
-#     Linear Sampler where sampling positions adjusted depending flux
-#     """
-#     if(len(rov.measured_samples)> 3):
-#         rov._metric.append(abs(rov.measured_samples[-3]/rov.measured_samples[-2]))
-#         rov._metric.append(abs(rov.measured_samples[-2]/rov.measured_samples[-1]))
+"""
+def linear_sampling_waypoints(rov):
     
-#     if(rov._metric[1] > rov._metric[0]):
-#         rov._sample_dist += 50
-#     else:
-#         if(rov.sample_dist > 100):
-#             rov._sample_dist -= 50
-
+    #Linear Sampler where sampling positions adjusted depending flux
+    
+    if(len(rov.measured_samples)> 3):
+        rov._metric.append(abs(rov.measured_samples[-3]/rov.measured_samples[-2]))
+        rov._metric.append(abs(rov.measured_samples[-2]/rov.measured_samples[-1]))
+    
+    if(rov._metric[1] > rov._metric[0]):
+        rov._sample_dist += 50
+    else:
+        if(rov.sample_dist > 100):
+            rov._sample_dist -= 50
+"""
 
 def gradient_calc(rov, i):
     """
@@ -36,9 +36,9 @@ def avg_pos(rov, i, xY):
     #change to for loop for adding the different x's as -2, -1, will caused IndexError
     return (rov.measured_samples[-i+2][xY] + rov.measured_samples[-i+1][xY] + rov.measured_samples[-i][xY]) / i
 
-def euclidean_dist(rov, index):
-    dist_x = rov.metric[index][0] - rov.metric[rov.rov_id-1][0]
-    dist_y = rov.metric[index][1] - rov.metric[rov.rov_id-1][1]
+def euclidean_dist(x1, x2, y1, y2):
+    dist_x =  x1 - x2 
+    dist_y =  y1 - y2 
     return math.sqrt(dist_x**2 + dist_y**2)
 
 def weight_neighbours(rov):
@@ -49,7 +49,8 @@ def weight_neighbours(rov):
     neighbour_metrics = []
     for i in range(len(rov.metric)):
         if(rov.metric[i][0] != 0 and i != rov.rov_id-1):
-            dist = euclidean_dist(rov, i)
+            dist = euclidean_dist(rov.metric[i][0], rov.metric[rov.rov_id-1][0], \
+                                        rov.metric[i][1], rov.metric[rov.rov_id-1][1])
             weights.append(1/dist)
             neighbour_metrics.append(rov.metric[i][2])
     weights = np.array(weights)
@@ -125,9 +126,11 @@ def co_op_sampler(rov, world, s_max, s_min):
     Adaptive sampler sampling at regular intervals
     Linear or proportional adjustment of distance to next waypoint
     """
+    if(len(rov.measured_samples)>0):
+        travelled_dist = euclidean_dist(rov.pose[0], rov.measured_samples[-1][0], \
+                                rov.pose[1], rov.measured_samples[-1][1])
 
-    if((world.dt*world.tn == 0) or \
-            (len(rov.measured_samples) > 0 and rov.pose[1]-rov.measured_samples[-1][1] >= rov.sample_dist)):
+    if((world.dt*world.tn == 0) or (len(rov.measured_samples) > 0 and travelled_dist >= rov.sample_dist)):    
         if(rov.num_samples < rov.max_num_samples and rov.is_sampling == False):
             rov._is_sampling = True
             rov._num_samples += 1

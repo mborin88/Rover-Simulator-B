@@ -139,7 +139,8 @@ class World:
                             transmitter.radio.transmit_pos(self)
                 elif(self._mission == 'AS'):
                     if(rover.control_policy != 'Independent Adaptive Sampling'):
-                        if rover.transmit == True and tn%rover.num_rovers == rover.rov_id:
+                        if((rover.transmit == True and tn%rover.num_rovers == rover.rov_id-1) or \
+                                    (tn == rover.radio.next_tx) and len(rover.measured_samples)>0):
                             transmitter = rover
                             transmitter.radio.transmit_metric(self)   
                             rover.reset_transmission_flag()

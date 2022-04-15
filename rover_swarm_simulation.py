@@ -29,10 +29,10 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 100000      #432000      # Maximum iteration
+steps = 432000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
-len_interval = 120   # Number of time slots between transmissions for one device.
+len_interval = 3000   # Number of time slots between transmissions for one device.
 
 Q = None                                      # State noise.
 R = None                                        # Measurement noise.
@@ -40,7 +40,7 @@ seed_value = dt.datetime.now().microsecond      #Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '000'
+log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Absolute Value"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
@@ -73,8 +73,8 @@ num_of_waypoints = 10
 metric_mean = ['L', 'B']                            #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[2, 1], [0, 0.75]]
 K_sampler = [0.2, 2, 1]                             #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain # 500 4
-num_r_samples = 10
-sampling_time = 1000
+num_r_samples = 20
+sampling_time = 6000
 metric_order = 0
 
 
@@ -261,9 +261,9 @@ def main():
             print('Transmission Power: {} (dBm)'.format(str(transceiver.tx_pw)))
             print('Antenna Gain: {} (dBi)'.format(str(transceiver.ant_gain)))
             print('Payload Length: {} (byte)'.format(str(transceiver.pl)))
-            print('Duty Cycle: {}%'.format(str(round(transceiver.actual_dc() * 100, 1))))
+            print('Duty Cycle: {}%'.format(str(round(transceiver.actual_dc(mission) * 100, 1))))
             print('Airtime: {} (sec)'.format(str(round(transceiver.airtime(), 4))))
-            print('Silent time: {} (sec)'.format(str(round(transceiver.actual_silent_time(), 1))))
+            print('Silent time: {} (sec)'.format(str(round(transceiver.actual_silent_time(mission), 1))))
             print('Transmitted Packets: {}'.format(str(transceiver.num_tx)))
             print('Received Packets: {}'.format(str(transceiver.num_rx)))
             print('Discarded Packets: {}'.format(str(transceiver.num_disc)))
@@ -298,25 +298,32 @@ def main():
             os.mkdir(os.getcwd() + '\\logs\\' + str(area) + '\\control_policy_' + str(ctrl_policy) + '\\' + str(log_title))
     directory = 'logs\\' + str(area) + '\\control_policy_' + str(ctrl_policy) + '\\' + str(log_title) + '\\'
 
+    if(int(log_control) >= 1):
+        log_parameter_file_name = 'SSS Parameters'
+        log_parameter_file = open(directory + log_parameter_file_name+'.txt', 'w')
+        log_parameter_file.write(log_parameter_file_name + ': ' + log_title + '\n')
+        log_parameter_file.write("\nNotes: " + log_notes)
+        log_parameter_file.write('\n')
+        log_parameter_file.write('=' * 50)
+        log_parameter_file.write('\nParameters:\n')
+        log_parameter_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
+            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
+            \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
+            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}
+            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nDefault Number of Samples = {}\nDefault Sampling Distance = {}
+            \nSampler Gain = {}\nRequired Time for Sampling = {}\nNth Order Derivative Measure = {}'''\
+            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
+                    str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
+                    str(len_interval), str(K_goal), str(K_neighbour), str(metric_mean[0]), str(metric_mean[1]), str(metric_covariance[0][1]), \
+                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples), str(s_dist), str(K_sampler),
+                    str(sampling_time), str(metric_order)))
+
     #Log Summary Information
     if(int(log_control[1]) == 1):
         log_summary_file_name = 'SSS Summary Data'
         log_summary_file = open(directory + log_summary_file_name+'.txt', 'w')
         log_summary_file.write(log_summary_file_name + ': ' + log_title + '\n')
         log_summary_file.write("\nNotes: " + log_notes)
-        log_summary_file.write('\n')
-        log_summary_file.write('=' * 50)
-        log_summary_file.write('\nParameters:\n')
-        log_summary_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
-            \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
-            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}
-            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nDefault Number of Samples = {}\nDefault Sampling Distance = {}
-            Sampler Gain = {}\nRequired Time for Sampling = {}\nNth Order of derivative measure = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
-                    str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
-                    str(len_interval), str(K_goal), str(K_neighbour), str(metric_mean[0]), str(metric_mean[1]), str(metric_covariance[0][1]), \
-                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples), str(s_dist), str(K_sampler), str(metric_order)))
         log_summary_file.write('\n')
         log_summary_file.write('=' * 50)
         log_summary_file.write('\n')
@@ -358,9 +365,9 @@ def main():
                 log_summary_file.write('\nTransmission Power: {} (dBm)'.format(str(transceiver.tx_pw)))
                 log_summary_file.write('\nAntenna Gain: {} (dBi)'.format(str(transceiver.ant_gain)))
                 log_summary_file.write('\nPayload Length: {} (byte)'.format(str(transceiver.pl)))
-                log_summary_file.write('\nDuty Cycle: {}%'.format(str(round(transceiver.actual_dc() * 100, 1))))
+                log_summary_file.write('\nDuty Cycle: {}%'.format(str(round(transceiver.actual_dc(mission) * 100, 1))))
                 log_summary_file.write('\nAirtime: {} (sec)'.format(str(round(transceiver.airtime(), 4))))
-                log_summary_file.write('\nSilent time: {} (sec)'.format(str(round(transceiver.actual_silent_time(), 1))))
+                log_summary_file.write('\nSilent time: {} (sec)'.format(str(round(transceiver.actual_silent_time(mission), 1))))
                 log_summary_file.write('\nTransmitted Packets: {}'.format(str(transceiver.num_tx)))
                 log_summary_file.write('\nReceived Packets: {}'.format(str(transceiver.num_rx)))
                 log_summary_file.write('\nDiscarded Packets: {}'.format(str(transceiver.num_disc)))
@@ -385,17 +392,6 @@ def main():
         log_raw_file.write(log_raw_file_name + ': ' + log_title + '\n')
         log_raw_file.write("Notes: " + log_notes + '\n')
         log_raw_file.write('=' * 50)
-        log_raw_file.write('\nParameters:\n')
-        log_raw_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
-            \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
-            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}
-            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nDefault Number of Samples = {}\nDefault Sampling Distance = {}
-            Sampler Gain = {}\nRequired Time for Sampling = {}\nNth Order of derivative measure = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
-                    str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
-                    str(len_interval), str(K_goal), str(K_neighbour), str(metric_mean[0]), str(metric_mean[1]), str(metric_covariance[0][1]), \
-                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples), str(s_dist), str(K_sampler), str(metric_order)))
         log_raw_file.write('\n')
         log_raw_file.write('=' * 50)
         log_raw_file.write("\t\t Rover\n")
@@ -434,8 +430,8 @@ def main():
     terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
     RMSE_plot(world, step, log_step_interval, ee, log_control[2], directory)
     landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint_interval, step, log_control[2], directory)
-    #y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
-    #mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
+    y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
+    mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
     real_metric_distribution(world, directory, log_control[2])
 
     plt.show()
