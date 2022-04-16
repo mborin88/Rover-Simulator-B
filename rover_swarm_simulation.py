@@ -40,7 +40,7 @@ seed_value = dt.datetime.now().microsecond      #Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '000'
+log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Full Run - Gradient"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
