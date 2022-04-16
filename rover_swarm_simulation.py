@@ -32,7 +32,8 @@ goal_offset = 5     # Of distance to goal is smaller than offset, goal is assume
 steps = 432000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
-len_interval = 3000   # Number of time slots between transmissions for one device.
+len_interval = 120   # Number of time slots between transmissions for one device.
+pulse_interval = 3000
 
 Q = None                                      # State noise.
 R = None                                        # Measurement noise.
@@ -124,7 +125,10 @@ def main():
     for starter in world.rovers:
         starter.config_radio(user_f, user_bw, user_sf, user_cr, user_txpw)
         starter.radio.set_swarm_size(N)
-        starter.radio.set_interval(len_interval)
+        if(mission == 'LS'):
+            starter.radio.set_interval(len_interval)
+        elif(mission == 'AS'):
+            starter.radio.set_interval(pulse_interval)
         starter.radio.set_t_slot(t_sampling)
 
         # Configure motion logger.
