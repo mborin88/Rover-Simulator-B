@@ -77,8 +77,8 @@ len_interval| FLOAT | Interval between transmissions.
 Parameters needed to be configured for a line sweeping mission
 Variable | Type | Description
 --- | --- | ---
-K_goal| FLOAT ARRAY | Gain of controller. (Array length of 2)
-K_neighbour | FLOAT ARRAY | Gain of controller.(Array length of 2)
+K_goal| FLOAT ARRAY | Gain of controller. 
+K_neighbour | FLOAT ARRAY | Gain of controller.
 rover_sep| INTEGER | Distance between rovers in meters.
 decay| INTEGER | Mathematic style of the decay of rovers speed position, over time. (control policy 2)
 zero_crossing| INTEGER | How many time slots the adjustment speed of a neighbouring rover is valid for (control policy 2)
@@ -101,33 +101,42 @@ metric_covariance|2D FLOAT ARRAY | Covariance matrix for generating sampling met
 num_r_samples| INTEGER | Number of base samples to be used if using a fixed sampler. (No. samples adjsuted from this point automatically)
 K_sampler[0] | FLOAT | Gain for the rovers own sampling metric measure
 K_sampler[1] | FLOAT | Gain for the neighbouring rovers sampling metrics. Affects how significant the neighbouring rovers metrics are.
-K_smapler[2] | FLOAT | Gain for natural increase of sampling distance if insignificant metric recieved. 
+K_smapler[2] | FLOAT | Gain for natural increase of sampling distance if insignificant metric received. 
 sampling_time | INTEGER | Number of steps required for successful sample to be taken. (Steps rover will be stationary for)
 metric_order | INTEGER | Whether to take absolute, first order or second order derivative of the metric.
+pulse_interval | INTEGER | Interval between transmission that take too long for Duty Cycle Requirements
 
 
 ## Missions
 ### Line Sweep
 The line sweep mission entails the swarm of rovers maintaining a line as they traverse the map. Here each rover only has one goal which is defaulted to directly north of its starting position, at the other end of the map. The controllers available for this type of mission:
 * Goal-Driven
+  * Controller where the rovers speed is only dependent on the goal.
 * Simple Passive
+  * Controller where the rover speed is dependent on goal and last received position of neighbouring rovers. 
 * Passive
+  * Controller where the rover speed is dependent on goal and last received position of neighbouring rovers, where the last received position expires over time.
 
 ### Advanced Line Sweep
 The advanced line sweep differs from the original line sweep in that the rovers take multiple waypoints between the starting and endpoint, with each of these waypoints being able to be manually adjusted from the user. This allows this line sweep to now avoid certain regions such as water bodies which couldn't be done by the original line sweeping missions. Controllers available for this type of misssion:
 * Goal-Driven
+  * Controller where the rovers speed is only dependent on the goal.
 * Simple Passive
+  * Controller where the rover speed is dependent on goal and last received position of neighbouring rovers. 
 * Passive
+  * Controller where the rover speed is dependent on goal and last received position of neighbouring rovers, where the last received position expires over time.
 
 ### Adaptive Sampling
 Adaptive sampling is a mission where the swarm ultimately hopes to take samples at the most important points during a sweep to build up an accurate depiction of a distribution of a metric (e.g. greenhoouse gases, temperature...) Controllers available for this type of misssion:
-* Independent
+* Independent 
+  * Controller changes distance to next sample based on its own measurements.
 * Co-operative
+  * Controller changes distance to next sample based on its own measurements, and the measurements received from its neighbours.
 
 ## LoRa Communication
 **Notes:** The communication parameters aren't defaulted to abide to a LoRa Regulations for any particular region, so after running manual check has to be done to see if the LoRa parameters in your region have been abided to. 
 
-After running a mission more details of the LoRa communications are shown such as the duty cycle, this can be found in the ```SSS Summary Data.txt``` log files.
+After running a mission more details of the LoRa communications are shown such as the duty cycle, this can be found in the ```SSS Parameters.txt``` log file or at the top of ```SSS Summary Data.txt``` or ```SSS Raw Data.txt``` if the mission is from an outdated version of the simulator.
 
 ## Maps
 ### Overview
@@ -182,6 +191,7 @@ So we can normally call this function as get_data(x, y)
 Files are logged at the end of mission if desired by the user.
 There are multiple files logged after a mission these are as follows:
 * ```SSS Raw Data.txt``` - This stores each rovers position, velocity and RMSE of swarm.
+* ```SSS Parameters.txt``` - Log file of the parameters selected for mission.
 * ```SSS Summary Data.txt``` - Stores a summary of mission.
 * ```Elevation.png``` - Plots of the rover trajectories against terrain map.
 * ```Landcover.png``` - Plots of the rover trajectories against landcover map.
