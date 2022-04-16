@@ -59,6 +59,7 @@ log_control| STRING | Controls if and what parts of the mission are logged. Trea
 log_step_interval| INTEGER | To reduce data storage size some logs and plots are taken as an average over this interval. (Interval is specified in steps)
 log_title_tag| STRING | User specified custom title for the logs.
 log_notes| STRING | More detailed notes of a mission taken before running, and is where post mission notes can be added.
+log_checkpoint_interval | INTEGER | Interval for how often to see rover line organisation on plots. (Interval done in steps)
 
 
 ### Communication Parameters
@@ -88,7 +89,6 @@ zero_crossing| INTEGER | How many time slots the adjustment speed of a neighbour
 These parameters are needed in addition to the ones stated for line sweep.
 Variable | Type | Description
 --- | --- | ---
-waypoint_interval | INTEGER | Interval for how often to see rover line organisation on plots. (Interval done in steps)
 num_of_waypoints| INTEGER | Number of waypoints between starting and proposed end position(including) of each rover.
 
 
