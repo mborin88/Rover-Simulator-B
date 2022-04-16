@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LightSource
 import matplotlib.image as mpimg
 from PIL import Image
-sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator/models')
+
+sys.path.append(str(os.getcwd()) + '\\models')
 from landcover_spec import LCM2015_COLORMAP
 
 
@@ -20,7 +21,7 @@ def prep_data(map_object):
     return data_re
 
 
-def render2d(terrain_map, cmap='terrain', window_size=(8, 8)):
+def render2d(terrain_map, cmap='gist_earth', window_size=(8, 8)):
     """
     Render a terrain map as a 2d contour plot.
     """
@@ -100,9 +101,9 @@ def show_rgb(im, ax_range):
 
 
 if __name__ == '__main__':
-    sys.path.append('C:/Users/borin/Documents/GitHub/Rover-Simulator')
+    sys.path.append(os.getcwd())
     from utils.load_map import *
-    map_name = 'SX49SW'
+    map_name = 'SP46NE'
     t_map = read_asc(locate_map(map_name + '_elevation.asc'))
     la_map = read_asc(locate_map(map_name + '_landcover.asc'))
     render2d(t_map)

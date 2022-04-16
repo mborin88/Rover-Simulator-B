@@ -32,7 +32,7 @@ def scale_all_control(rov):
     Scale all control variable. 
     """ 
     multiplier = np.array([1.0]*len(rov._all_control))
-    for i in range(1,len(rov._all_control)):
+    for i in range(1, len(rov._all_control)):
         multiplier[i] = time_decay(rov, rov._steps_control_not_updated[i])
     rov._all_control = rov._all_control * multiplier
 
@@ -46,12 +46,18 @@ def x_direction(value):
         return -1
 
 def ratio_speeds(rov):
+    """
+    Adjusts x and y speed so that rover is going in right direction
+    """
     p = rov._pose
     target = rov.goal
     v = rov._control[2]
     x_diff = target[0] - p[0]
     y_diff = target[1] - p[1]
-    angle = math.atan(y_diff/abs(x_diff))
+    try:
+        angle = math.atan(y_diff/abs(x_diff))
+    except ZeroDivisionError:
+        angle = math.pi / 2
     rov._angle = angle
     
     rov._control[0] = round(x_direction(x_diff) * v * math.cos(angle), 3)

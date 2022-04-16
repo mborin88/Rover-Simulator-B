@@ -42,7 +42,7 @@ class Radio:
     de = DE     # The presence of low data rate optimisation.
     ant_gain = ANT_GAIN         # The antenna gain， in dBi.
     ant_height = ANT_HEIGHT     # The antenna height, in meter.
-    pl = 4                      # The length of payload, in byte.
+    pl = 10                      # The length of payload, in byte.
 
     def __init__(self, rover, f, bw, sf, cr, tx_pw, t_slot=0.1):
         self._rover = rover                     # A rover object which the radio is attached to.
@@ -58,6 +58,7 @@ class Radio:
         self._sensitivity = SENSITIVITY[self._bw][self._sf]    # The receiving sensitivity, in dBm.
         self._tx_pw = tx_pw                     # The transmitted power, in dBm.
         self._next_tx = 0 + self._radio_id - 1
+        self._tx_steps = []
         # The time slot for next transmission.
         # A transmission is only allowed to take place at the beginning of a time slot.
         # Each time slot only allows one transmission to happen.
@@ -67,7 +68,7 @@ class Radio:
         self._num_discarded = 0         # The number of discarded packets.
         self._receiver_buffer = None    # The buffer to store the most recent packet received.
         self._neighbour_register = [None, None]
-        # The memory to store the most packets received from neighbours (at most 2).
+        # The memory to store the most packets received from neighbours.
 
     @property
     def radio_id(self):
@@ -116,6 +117,10 @@ class Radio:
     @property
     def next_tx(self):
         return self._next_tx
+
+    @property
+    def tx_steps(self):
+        return self._tx_steps
 
     @property
     def num_tx(self):
@@ -200,8 +205,42 @@ class Radio:
         Get the measured pose info ready for packet formation.
         """
         return self._rover.measurement
+    
+    def get_metric(self):
+        """
+        Get the measured pose info ready for packet formation.
+        """
+        return self._rover.metric[self._radio_id-1]     
 
-    def transmit(self, world):
+    def transmit_metric(self, world):
+        """
+        Place a new transmission into the channel.
+        """
+        metric_data = self.get_metric()
+        self._tx_steps.append(world.tn)
+        payload = [self._radio_id, metric_data[2], metric_data[0], metric_data[1]]
+        packet = Packet(self, payload)
+        self._num_transmitted += 1
+        world.add_packet(packet)
+        self._next_tx = world.tn + self._interval
+
+    def receive_metric(self, world):
+        """
+        Receive a packet which can be successfully demodulated from the channel.
+        """
+        threshold = self._sensitivity
+        if len(world.channel) > 0:
+            packet = world.channel[-1]
+            if self.rx_power(packet, world) >= threshold:
+                self._num_received += 1
+                self._receiver_buffer = packet
+                self.update_neighbour_metric_register()
+            else:
+                self._num_discarded += 1
+        else:
+            pass
+
+    def transmit_pos(self, world):
         """
         Place a new transmission into the channel.
         """
@@ -213,7 +252,7 @@ class Radio:
         world.add_packet(packet)
         self._next_tx += self._interval
 
-    def receive(self, world):
+    def receive_pos(self, world):
         """
         Receive a packet which can be successfully demodulated from the channel.
         """
@@ -241,6 +280,14 @@ class Radio:
     def update_neighbour_register(self):
         """
         Update neighbour register.
+        """
+        packet = self._receiver_buffer
+        tx_id = packet.tx.radio_id
+        self._neighbour_register[tx_id - 1] = packet
+    
+    def update_neighbour_metric_register(self):
+        """
+        Update neighbour metric register.
         """
         packet = self._receiver_buffer
         tx_id = packet.tx.radio_id
@@ -273,14 +320,24 @@ class Radio:
         t_payload = n_payload * t_symbol
         return t_preamble + t_payload
 
-    def actual_dc(self):
+    def actual_dc(self, mission):
         """
         Calculate the actual duty cycle due to user-defined configuration.
         """
-        return self.airtime() / (self.airtime() + self.actual_silent_time())
+        return self.airtime() / (self.airtime() + self.actual_silent_time(mission))
 
-    def actual_silent_time(self):
+    def actual_silent_time(self, mission):
         """
         Calculate the actual silent time due to use-defined configuration.
         """
-        return self._interval * self._t_slot
+        if(mission == 'LS'):
+            return self._interval * self._t_slot
+        elif(mission == 'AS'):
+            intervals = []
+            for i in range(len(self._tx_steps)-1):
+                intervals.append(self._tx_steps[i+1] - self._tx_steps[i])
+            try:
+                mean_interval = sum(intervals)/len(intervals)
+            except ZeroDivisionError:
+                mean_interval = 0
+            return mean_interval * self._t_slot

@@ -6,16 +6,18 @@ class World:
     """
     A world class.
     """
-    def __init__(self, map_terrain, map_landcover, dt=0.1):  # Input two map objects and a time step in ms.
+    def __init__(self, map_terrain, map_landcover, mission='LS', dt=0.1):  # Input two map objects and a time step in ms.
         if self.is_aligned(map_terrain, map_landcover):
-            self._terrain = map_terrain      # Terrain info, a map object.
-            self._landcover = map_landcover  # Land cover info, a map object.
-            self._tn = 0                     # Simulation time, represented by a sequence order.
-            self._dt = dt                    # Step time, in second.
-            self._rovers = []                # List of existing rovers.
-            self.channel = []                # List of existing transmissions.
-            self._dynamics_engine = None     # Dynamics engine.
-            self._completed_rovers = 0       # Number of rovers that have completed their tasks.
+            self._terrain = map_terrain                     # Terrain info, a map object.
+            self._landcover = map_landcover                 # Land cover info, a map object.
+            self._sample_metric = None                       
+            self._tn = 0                                    # Simulation time, represented by a sequence order.
+            self._dt = dt                                   # Step time, in second.
+            self._mission = mission
+            self._rovers = []                               # List of existing rovers.
+            self.channel = []                               # List of existing transmissions.
+            self._dynamics_engine = None                    # Dynamics engine.
+            self._completed_rovers = 0                      # Number of rovers that have completed their tasks.
         else:
             raise MapNotAligned()
 
@@ -28,6 +30,10 @@ class World:
         return self._landcover
 
     @property
+    def sample_metric(self):
+        return self._sample_metric
+
+    @property
     def time(self):
         return self._tn * self._dt
 
@@ -38,6 +44,10 @@ class World:
     @property
     def dt(self):
         return self._dt
+    
+    @property
+    def mission(self):
+        return self._mission
 
     @property
     def rovers(self):
@@ -56,6 +66,15 @@ class World:
         Configure dynamics engine of the world.
         """
         self._dynamics_engine = engine
+    
+    def config_sample_metric(self, distribution, mu, cov):
+        """
+        Configure Sampling Metric and it's distribution in the world.
+        """
+        self._sample_metric = distribution
+        self._sample_metric.config_mean(mu)
+        self._sample_metric.config_covariance(cov)
+        self._sample_metric.config_distribution()
 
     def is_aligned(self, map_1, map_2):
         """
@@ -73,13 +92,11 @@ class World:
         else:
             return False
 
-    def add_rover(self, easting, northing, r_path, q_noise=None, r_noise=None, num_rovers=10,\
-                        decay_type='quad', decay_zero_crossing=1200):
+    def add_rover(self, easting, northing, r_path, q_noise=None, r_noise=None, num_rovers=10):
         """
         Add a rover to the world given its coordinates.
         """
-        self._rovers.append(Rover(len(self.rovers) + 1, easting, northing, r_path, q_noise, r_noise, num_rovers,\
-                                    decay_type, decay_zero_crossing))
+        self._rovers.append(Rover(len(self.rovers) + 1, easting, northing, r_path, q_noise, r_noise, num_rovers))
 
     def rover_completes_task(self):
         """
@@ -112,13 +129,22 @@ class World:
         transmitter = None
         for rover in self._rovers:
             rover.step_motion(self, dt)
-            # print(tn, rover.radio.next_tx)
             if rover.radio is None:
                 pass
             else:
-                if tn == rover.radio.next_tx:
-                    transmitter = rover
-                    transmitter.radio.transmit(self)
+                if(self._mission == 'LS'):
+                    if(rover.control_policy != 'Goal-driven'):
+                        if tn == rover.radio.next_tx:
+                            transmitter = rover
+                            transmitter.radio.transmit_pos(self)
+                elif(self._mission == 'AS'):
+                    if(rover.control_policy != 'Independent Adaptive Sampling'):
+                        if((rover.transmit == True and tn%rover.num_rovers == rover.rov_id-1) or \
+                                    (tn == rover.radio.next_tx) and len(rover.measured_samples)>rover.sample_metric_order):
+                            transmitter = rover
+                            transmitter.radio.transmit_metric(self)   
+                            rover.reset_transmission_flag()
+
 
         #Slowing down simulation
         #if len(self.channel) > 0:
@@ -131,7 +157,12 @@ class World:
             elif receiver == transmitter:
                 pass
             else:
-                receiver.radio.receive(self)
+                if(self._mission == 'LS'):
+                    if(rover.control_policy != 'Goal-driven'):
+                        receiver.radio.receive_pos(self)
+                elif(self._mission == 'AS'):
+                    if(rover.control_policy != 'Independent Adaptive Sampling'):
+                        receiver.radio.receive_metric(self)
 
         self.clear_channel()
 

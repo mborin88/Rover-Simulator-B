@@ -4,7 +4,7 @@ cr_num = 4
 cr_den = 8
 cr = cr_num / cr_den  # Coding rate
 ps = 8                # Preamble symbol
-pl = 4   # Payload, in byte
+pl = 12   # Payload, in byte
 crc = 1  # Cyclic redundancy check
 is_crc = {1: 'Yes',
           0: 'No'}
@@ -14,7 +14,7 @@ is_hd = {1: 'No',
 de = 0  # Low data rate optimisation
 is_de = {1: 'Yes',
          0: 'No'}
-dc = 0.1  # Duty cycle
+dc = 1  # Duty cycle
 
 
 def main():
