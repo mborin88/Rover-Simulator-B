@@ -50,7 +50,7 @@ def passive_cooperation(rov, v_max, v_min):
         and (rov._goal_index < len(rov._waypoints)-1):   #if within offset of the y waypoint
         rov._goal_index += 1
     goal_driven_controller = PController(ref=rov._current_goal, gain=[0, 1e-3])
-    controlled_object = rov.measurement
+    controlled_object = rov.pos_measurement
     control_input = goal_driven_controller.execute(controlled_object)
     
     if control_input > v_max:  # Control input saturation.
@@ -81,7 +81,7 @@ def passive_cooperation(rov, v_max, v_min):
                 if pose is not None:
                     rov._steps_control_not_updated[control_index] = 0
                     rov._speed_controller.set_ref(pose)
-                    controlled_object = rov.measurement
+                    controlled_object = rov.pos_measurement
                     rov._all_control[control_index] = rov._speed_controller.execute(controlled_object)
             scale_all_control(rov)
             control_input = weighted_control_calc(rov)
@@ -115,7 +115,7 @@ def simple_passive_cooperation(rov, v_max, v_min):
         rov._goal_index += 1
         
     goal_driven_controller = PController(ref=rov._current_goal, gain=[0, 1e-3])
-    controlled_object = rov.measurement
+    controlled_object = rov.pos_measurement
     control_input = goal_driven_controller.execute(controlled_object)
     
     if control_input > v_max:  # Control input saturation.
@@ -146,7 +146,7 @@ def simple_passive_cooperation(rov, v_max, v_min):
                 control_index += 1
                 if pose is not None:
                     rov._speed_controller.set_ref(pose)
-                    controlled_object = rov.measurement
+                    controlled_object = rov.pos_measurement
                     rov._all_control[control_index] = rov._speed_controller.execute(controlled_object)
                     rov._steps_control_not_updated[control_index] = 0 
             control_input = weighted_control_calc(rov)

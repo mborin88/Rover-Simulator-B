@@ -33,7 +33,7 @@ def advanced_move2goal(rov, v_max, v_min):
     Move towards goal point.
     """
 
-    controlled_object = rov.measurement  # Controlled object is [x, y].
+    controlled_object = rov.pos_measurement  # Controlled object is [x, y].
     if(rov._pose[1] > rov.goal[1]-rov._goal_offset) \
         and (rov._goal_index < len(rov._waypoints)-1):   #if within offset of the y waypoint
         rov._goal_index += 1

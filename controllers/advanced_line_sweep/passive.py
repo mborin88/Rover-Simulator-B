@@ -1,5 +1,6 @@
 from models.P_controller import *
 import numpy as np
+import warnings
 
 def weighted_control_calc(rov):
     """
@@ -55,7 +56,9 @@ def ratio_speeds(rov):
     x_diff = target[0] - p[0]
     y_diff = target[1] - p[1]
     try:
-        angle = math.atan(y_diff/abs(x_diff))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            angle = math.atan(y_diff/abs(x_diff))
     except ZeroDivisionError:
         angle = math.pi / 2
     rov._angle = angle
@@ -74,7 +77,7 @@ def advanced_simple_passive_cooperation(rov, v_max, v_min):
         rov._goal_index += 1
 
     goal_driven_controller = PController(ref=rov._current_goal, gain=[1e-2, 1e-2])
-    controlled_object = rov.measurement
+    controlled_object = rov.pos_measurement
     control_input = goal_driven_controller.execute2(controlled_object)
     
     if control_input > v_max:  # Control input saturation.
@@ -97,7 +100,7 @@ def advanced_simple_passive_cooperation(rov, v_max, v_min):
     rov.neighbour_connectivity(neighbour_poses)
 
     for i in range(1, len(rov._steps_control_not_updated)):
-        rov._steps_control_not_updated[i] += 1 #all incremented by 1
+        rov._steps_control_not_updated[i] += 1          # all incremented by 1
 
     if not rov._initial_control:
         # Adjust speed according to neighbour(s)' info.
@@ -107,7 +110,7 @@ def advanced_simple_passive_cooperation(rov, v_max, v_min):
                 control_index += 1
                 if pose is not None:
                     rov._speed_controller.set_ref(pose)
-                    controlled_object = rov.measurement
+                    controlled_object = rov.pos_measurement
                     rov._all_control[control_index] = rov._speed_controller.execute(controlled_object)
                     rov._steps_control_not_updated[control_index] = 0 
             control_input = weighted_control_calc(rov)
@@ -124,7 +127,6 @@ def advanced_simple_passive_cooperation(rov, v_max, v_min):
     else:
         rov._control[1] = control_input  # Assume changing linear velocity instantly.    
 
-    # rov.update_speeds(x_dir * rov.control[1] / math.tan(rov._angle), rov._control[1])  
     rov.update_speeds(rov._control[0], rov._control[1])   
     rov._radio.reset_neighbour_register()
     rov._radio.reset_buffer()
@@ -140,7 +142,7 @@ def advanced_passive_cooperation(rov, v_max, v_min):
         rov._goal_index += 1
 
     goal_driven_controller = PController(ref=rov._current_goal, gain=[0, 1e-2])
-    controlled_object = rov.measurement
+    controlled_object = rov.pos_measurement
     control_input = goal_driven_controller.execute2(controlled_object)
     
     if control_input > v_max:  # Control input saturation.
@@ -175,7 +177,7 @@ def advanced_passive_cooperation(rov, v_max, v_min):
                 if pose is not None:
                     rov._steps_control_not_updated[control_index] = 0
                     rov._speed_controller.set_ref(pose)
-                    controlled_object = rov.measurement
+                    controlled_object = rov.pos_measurement
                     rov._all_control[control_index] = rov._speed_controller.execute(controlled_object)
             scale_all_control(rov)
             control_input = weighted_control_calc(rov)

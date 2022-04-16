@@ -1,5 +1,5 @@
 bw = 125  # Bandwidth, in KHz
-sf = 12    # Spreading factor
+sf = 9    # Spreading factor
 cr_num = 4
 cr_den = 8
 cr = cr_num / cr_den  # Coding rate
@@ -11,11 +11,11 @@ is_crc = {1: 'Yes',
 hd = 1  # Header
 is_hd = {1: 'No',
          0: 'Yes'}
-de = 1  # Low data rate optimisation
+de = 0  # Low data rate optimisation
 is_de = {1: 'Yes',
          0: 'No'}
 
-len_interval = 6000 # Steps to next transmission
+len_interval = 120 # Steps to next transmission
 dt = 0.1    # Simulation step time
 
 def airtime_calc():

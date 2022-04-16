@@ -13,12 +13,12 @@ from controllers.advanced_line_sweep.passive import advanced_passive_cooperation
 from controllers.adaptive_sampling.independent_AS import independent_sampler
 from controllers.adaptive_sampling.co_operative_AS import co_op_sampler
 
-STARTING_SPEED = 0.2       # m/s
-MAXIMUM_SPEED = 0.5        # m/s, which can be exceeded due to the effect of slope.
-MINIMUM_SPEED = 0.05       # m/s, which depicts the worst scenario and cannot be decreased any more.
+STARTING_SPEED = 0.2            # m/s
+MAXIMUM_SPEED = 0.5             # m/s, which CAN be exceeded due to the effect of slope.
+MINIMUM_SPEED = 0.05            # m/s, which depicts the worst scenario and CAN NOT be decreased any more.
 
-MAXIMUM_SAMPLE_DIST = 1000
-MINIMUM_SAMPLE_DIST = 100
+MAXIMUM_SAMPLE_DIST = 1000      # m, which comes from the measurements made/received, CAN NOT be exceeded
+MINIMUM_SAMPLE_DIST = 100       # m, which comes from the measurements made/received, CAN NOT be exceeded
 
 
 class Rover:
@@ -33,44 +33,44 @@ class Rover:
         self._angle = 0
         self._q_noise = q_noise               # The state noise, a random variable.
         self._r_noise = r_noise               # The measurement noise, a random variable.
-        self.measurement = self._pose         # The measurement of pose, assumed noiseless at first.
+        self.pos_measurement = self._pose         # The measurement of pose, assumed noiseless at first.
         self._waypoints = rov_waypoints
 
         self._control = [0, STARTING_SPEED, STARTING_SPEED]                     # Control input, linear velocity.
         self._all_control = np.array([np.nan] * (num_rovers + 1))               # First control is p control then rovers
         self._steps_control_not_updated = np.array([0.0] * (num_rovers + 1))    # Amount of steps since that control has been updated.
         self._num_rovers = num_rovers
-        self._initial_control = True                        # Want to P controller until we get neighbouring positions
+        self._initial_control = True                                            # Want to P controller until we get neighbouring positions
         self._control_policy = None
-        self._decay_type = 'quad'                       # Decay style currently quadratic decay or exponential decay
-        self._decay_zero_crossing = 1200     # How many steps until speed position of neighbour rover ignored.
+        self._decay_type = 'quad'                                               # Decay style currently quadratic decay or exponential decay
+        self._decay_zero_crossing = 1200                                        # How many steps until speed position of neighbour rover ignored.
         self._connectivity = [0] * num_rovers
 
         self._transmit = False
         self._avg_sample_dist = 500
         self._sample_dist = 500
 
-        self._K_sampler = [1, 1, 1]                           #Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain
-        self._measured_samples = []                     # Samples gathered
+        self._K_sampler = [1, 1, 1]                                             # Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain
+        self._measured_samples = []                                             # Samples gathered
         self._metric = [[0] * 3 for _ in range(num_rovers)]                         # Most recent change metric
         self._weighted_metric  = np.array([np.nan] * (num_rovers))   
-        self._max_num_samples = 80                      # Max number of samples the rover can take
-        self._num_samples = 0                           # Number of samples taken by rover
-        self._req_sampling_steps = 6000                       # Default 6000 steps, how many steps it takes to gather an accurate sample 10 
-        self._sampling_steps_passed = 0                 # How long the rover has been sampling for
+        self._max_num_samples = 80                                              # Max number of samples the rover can take
+        self._num_samples = 0                                                   # Number of samples taken by rover
+        self._req_sampling_steps = 6000                                         # Default 6000 steps, how many steps it takes to gather an accurate sample 10 
+        self._sampling_steps_passed = 0                                         # How long the rover has been sampling for
         self._sample_metric_order = 0
-        self._is_sampling = False                       # Is rover currently sampling.
+        self._is_sampling = False                                               # Is rover currently sampling.
 
         # The control policy used by the rover.
         self._speed_controller = None
         # The speed controller, a specific type of controller object.
-        self._radio = None              # The communication module, a radio object.
-        self._goal_index = 1            # Indicates index of active waypoint
+        self._radio = None                                                      # The communication module, a radio object.
+        self._goal_index = 1                                                    # Indicates index of active waypoint
         self._goal_offset = 25
-        self._termination_flag = False  # The flag indicating that mission is terminated.
-        self._termination_time = None   # The time when rover completes its task.
-        self._landcover_termination = False     #Flag to terminate mission if rover on invalid land(e.g. water)
-        self.pose_logger = None         # The logger to record pose, a motion logger object.
+        self._termination_flag = False                                          # The flag indicating that mission is terminated.
+        self._termination_time = None                                           # The time when rover completes its task.
+        self._landcover_termination = False                                     # Flag to terminate mission if rover on invalid land(e.g. water)
+        self.pose_logger = None                                                 # The logger to record pose, a motion logger object.
 
     @property
     def rov_id(self):
@@ -380,7 +380,7 @@ class Rover:
                 self._pose[0] = h[0]
 
         self.update_speeds(v_x, v_y)
-        self.measure()
+        self.measure_pos()
         self.check_invalid_landcover(world)  
 
 
@@ -434,16 +434,17 @@ class Rover:
                     co_op_sampler(self, world, MAXIMUM_SAMPLE_DIST, MINIMUM_SAMPLE_DIST)
 
 
-    def measure(self):
+    def measure_pos(self):
         """
         Measure the pose info at current time.
         """
         if self._r_noise is None:
-            self.measurement = self._pose  # Noiseless measurement.
+            self.pos_measurement[0] = round(self._pose[0], 2)
+            self.pos_measurement[1] = round(self._pose[1], 2)
         else:
             noise = self.generate_noise(self._r_noise)
-            self.measurement[0] = self._pose[0] + noise[0]
-            self.measurement[1] = self._pose[1] + noise[1]  # Noisy measurement.
+            self.pos_measurement[0] = self._pose[0] + noise[0]
+            self.pos_measurement[1] = self._pose[1] + noise[1]  # Noisy measurement.
 
     def connectivity_reset(self):
         """

@@ -4,7 +4,7 @@ cr_num = 4
 cr_den = 8
 cr = cr_num / cr_den  # Coding rate
 ps = 8                # Preamble symbol
-pl = 12   # Payload, in byte
+pl = 10   # Payload, in byte
 crc = 1  # Cyclic redundancy check
 is_crc = {1: 'Yes',
           0: 'No'}

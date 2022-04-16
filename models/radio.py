@@ -204,7 +204,7 @@ class Radio:
         """
         Get the measured pose info ready for packet formation.
         """
-        return self._rover.measurement
+        return self._rover.pos_measurement
     
     def get_metric(self):
         """
