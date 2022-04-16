@@ -41,7 +41,7 @@ seed_value = dt.datetime.now().microsecond      #Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '000'
+log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Report Run"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
@@ -56,7 +56,7 @@ user_cr = CR[3]                                     # Coding rate.
 user_txpw = 24                                      # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = 2
+ctrl_policy = '1-2'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -86,11 +86,16 @@ def main():
     """
     print('')
     print('Simulating...')
-    
-    if(ctrl_policy >= 4):
-        mission = 'AS'
-    else:
+    CP = ctrl_policy.split('-')
+    CP[0] = int(CP[0])
+    CP[1] = int(CP[1])
+
+    if(CP[0] == 1):
         mission = 'LS'
+    elif(CP[0] == 2):
+        mission = 'ALS'
+    elif(CP[0] == 3):
+        mission = 'AS'
 
     start = time.time()
 
@@ -126,7 +131,7 @@ def main():
     for starter in world.rovers:
         starter.config_radio(user_f, user_bw, user_sf, user_cr, user_txpw)
         starter.radio.set_swarm_size(N)
-        if(mission == 'LS'):
+        if(mission == 'LS' or mission == 'ALS'):
             starter.radio.set_interval(len_interval)
         elif(mission == 'AS'):
             starter.radio.set_interval(pulse_interval)
@@ -139,58 +144,62 @@ def main():
         starter.set_current_goal(starter.waypoints[1])
 
         # Configure controller.
-        if ctrl_policy == 0:  # No controller
-            pass
-        elif ctrl_policy == 1:  # Goal-driven controller
-            speed_controller = PController(None, K_goal)
-            # The reference is goal point [x_g, y_g],
-            # which is set differently for each rover.
-            starter.config_speed_controller(speed_controller)
-            starter.speed_controller.set_ref(starter.goal)
-            full_mission_name = 'Goal-driven'
-            starter.config_control_policy(full_mission_name)
-        elif ctrl_policy == 2:  # Passive-cooperative controller
-            speed_controller = PController(None, K_neighbour)
-            starter.config_speed_controller(speed_controller)
-            starter.config_decay_type(decay)
-            starter.config_decay_zero_crossing(zero_crossing)
-            # The reference for passive-cooperative controller
-            # dynamically changes when new packet from the neighbour is received.
-            full_mission_name = 'Passive-cooperative'
-            starter.config_control_policy(full_mission_name)
-        elif ctrl_policy == 3:
-            speed_controller = PController(None, K_neighbour)
-            starter.config_speed_controller(speed_controller)
-            # The reference for passive-cooperative controller
-            # dynamically changes when new packet from the neighbour is received.
-            full_mission_name = 'Simple Passive-cooperative'
-            starter.config_control_policy(full_mission_name)
-        elif ctrl_policy == 4:
-            speed_controller = PController(None, K_goal)
-            # The reference is goal point [x_g, y_g],
-            # which is set differently for each rover.
-            starter.config_speed_controller(speed_controller)
-            starter.speed_controller.set_ref(starter.goal)
-            full_mission_name = 'Independent Adaptive Sampling'
-            starter.config_control_policy(full_mission_name)
-            starter.config_adaptive_sampler_gains(K_sampler)
-            starter.config_sample_dist(s_dist)
-            starter.config_req_sample_steps(sampling_time)
-            starter.config_sample_order_metric(metric_order)
-        elif ctrl_policy == 5:
-            speed_controller = PController(None, K_goal)
-            # The reference is goal point [x_g, y_g],
-            # which is set differently for each rover.
-            starter.config_speed_controller(speed_controller)
-            starter.speed_controller.set_ref(starter.goal)
-            full_mission_name = 'Co-op Adaptive Sampling'
-            starter.config_control_policy(full_mission_name)
-            starter.config_adaptive_sampler_gains(K_sampler)
-            starter.config_sample_dist(s_dist)
-            starter.config_req_sample_steps(sampling_time)
-            starter.config_sample_order_metric(metric_order)
-        else:
-            full_mission_name = 'NA'
+        if CP[0] == 1 or CP[0] == 2:
+            if CP[1] == 0:  # No controller
+                pass
+            elif CP[1] == 1:  # Goal-driven controller
+                speed_controller = PController(None, K_goal)
+                # The reference is goal point [x_g, y_g],
+                # which is set differently for each rover.
+                starter.config_speed_controller(speed_controller)
+                starter.speed_controller.set_ref(starter.goal)
+                full_mission_name = 'Goal-driven'
+                starter.config_control_policy(full_mission_name)
+            elif CP[1] == 2:  # Passive-cooperative controller
+                speed_controller = PController(None, K_neighbour)
+                starter.config_speed_controller(speed_controller)
+                starter.config_decay_type(decay)
+                starter.config_decay_zero_crossing(zero_crossing)
+                # The reference for passive-cooperative controller
+                # dynamically changes when new packet from the neighbour is received.
+                full_mission_name = 'Passive-cooperative'
+                starter.config_control_policy(full_mission_name)
+            elif CP[1] == 3:
+                speed_controller = PController(None, K_neighbour)
+                starter.config_speed_controller(speed_controller)
+                # The reference for passive-cooperative controller
+                # dynamically changes when new packet from the neighbour is received.
+                full_mission_name = 'Simple Passive-cooperative'
+                starter.config_control_policy(full_mission_name)
+            else:
+                full_mission_name = 'NA'
+        elif CP[0] == 3:
+            if CP[1] == 1:
+                speed_controller = PController(None, K_goal)
+                # The reference is goal point [x_g, y_g],
+                # which is set differently for each rover.
+                starter.config_speed_controller(speed_controller)
+                starter.speed_controller.set_ref(starter.goal)
+                full_mission_name = 'Independent Adaptive Sampling'
+                starter.config_control_policy(full_mission_name)
+                starter.config_adaptive_sampler_gains(K_sampler)
+                starter.config_sample_dist(s_dist)
+                starter.config_req_sample_steps(sampling_time)
+                starter.config_sample_order_metric(metric_order)
+            elif CP[1] == 2:
+                speed_controller = PController(None, K_goal)
+                # The reference is goal point [x_g, y_g],
+                # which is set differently for each rover.
+                starter.config_speed_controller(speed_controller)
+                starter.speed_controller.set_ref(starter.goal)
+                full_mission_name = 'Co-op Adaptive Sampling'
+                starter.config_control_policy(full_mission_name)
+                starter.config_adaptive_sampler_gains(K_sampler)
+                starter.config_sample_dist(s_dist)
+                starter.config_req_sample_steps(sampling_time)
+                starter.config_sample_order_metric(metric_order)
+            else:
+                full_mission_name = 'NA'
 
     # Step simulation and record data.
     ee = []  # To record formation error.

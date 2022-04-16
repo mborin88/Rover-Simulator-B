@@ -330,7 +330,7 @@ class Radio:
         """
         Calculate the actual silent time due to use-defined configuration.
         """
-        if(mission == 'LS'):
+        if(mission == 'LS' or mission == 'ALS'):
             return self._interval * self._t_slot
         elif(mission == 'AS'):
             intervals = []

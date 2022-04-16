@@ -6,7 +6,7 @@ class World:
     """
     A world class.
     """
-    def __init__(self, map_terrain, map_landcover, mission='LS', dt=0.1):  # Input two map objects and a time step in ms.
+    def __init__(self, map_terrain, map_landcover, mission='ALS', dt=0.1):  # Input two map objects and a time step in ms.
         if self.is_aligned(map_terrain, map_landcover):
             self._terrain = map_terrain                     # Terrain info, a map object.
             self._landcover = map_landcover                 # Land cover info, a map object.
@@ -157,7 +157,7 @@ class World:
             elif receiver == transmitter:
                 pass
             else:
-                if(self._mission == 'LS'):
+                if(self._mission == 'LS' or self._mission == 'ALS'):
                     if(rover.control_policy != 'Goal-driven'):
                         receiver.radio.receive_pos(self)
                 elif(self._mission == 'AS'):

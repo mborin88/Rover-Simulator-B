@@ -32,7 +32,7 @@ def terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_int
         y = [data[1] for waypoint in samples for data in waypoint]
         metric = [data[2] for waypoint in samples for data in waypoint]
         ax.scatter(x, y, c=metric, cmap='YlOrBr',s=10, zorder=2)
-    elif(world.mission == 'LS'):
+    elif(world.mission == 'LS' or world.mission == 'ALS'):
         # Waypoint grapher on contour plot
         for k in range(waypoint_interval, step, waypoint_interval):
             x_waypoint = []
@@ -56,7 +56,7 @@ def RMSE_plot(world, step, log_step_interval, ee, graph_log, directory):
     """"
     Plots RMSE over time with upper limit set so that the graphs are comparable.
     """
-    if(world.mission == 'LS'):
+    if(world.mission == 'LS' or world.mission == 'ALS'):
         upper_limit = 150
         fig1, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
         ax.set_ylim(0, upper_limit)
@@ -115,8 +115,8 @@ def landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint
         y = [data[1] for waypoint in samples for data in waypoint]
         metric = [data[2] for waypoint in samples for data in waypoint]
         ax.scatter(x, y, c=metric, cmap='YlOrBr', s=10, zorder=2)
-    elif(world.mission == 'LS'):
-        #Waypoint grapher for landcover map
+    elif(world.mission == 'LS' or world.mission == 'ALS'):
+        # Waypoint grapher for landcover map
         for k1 in range(waypoint_interval, step, waypoint_interval):
             x1_waypoint = []
             y1_waypoint = []

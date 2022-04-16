@@ -339,11 +339,14 @@ class Rover:
         a_yf = world.dynamics_engine.generate_friction(slope_y)
         v_y = u[1] + a_y * dt + a_yf * dt
 
-        slope_x = world.dynamics_engine.easting_slope(p[0], p[1])
-        a_x = world.dynamics_engine.generate_acceleration(slope_x)
-        a_xf = world.dynamics_engine.generate_friction(slope_x)
-        v_x = u[0] + a_x * dt + a_xf * dt
-        
+        if(world.mission != 'LS'):
+            slope_x = world.dynamics_engine.easting_slope(p[0], p[1])
+            a_x = world.dynamics_engine.generate_acceleration(slope_x)
+            a_xf = world.dynamics_engine.generate_friction(slope_x)
+            v_x = u[0] + a_x * dt + a_xf * dt
+        else:
+            v_x = 0
+
         if v_y < MINIMUM_SPEED:
             v_y = MINIMUM_SPEED
 
@@ -420,16 +423,22 @@ class Rover:
                     pass
                 elif self._control_policy is None:
                     pass
-                elif self._control_policy == 'Goal-driven':
+                elif world.mission == 'LS' and self._control_policy == 'Goal-driven':
+                    move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                elif world.mission == 'LS' and self._control_policy == 'Passive-cooperative':
+                    passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                elif world.mission == 'LS' and self._control_policy == 'Simple Passive-cooperative':
+                    simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                elif world.mission == 'ALS' and self._control_policy == 'Goal-driven':
                     advanced_move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
-                elif self._control_policy == 'Passive-cooperative':
+                elif world.mission == 'ALS' and self._control_policy == 'Passive-cooperative':
                     advanced_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
-                elif self._control_policy == 'Simple Passive-cooperative':
+                elif world.mission == 'ALS' and self._control_policy == 'Simple Passive-cooperative':
                     advanced_simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
-                elif self._control_policy == 'Independent Adaptive Sampling':
+                elif world.mission == 'AS' and self._control_policy == 'Independent Adaptive Sampling':
                     advanced_move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                     independent_sampler(self, world, MAXIMUM_SAMPLE_DIST, MINIMUM_SAMPLE_DIST)
-                elif self._control_policy == 'Co-op Adaptive Sampling':
+                elif world.mission =='AS' and self._control_policy == 'Co-op Adaptive Sampling':
                     advanced_move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                     co_op_sampler(self, world, MAXIMUM_SAMPLE_DIST, MINIMUM_SAMPLE_DIST)
 
