@@ -1,5 +1,3 @@
-#Changes only y speed works with only final waypoint (old code)
-
 from models.P_controller import *
 import numpy as np
 
@@ -46,9 +44,6 @@ def passive_cooperation(rov, v_max, v_min):
     Slowly push all_control values that haven't been recieved to 0.
     """
 
-    # if(rov._pose[1] > rov.goal[1]-rov._goal_offset) \
-    #     and (rov._goal_index < len(rov._waypoints)-1):   #if within offset of the y waypoint
-    #     rov._goal_index += 1
     goal_driven_controller = PController(ref=rov._waypoints[-1], gain=[0, 1e-3])
     controlled_object = rov.pos_measurement
     control_input = goal_driven_controller.execute(controlled_object)
@@ -100,6 +95,7 @@ def passive_cooperation(rov, v_max, v_min):
     else:
         rov._control[1] = control_input  # Assume changing linear velocity instantly.    
 
+    rov.update_speeds(0, rov._control[1])
     rov._radio.reset_neighbour_register()
     rov._radio.reset_buffer()
 
@@ -109,12 +105,8 @@ def simple_passive_cooperation(rov, v_max, v_min):
     otherwise do not apply any control effect.
     Start with P controller then only change speed when neighbour info recieved again.
     """
-
-    if(rov._pose[1] > rov.goal[1]-rov._goal_offset) \
-        and (rov._goal_index < len(rov._waypoints)-1):   #if within offset of the y waypoint
-        rov._goal_index += 1
         
-    goal_driven_controller = PController(ref=rov._current_goal, gain=[0, 1e-3])
+    goal_driven_controller = PController(ref=rov._waypoints[-1], gain=[0, 1e-3])
     controlled_object = rov.pos_measurement
     control_input = goal_driven_controller.execute(controlled_object)
     
@@ -163,5 +155,6 @@ def simple_passive_cooperation(rov, v_max, v_min):
     else:
         rov._control[1] = control_input  # Assume changing linear velocity instantly.    
 
+    rov.update_speeds(0, rov._control[1])
     rov._radio.reset_neighbour_register()
     rov._radio.reset_buffer()

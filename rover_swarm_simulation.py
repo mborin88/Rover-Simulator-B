@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 10000      #432000      # Maximum iteration
+steps = 5000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 120   # Number of time slots between transmissions for one device.
@@ -41,7 +41,7 @@ seed_value = dt.datetime.now().microsecond      #Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '111'
+log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Report Run"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
@@ -56,7 +56,7 @@ user_cr = CR[3]                                     # Coding rate.
 user_txpw = 24                                      # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = '1-2'
+ctrl_policy = '1-1'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -456,9 +456,8 @@ def main():
     RMSE_plot(world, step, log_step_interval, ee, log_control[2], directory)
     landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, log_checkpoint_interval, step, log_control[2], directory)
     y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
-    # mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
-    # generate_distribution(world, N, x_min, x_max, y_min, y_max, directory, log_control[2])
-    real_metric_distribution(world, directory, log_control[2])
+    mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
+    # real_metric_distribution(world, directory, log_control[2])
 
     plt.show()
     plt.tight_layout()
