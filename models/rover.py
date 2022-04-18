@@ -448,8 +448,8 @@ class Rover:
         Measure the pose info at current time.
         """
         if self._r_noise is None:
-            self.pos_measurement[0] = round(self._pose[0], 2)
-            self.pos_measurement[1] = round(self._pose[1], 2)
+            self.pos_measurement = self._pose
+
         else:
             noise = self.generate_noise(self._r_noise)
             self.pos_measurement[0] = self._pose[0] + noise[0]

@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 5000      #432000      # Maximum iteration
+steps = 432000      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 120   # Number of time slots between transmissions for one device.
@@ -41,9 +41,9 @@ seed_value = dt.datetime.now().microsecond      #Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '000'
+log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Report Run"
+log_title_tag = "Full Report Run"
 log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Finished Development v1'''            #Additional notes to be added to Log file if wished
 log_checkpoint_interval = 18000                           #Log every 30 minutes = 18000 steps
@@ -56,11 +56,11 @@ user_cr = CR[3]                                     # Coding rate.
 user_txpw = 24                                      # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = '1-1'
+ctrl_policy = '1-2'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
-K_goal = [1e-1, 1e-2]                               # Control gain for goal-driven controller;
+K_goal = [1e-1, 1e-1]                               # Control gain for goal-driven controller;
 
 # 2/3 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]                             # Control gain for passive-cooperative controller;
@@ -172,6 +172,7 @@ def main():
                 full_mission_name = 'Simple Passive-cooperative'
                 starter.config_control_policy(full_mission_name)
             else:
+                print("No valid controller found")
                 full_mission_name = 'NA'
         elif CP[0] == 3:
             if CP[1] == 1:
@@ -199,7 +200,10 @@ def main():
                 starter.config_req_sample_steps(sampling_time)
                 starter.config_sample_order_metric(metric_order)
             else:
+                print("No valid controller found")
                 full_mission_name = 'NA'
+        else:
+            print("No valid controller found.")
 
     # Step simulation and record data.
     ee = []  # To record formation error.
