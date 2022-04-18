@@ -15,7 +15,7 @@ from utils.load_map import *
 from utils.render import *
 from utils.path import *
 from utils.graphs import *
-from utils.sampling_metric import *
+from sampling_metric import *
 
 
 BW = [125, 250, 500]                # Selectable bandwidth, in KHz.
@@ -56,7 +56,7 @@ user_cr = CR[3]                                     # Coding rate.
 user_txpw = 24                                      # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = '1-2'
+ctrl_policy = '3-1'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -75,7 +75,7 @@ metric_mean = ['L', 'B']                            #[0]: (L)eft, (M)iddle, (R)i
 metric_covariance = [[2, 1], [0, 0.75]]
 K_sampler = [200, 3.25, 0.25]                               # Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain # 500 4, [0.2, 3.25, 0.25]
 num_r_samples = 20                                          # Determines default sampling distance
-sampling_time = 6000                                        # How long it takes to correctly take a sample
+sampling_time = 100                                        # How long it takes to correctly take a sample
 metric_order = 1                                            # What metric we are measuring
 pulse_interval = 3000                                       # How often repeat transmissions should be sent for DC
 

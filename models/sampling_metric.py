@@ -90,7 +90,7 @@ class  Sampling_Metric():
             pos = np.dstack((self._x_range, self._y_range))
             fig = plt.figure()
             ax = fig.add_subplot(111)
-            contf = ax.contourf(self._x_range, self._y_range, self._multiplier * self.distribution.pdf(pos))
+            contf = ax.contourf(self._x_range, self._y_range, self._multiplier * self.distribution.pdf(pos), cmap='YlOrBr')
             plt.colorbar(contf, label='Measurement')
             ax.set_xlabel('Easting (m)')
             ax.set_ylabel('Northing (m)')
@@ -131,7 +131,7 @@ class  Sampling_Metric():
 
 if __name__ == '__main__':
     sys.path.append(str(os.getcwd()))
-    from load_map import *
+    from utils.load_map import *
     area = 'SP46NE'
     map_terrain = read_asc(locate_map(area + '_elevation' + '.asc'))
     map_landcover = read_asc(locate_map(area + '_landcover' + '.asc'))
