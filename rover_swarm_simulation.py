@@ -23,7 +23,7 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU30NW'     # Area to run simulation.
+area = 'SU20SE'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
@@ -44,7 +44,7 @@ rand.seed(seed_value)
 log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "Full Report Run"
-log_title = log_title_tag + ', ' +str(dt.datetime.now())[:-7].replace(':', '-')
+log_title = log_title_tag + ', ' + str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Finished Development v1'''            #Additional notes to be added to Log file if wished
 log_checkpoint_interval = 18000                           #Log every 30 minutes = 18000 steps
 
@@ -56,7 +56,7 @@ user_cr = CR[3]                                     # Coding rate.
 user_txpw = 24                                      # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = '3-1'
+ctrl_policy = '1-1'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -158,18 +158,18 @@ def main():
             elif CP[1] == 2:  # Passive-cooperative controller
                 speed_controller = PController(None, K_neighbour)
                 starter.config_speed_controller(speed_controller)
+                # The reference for passive-cooperative controller
+                # dynamically changes when new packet from the neighbour is received.
+                full_mission_name = 'Simple Passive-cooperative'
+                starter.config_control_policy(full_mission_name)
+            elif CP[1] == 3:
+                speed_controller = PController(None, K_neighbour)
+                starter.config_speed_controller(speed_controller)
                 starter.config_decay_type(decay)
                 starter.config_decay_zero_crossing(zero_crossing)
                 # The reference for passive-cooperative controller
                 # dynamically changes when new packet from the neighbour is received.
                 full_mission_name = 'Passive-cooperative'
-                starter.config_control_policy(full_mission_name)
-            elif CP[1] == 3:
-                speed_controller = PController(None, K_neighbour)
-                starter.config_speed_controller(speed_controller)
-                # The reference for passive-cooperative controller
-                # dynamically changes when new packet from the neighbour is received.
-                full_mission_name = 'Simple Passive-cooperative'
                 starter.config_control_policy(full_mission_name)
             else:
                 print("No valid controller found")
