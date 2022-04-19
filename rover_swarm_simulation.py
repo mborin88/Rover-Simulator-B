@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000      #432000      # Maximum iteration
+steps = 100      #432000      # Maximum iteration
 
 t_sampling = 0.1    # Sampling time, in second.
 len_interval = 120   # Number of time slots between transmissions for one device.
@@ -43,7 +43,7 @@ rand.seed(seed_value)
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Full Report Run"
+log_title_tag = "Parameter"
 log_title = log_title_tag + ', ' + str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Finished Development v1'''            #Additional notes to be added to Log file if wished
 log_checkpoint_interval = 18000                           #Log every 30 minutes = 18000 steps
@@ -56,7 +56,7 @@ user_cr = CR[3]                                     # Coding rate.
 user_txpw = 24                                      # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = '1-1'
+ctrl_policy = '1-3'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -330,21 +330,36 @@ def main():
         log_parameter_file.write("\nNotes: " + log_notes)
         log_parameter_file.write('\n')
         log_parameter_file.write('=' * 50)
-        log_parameter_file.write("Mission: " + full_mission_name)
+        log_parameter_file.write("\nMission: " + full_mission_name)
         log_parameter_file.write('\n')
         log_parameter_file.write('=' * 50)
-        log_parameter_file.write('\nParameters:\n')
-        log_parameter_file.write('''Area = {}\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nRovers(N) = {}\nControl Policy(ctrl_policy) = {}\nDecay Type = {}\nDecay Zero Crossing = {}\nNoise Seed = {}\nState Noise(Q) = {}
-            \nMeasurement Noise(R) = {}\nDistance between Rovers(dist) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}
-            \nSteps = {}\nMax Steps = {}\nLength Interval = {}\nGoal Driven Gain = {}\nPassive Controller Gain = {}
-            \nMetric Distirbution Mean = [{}, {}]\nMetric Distribution Covariance = [[{}, {}], [{}, {}]]\nDefault Number of Samples = {}\nDefault Sampling Distance = {}
-            \nSampler Gain = {}\nRequired Time for Sampling = {}\nNth Order Derivative Measure = {}'''\
-            .format(str(area), str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(N), str(ctrl_policy), str(decay), str(zero_crossing),\
-                    str(seed_value), str(Q), str(R), str(rovers_sep), str(x_offset), str(y_offset), str(goal_offset), str(step), str(steps), \
-                    str(len_interval), str(K_goal), str(K_neighbour), str(metric_mean[0]), str(metric_mean[1]), str(metric_covariance[0][1]), \
-                    str(metric_covariance[0][1]), str(metric_covariance[1][0]), str(metric_covariance[1][1]), str(num_r_samples), str(s_dist), str(K_sampler),
-                    str(sampling_time), str(metric_order)))
+        log_parameter_file.write('\nSimulator Parameters:\n')
+        log_parameter_file.write('-' * 50)
+        log_parameter_file.write('''\nArea = {}\nRovers(N) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}\nSteps Undergone= {}
+        \nMaximum Steps Allowed = {}\nSimpulation Sampling Period = {}\nNoise Seed = {}\nState Noise(Q) = {}\nMeasurement Noise(R) = {}
+        \nControl Policy(ctrl_policy) = {}\nDistance between Rovers(dist) = {}'''.format(str(area), str(N), str(x_offset), str(y_offset), str(goal_offset), \
+        str(step), str(steps), str(t_sampling), str(seed_value), str(Q), str(R), str(ctrl_policy), str(rovers_sep)))
+        log_parameter_file.write('\n')
+        log_parameter_file.write('=' * 50)
+        log_parameter_file.write('''\nLoRa Parameters:\n''')
+        log_parameter_file.write('-' * 50)
+        log_parameter_file.write('''\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
+            \nTransmitting Power(TxPW) = {}\nLength Interval = {}\nPulse Interval = {}'''.format(str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw),\
+            str(len_interval), str(pulse_interval)))
+
+        log_parameter_file.write('\n')
+        log_parameter_file.write('=' * 50)
+        log_parameter_file.write('\nMission Parameters:\n')
+        log_parameter_file.write('-' * 50)
+        if(mission[-2:] == 'LS'):
+            log_parameter_file.write('''\nGoal Driven Gain = {}\nPassive Controller Gain = {}\nDecay Type = {}\nDecay Zero Crossing = {}'''.format(str(K_goal), \
+                str(K_neighbour), str(decay), str(zero_crossing)))
+            if(mission == 'ALS'):
+                log_parameter_file.write('''Number of Path Planning Waypoints = {}'''.format(str(num_of_waypoints)))
+        elif(mission == 'AS'):
+            log_parameter_file.write('''Metric Distirbution Mean = {}\nMetric Distribution Covariance = {}\nDefault Number of Samples = {}\nDefault Sampling Distance = {}
+            \nSampler Gain = {}\nRequired Time for Sampling = {}\nNth Order Derivative Measure = {}'''.format(str(metric_mean), str(metric_covariance), str(num_r_samples), \
+            str(s_dist), str(K_sampler), str(sampling_time), str(metric_order)))
 
     #Log Summary Information
     if(int(log_control[1]) == 1):
