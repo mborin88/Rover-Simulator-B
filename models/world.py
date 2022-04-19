@@ -132,7 +132,7 @@ class World:
             if rover.radio is None:
                 pass
             else:
-                if(self._mission == 'LS'):
+                if(self._mission[-2:] == 'LS'):
                     if(rover.control_policy != 'Goal-driven'):
                         if tn == rover.radio.next_tx:
                             transmitter = rover
@@ -157,7 +157,7 @@ class World:
             elif receiver == transmitter:
                 pass
             else:
-                if(self._mission == 'LS' or self._mission == 'ALS'):
+                if(self._mission[-2:] == 'LS'):
                     if(rover.control_policy != 'Goal-driven'):
                         receiver.radio.receive_pos(self)
                 elif(self._mission == 'AS'):
