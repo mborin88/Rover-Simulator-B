@@ -72,7 +72,8 @@ user_bw| INTEGER | Bandwidth.
 user_sf| INTEGER | Spreading factor.
 user_cr| FLOAT | Coding rate.
 user_txpw| INTEGER | Transmitting power.
-len_interval| FLOAT | Interval between transmissions.
+len_interval| FLOAT | Interval between transmissions. (Only used in Line sweeping missions)
+pulse_interval | INTEGER | Interval between transmission that take too long for Duty Cycle Requirements. (Only used in adaptive sampling missions)
 
 
 ### Line Sweep Parameters
@@ -104,7 +105,6 @@ K_sampler[1] | FLOAT | Gain for the neighbouring rovers sampling metrics. Affect
 K_sampler[2] | FLOAT | Gain for natural increase of sampling distance if insignificant metric received. 
 sampling_time | INTEGER | Number of steps required for successful sample to be taken. (Steps rover will be stationary for)
 metric_order | INTEGER | Whether to take absolute, first order or second order derivative of the metric.
-pulse_interval | INTEGER | Interval between transmission that take too long for Duty Cycle Requirements
 
 
 ## Missions
