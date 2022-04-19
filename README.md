@@ -49,7 +49,8 @@ area| STRING | Simulation area (6 letter code from downloaded list)
 N | INTEGER | Total rover numbers.
 x_offset| INTEGER | Distance from the left boundary which is the location of the first rover. 
 y_offset| INTEGER | Distance from the baseline which is the location of the first rover.
-goal_offset| INTEGER | Distance to the goal below which the goal is assumed reached. 
+goal_offset| INTEGER | Distance to the goal below which the goal is assumed reached.
+rover_sep| INTEGER | Distance between rovers in meters.
 steps| INTEGER | Maximum time steps, for the mission.
 t_sampling| FLOAT | Simulation Sampling period.
 Q| FLOAT ARRAY | The state noise. (Array length of 2 )
@@ -80,7 +81,6 @@ Variable | Type | Description
 --- | --- | ---
 K_goal| FLOAT ARRAY | Gain of controller. 
 K_neighbour | FLOAT ARRAY | Gain of controller.
-rover_sep| INTEGER | Distance between rovers in meters.
 decay| INTEGER | Mathematic style of the decay of rovers speed position, over time. (control policy 2)
 zero_crossing| INTEGER | How many time slots the adjustment speed of a neighbouring rover is valid for (control policy 2)
 
