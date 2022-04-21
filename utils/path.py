@@ -59,13 +59,13 @@ def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset,
         waypoints.append([])
         for w_point in range(num_waypoints): #No. waypoints
             waypoints[rover].append([])
-            waypoints[rover][w_point].append(ax_range[0] + x_offset + (rover*r_sep))
+            waypoints[rover][w_point].append(round(ax_range[0] + x_offset + (rover*r_sep)))
             if(w_point==0):
-                waypoints[rover][w_point].append(ax_range[2] + y_offset +(w_point*y_sep)) # waypoint difference.
+                waypoints[rover][w_point].append(round(ax_range[2] + y_offset +(w_point*y_sep))) # waypoint difference.
             elif(w_point == num_waypoints):
-                waypoints[rover][w_point].append(ax_range[3] - goal_offset)
+                waypoints[rover][w_point].append(round(ax_range[3] - goal_offset))
             else:
-                waypoints[rover][w_point].append(ax_range[2] +(w_point*y_sep))
+                waypoints[rover][w_point].append(round(ax_range[2] +(w_point*y_sep)))
             waypoints[rover][w_point].append(0) # waypoint difference.
 
     x_plt = [x[0] for r in waypoints for x in r]

@@ -23,7 +23,7 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SP46NE'     # Area to run simulation.
+area = 'SU20NE'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
@@ -31,7 +31,7 @@ y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
 steps = 432000      #432000      # Maximum iteration
 
-t_sampling = 0.1    # Sampling time, in second.
+t_sampling = 0.1     # Sampling time, in second.
 len_interval = 120   # Number of time slots between transmissions for one device.
 
 
@@ -43,9 +43,9 @@ rand.seed(seed_value)
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
-log_title_tag = "Full Report Run"
+log_title_tag = "New tx_pw"
 log_title = log_title_tag + ', ' + str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Finished Development v1'''            #Additional notes to be added to Log file if wished
+log_notes = '''Tx_pw set to rightful 14'''            #Additional notes to be added to Log file if wished
 log_checkpoint_interval = 18000                           #Log every 30 minutes = 18000 steps
 
 # Configure communication settings:
@@ -53,10 +53,10 @@ user_f = 869.525                                    # Carrier center frequency, 
 user_bw = BW[0]                                     # Bandwidth, in kHz.
 user_sf = SF[3]                                     # Spreading factor.
 user_cr = CR[3]                                     # Coding rate.
-user_txpw = 24                                      # Transmitting power, in dBm.
+user_txpw = 14                                      # Transmitting power, in dBm.
 
 # Configure control settings:
-ctrl_policy = '2-3'
+ctrl_policy = '1-3'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -73,9 +73,9 @@ num_of_waypoints = 10
 # 4 Adaptive Sampling Parameters
 metric_mean = ['L', 'B']                            #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[2, 1], [0, 0.75]]
-K_sampler = [200, 3.25, 0.25]                               # Gains for sampler [0]: is own sampling change [1]: neighbouring samples [2]: natural increase gain # 500 4, [0.2, 3.25, 0.25]
+K_sampler = [200, 3.25, 0.25]                               # Gains for sampler [0]: is own sampling change [2]: neighbouring samples [1]: natural increase gain # 500 4, [0.2, 3.25, 0.25]
 num_r_samples = 20                                          # Determines default sampling distance
-sampling_time = 100                                        # How long it takes to correctly take a sample
+sampling_time = 6000                                        # How long it takes to correctly take a sample
 metric_order = 1                                            # What metric we are measuring
 pulse_interval = 3000                                       # How often repeat transmissions should be sent for DC
 
@@ -355,7 +355,10 @@ def main():
             log_parameter_file.write('''\nGoal Driven Gain = {}\nPassive Controller Gain = {}\nDecay Type = {}\nDecay Zero Crossing = {}'''.format(str(K_goal), \
                 str(K_neighbour), str(decay), str(zero_crossing)))
             if(mission == 'ALS'):
-                log_parameter_file.write('''Number of Path Planning Waypoints = {}'''.format(str(num_of_waypoints)))
+                log_parameter_file.write('''\nNumber of Path Planning Waypoints = {}'''.format(str(num_of_waypoints)))
+                log_parameter_file.write('''\n\nWaypoints:''')
+                for x in range(N):
+                    log_parameter_file.write('''\nRover {} => {}'''.format(str(x+1), str(init_waypoints[x])))
         elif(mission == 'AS'):
             log_parameter_file.write('''Metric Distirbution Mean = {}\nMetric Distribution Covariance = {}\nDefault Number of Samples = {}\nDefault Sampling Distance = {}
             \nSampler Gain = {}\nRequired Time for Sampling = {}\nNth Order Derivative Measure = {}'''.format(str(metric_mean), str(metric_covariance), str(num_r_samples), \
