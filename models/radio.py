@@ -60,7 +60,6 @@ class Radio:
         self._sensitivity = SENSITIVITY[self._bw][self._sf]    # The receiving sensitivity, in dBm.
         self._tx_pw = tx_pw                     # The transmitted power, in dBm.
         self._next_tx = 0 + self._radio_id - 1
-        self._tx_steps = []
         # The time slot for next transmission.
         # A transmission is only allowed to take place at the beginning of a time slot.
         # Each time slot only allows one transmission to happen.
@@ -119,10 +118,6 @@ class Radio:
     @property
     def next_tx(self):
         return self._next_tx
-
-    @property
-    def tx_steps(self):
-        return self._tx_steps
 
     @property
     def num_tx(self):
@@ -206,20 +201,24 @@ class Radio:
         """
         Get the measured pose info ready for packet formation.
         """
-        return self._rover.tx_buffer       
+        return self._rover.tx_buffer
+
+    def set_next_tx(self, world):
+        """
+        Set the next transmission time for rover
+        """
+        self._next_tx = world.tn + self._interval
 
     def transmit(self, world):
         """
         Place a new transmission into the channel.
         """
         tx_buffer = self.get_tx_buffer()
-        self._tx_steps.append(world.tn)
         payload = [self._radio_id, tx_buffer[2], tx_buffer[0], tx_buffer[1]]
         packet = Packet(self, payload)
         self._num_transmitted += 1
         world.add_packet(packet)
         self._rover._tx_status = 1          # Transmission always successful
-        self._next_tx = world.tn + self._interval
 
     def receive(self, world):
         """

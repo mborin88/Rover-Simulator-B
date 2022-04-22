@@ -133,11 +133,13 @@ class World:
                 pass
             else:
                 if(rover.control_policy != 'Goal-driven' or rover.control_policy != 'Independent Adaptive Sampling'):
-                    if tn == rover.radio.next_tx and rover.transmit == True:
-                        transmitter = rover
-                        transmitter.radio.transmit(self)   
-                        rover.reset_transmission_flag()
-
+                    if tn == rover.radio.next_tx:
+                        if(rover.transmit == True):
+                            transmitter = rover
+                            transmitter.radio.transmit(self)   
+                            rover.reset_transmission_flag()
+                        rover.radio.set_next_tx(self)
+                        
         #Slowing down simulation
         #if len(self.channel) > 0:
         #    print('Currently Transmitting: Rover {}\n'.format(self.channel[-1].tx.radio_id))

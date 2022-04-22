@@ -32,8 +32,6 @@ goal_offset = 5     # Of distance to goal is smaller than offset, goal is assume
 steps = 8000      #432000      # Maximum iteration
 
 t_sampling = 0.1     # Sampling time, in second.
-len_interval = 120   # Number of time slots between transmissions for one device.
-
 
 Q = None                                      # State noise.
 R = None                                        # Measurement noise.
@@ -78,7 +76,6 @@ K_sampler = [200, 3.25, 0.25]                               # dist * K[1]/ (K[0]
 num_r_samples = 20                                          # Determines default sampling distance
 sampling_time = 6000                                        # How long it takes to correctly take a sample
 metric_order = 1                                            # What metric we are measuring
-pulse_interval = 3000                                       # How often repeat transmissions should be sent for DC
 
 
 def main():
