@@ -211,11 +211,11 @@ class Rover:
     def landcover_termination(self):
         return self._landcover_termination
 
-    def config_radio(self, f, bw, sf, cr, tx_pw):
+    def config_radio(self, f, bw, sf, cr, dc, tx_pw):
         """
         Configure radio parameters.
         """
-        self._radio = Radio(self, f, bw, sf, cr, tx_pw)
+        self._radio = Radio(self, f, bw, sf, cr, dc, tx_pw)
 
     def config_control_policy(self, policy):
         """

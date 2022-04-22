@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 1000      #432000      # Maximum iteration
+steps = 8000      #432000      # Maximum iteration
 
 t_sampling = 0.1     # Sampling time, in second.
 len_interval = 120   # Number of time slots between transmissions for one device.
@@ -66,7 +66,7 @@ K_goal = [1e-1, 1e-1]                               # Control gain for goal-driv
 # 2/3 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]                             # Control gain for passive-cooperative controller;
 decay = 'quad'
-zero_crossing = 20 * len_interval                   #20 communication cycles for it to fully decay
+zero_crossing = 20                   #20 communication cycles for it to fully decay
 
 # Advance Line Sweeping Parameter
 num_of_waypoints = 10
@@ -128,14 +128,10 @@ def main():
 
     # Configure rovers' settings.
     for starter in world.rovers:
-        starter.config_radio(user_f, user_bw, user_sf, user_cr, user_txpw)
+        starter.config_radio(user_f, user_bw, user_sf, user_cr, user_dc, user_txpw)
         starter.radio.set_swarm_size(N)
-        # airtime = starter.radio.airtime()
-        # starter.set
-        if(mission == 'LS' or mission == 'ALS'):
-            starter.radio.set_interval(len_interval)
-        elif(mission == 'AS'):
-            starter.radio.set_interval(pulse_interval)
+        starter.radio.config_de()
+        starter.radio.config_silent_time()
         starter.radio.set_t_slot(t_sampling)
 
         # Configure motion logger.
@@ -167,7 +163,7 @@ def main():
                 speed_controller = PController(None, K_neighbour)
                 starter.config_speed_controller(speed_controller)
                 starter.config_decay_type(decay)
-                starter.config_decay_zero_crossing(zero_crossing)
+                starter.config_decay_zero_crossing(zero_crossing * starter.radio.interval)
                 # The reference for passive-cooperative controller
                 # dynamically changes when new packet from the neighbour is received.
                 full_mission_name = 'Passive-cooperative'
@@ -287,9 +283,9 @@ def main():
             print('Transmission Power: {} (dBm)'.format(str(transceiver.tx_pw)))
             print('Antenna Gain: {} (dBi)'.format(str(transceiver.ant_gain)))
             print('Payload Length: {} (byte)'.format(str(transceiver.pl)))
-            print('Duty Cycle: {}%'.format(str(round(transceiver.actual_dc(mission) * 100, 1))))
+            print('Duty Cycle: {}%'.format(str(round(transceiver.actual_dc() * 100, 1))))
             print('Airtime: {} (sec)'.format(str(round(transceiver.airtime(), 4))))
-            print('Silent time: {} (sec)'.format(str(round(transceiver.actual_silent_time(mission), 1))))
+            print('Silent time: {} (sec)'.format(str(round(transceiver.interval * t_sampling, 1))))
             print('Transmitted Packets: {}'.format(str(transceiver.num_tx)))
             print('Received Packets: {}'.format(str(transceiver.num_rx)))
             print('Discarded Packets: {}'.format(str(transceiver.num_disc)))
@@ -298,6 +294,9 @@ def main():
                                                                 / (transceiver.num_rx + transceiver.num_disc) * 100, 2))))
             except ZeroDivisionError:
                 print('Packet Loss Ratio: N/A')
+
+            if(transceiver.airtime() > t_sampling):
+                    print('\nWARNING: Airtime ({}) > Sample time ({}), reduces accuracy of simulation.'.format(str(transceiver.airtime()), str(t_sampling)))
     print('=' * 50)
 
     # Print simulation running time.
@@ -345,8 +344,7 @@ def main():
         log_parameter_file.write('''\nLoRa Parameters:\n''')
         log_parameter_file.write('-' * 50)
         log_parameter_file.write('''\nFrequency = {}\nBandwidth(BW) = {}\nSpreading Factor(SF) = {}\nCoding Rate(CR) = {}
-            \nTransmitting Power(TxPW) = {}\nLength Interval = {}\nPulse Interval = {}'''.format(str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw),\
-            str(len_interval), str(pulse_interval)))
+        \nTransmitting Power(TxPW) = {}\nDuty Cycle = {}'''.format(str(user_f), str(user_bw), str(user_sf), str(user_cr), str(user_txpw), str(user_dc)))
 
         log_parameter_file.write('\n')
         log_parameter_file.write('=' * 50)
@@ -413,9 +411,9 @@ def main():
                 log_summary_file.write('\nTransmission Power: {} (dBm)'.format(str(transceiver.tx_pw)))
                 log_summary_file.write('\nAntenna Gain: {} (dBi)'.format(str(transceiver.ant_gain)))
                 log_summary_file.write('\nPayload Length: {} (byte)'.format(str(transceiver.pl)))
-                log_summary_file.write('\nDuty Cycle: {}%'.format(str(round(transceiver.actual_dc(mission) * 100, 1))))
+                log_summary_file.write('\nDuty Cycle: {}%'.format(str(round(transceiver.actual_dc() * 100, 1))))
                 log_summary_file.write('\nAirtime: {} (sec)'.format(str(round(transceiver.airtime(), 4))))
-                log_summary_file.write('\nSilent time: {} (sec)'.format(str(round(transceiver.actual_silent_time(mission), 1))))
+                log_summary_file.write('\nSilent time: {} (sec)'.format(str(round(transceiver.interval * t_sampling, 1))))
                 log_summary_file.write('\nTransmitted Packets: {}'.format(str(transceiver.num_tx)))
                 log_summary_file.write('\nReceived Packets: {}'.format(str(transceiver.num_rx)))
                 log_summary_file.write('\nDiscarded Packets: {}'.format(str(transceiver.num_disc)))
@@ -424,6 +422,8 @@ def main():
                                                                     / (transceiver.num_rx + transceiver.num_disc) * 100, 2))))
                 except ZeroDivisionError:
                     log_summary_file.write('\nPacket Loss Ratio: N/A')
+                if(transceiver.airtime() > t_sampling):
+                    log_summary_file.write('\nWARNING: Airtime ({}) > Sample time ({}), reduces accuracy of simulation.'.format(str(transceiver.airtime()), str(t_sampling)))
         log_summary_file.write('\n')                                                        
         log_summary_file.write('=' * 50)
 
@@ -479,7 +479,7 @@ def main():
     RMSE_plot(world, step, log_step_interval, ee, log_control[2], directory)
     landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, log_checkpoint_interval, step, log_control[2], directory)
     y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
-    mission_connectivity_plot(world, N, len_interval, step, log_control[2], directory)
+    mission_connectivity_plot(world, N, world.rovers[0].radio.interval, step, log_control[2], directory)
     # real_metric_distribution(world, directory, log_control[2])
 
     plt.show()

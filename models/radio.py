@@ -1,5 +1,6 @@
 from models.packet import *
 from models.path_loss import *
+import math
 
 PS = 8                              # Preamble symbol(s).
 CRC = 1                             # Presence of cyclic redundancy check, default 1, meaning present.
@@ -39,12 +40,11 @@ class Radio:
     ps = PS     # The preamble symbol(s).
     crc = CRC   # The presence of CRC.
     hd = HD     # The presence of header.
-    de = DE     # The presence of low data rate optimisation.
     ant_gain = ANT_GAIN         # The antenna gain， in dBi.
     ant_height = ANT_HEIGHT     # The antenna height, in meter.
     pl = 10                      # The length of payload, in byte.
 
-    def __init__(self, rover, f, bw, sf, cr, tx_pw, t_slot=0.1):
+    def __init__(self, rover, f, bw, sf, cr, dc, tx_pw, t_slot=0.1):
         self._rover = rover                     # A rover object which the radio is attached to.
         self._radio_id = self._rover.rov_id     # Unique id for each radio, same as the rover's id.
         self._total_radios = 1                  # Number of all the radios in operation, including self.
@@ -55,6 +55,8 @@ class Radio:
         self._bw = bw                           # The bandwidth, in KHz.
         self._sf = sf                           # The spreading factor.
         self._cr = cr                           # The coding rate.
+        self._dc = dc / 100                     # The duty cycle
+        self._de = DE                           # The presence of low data rate optimisation.
         self._sensitivity = SENSITIVITY[self._bw][self._sf]    # The receiving sensitivity, in dBm.
         self._tx_pw = tx_pw                     # The transmitted power, in dBm.
         self._next_tx = 0 + self._radio_id - 1
@@ -200,35 +202,11 @@ class Radio:
         """
         self._tx_pw = new_txpw
 
-    # def get_measurement(self):
-    #     """
-    #     Get the measured pose info ready for packet formation.
-    #     """
-    #     return self._rover.pos_measurement
-    
-    # def get_metric(self):
-    #     """
-    #     Get the measured pose info ready for packet formation.
-    #     """
-    #     return self._rover.metric[self._radio_id-1]
-
     def get_tx_buffer(self):
         """
         Get the measured pose info ready for packet formation.
         """
         return self._rover.tx_buffer       
-
-    # def transmit_metric(self, world):
-    #     """
-    #     Place a new transmission into the channel.
-    #     """
-    #     metric_data = self.get_metric()
-    #     self._tx_steps.append(world.tn)
-    #     payload = [self._radio_id, metric_data[2], metric_data[0], metric_data[1]]
-    #     packet = Packet(self, payload)
-    #     self._num_transmitted += 1
-    #     world.add_packet(packet)
-    #     self._next_tx = world.tn + self._interval
 
     def transmit(self, world):
         """
@@ -242,34 +220,6 @@ class Radio:
         world.add_packet(packet)
         self._rover._tx_status = 1          # Transmission always successful
         self._next_tx = world.tn + self._interval
-
-    # def receive_metric(self, world):
-    #     """
-    #     Receive a packet which can be successfully demodulated from the channel.
-    #     """
-    #     threshold = self._sensitivity
-    #     if len(world.channel) > 0:
-    #         packet = world.channel[-1]
-    #         if self.rx_power(packet, world) >= threshold:
-    #             self._num_received += 1
-    #             self._receiver_buffer = packet
-    #             self.update_neighbour_metric_register()
-    #         else:
-    #             self._num_discarded += 1
-    #     else:
-    #         pass
-
-    # def transmit_pos(self, world):
-    #     """
-    #     Place a new transmission into the channel.
-    #     """
-    #     tx_time = self._next_tx
-    #     pose_msred = self.get_measurement()
-    #     payload = [self._radio_id, tx_time, pose_msred[0], pose_msred[1]]
-    #     packet = Packet(self, payload)
-    #     self._num_transmitted += 1
-    #     world.add_packet(packet)
-    #     self._next_tx += self._interval
 
     def receive(self, world):
         """
@@ -324,31 +274,49 @@ class Radio:
         t_symbol = pow(2, self._sf) / (self._bw * 1000)
         t_preamble = (self.ps + 4.25) * t_symbol
         term = int((8 * self.pl - 4 * self._sf + 28 + 16 * self.crc - 20 * self.hd) /
-                   (4 * (self._sf - 2 * self.de))) * (1 / self._cr * 4)
+                   (4 * (self._sf - 2 * self._de))) * (1 / self._cr * 4)
         if term < 0:
             term = 0
         n_payload = 8 + term
         t_payload = n_payload * t_symbol
         return t_preamble + t_payload
 
-    def actual_dc(self, mission):
+    def actual_dc(self):
         """
         Calculate the actual duty cycle due to user-defined configuration.
         """
-        return self.airtime() / (self.airtime() + self.actual_silent_time(mission))
+        return self.airtime() / (self.airtime() + (self._interval * self._t_slot))
 
-    def actual_silent_time(self, mission):
+    # def actual_silent_time(self, mission):
+    #     """
+    #     Calculate the actual silent time due to use-defined configuration.
+    #     """
+    #     if(mission == 'LS' or mission == 'ALS'):
+    #         return self._interval * self._t_slot
+    #     elif(mission == 'AS'):
+    #         intervals = []
+    #         for i in range(len(self._tx_steps)-1):
+    #             intervals.append(self._tx_steps[i+1] - self._tx_steps[i])
+    #         try:
+    #             mean_interval = sum(intervals)/len(intervals)
+    #         except ZeroDivisionError:
+    #             mean_interval = 0
+    #         return mean_interval * self._t_slot
+
+    def config_silent_time(self):
         """
-        Calculate the actual silent time due to use-defined configuration.
+        Configurate the silent time by the duty cycle and airtime
+        Rounding up used as interval needs to be an integer, take care if wanting a low duty cycle. 
+        As will tend to decrease slightly further if not an integer.
         """
-        if(mission == 'LS' or mission == 'ALS'):
-            return self._interval * self._t_slot
-        elif(mission == 'AS'):
-            intervals = []
-            for i in range(len(self._tx_steps)-1):
-                intervals.append(self._tx_steps[i+1] - self._tx_steps[i])
-            try:
-                mean_interval = sum(intervals)/len(intervals)
-            except ZeroDivisionError:
-                mean_interval = 0
-            return mean_interval * self._t_slot
+        silent_time = math.ceil((self.airtime() / self._dc) - self.airtime())
+        self._interval = math.ceil(silent_time / self._t_slot)
+
+    def config_de(self):
+        """
+        If parameters are right data rate optimisation bit needs to be present.
+        """
+        if(self.bw <= 125 and (self._sf == 11 or self._sf == 12)):
+            self._de = 1
+        else:
+            self._de = 0 
