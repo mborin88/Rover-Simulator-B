@@ -289,6 +289,7 @@ class Rover:
         Reset transmission flag to Flalse
         """
         self._transmit = False
+        self._tx_buffer = None
     
     def update_metric(self, r_id, x_pos, y_pos, value):
         """

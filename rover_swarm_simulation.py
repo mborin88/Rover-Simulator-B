@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 432000      #432000      # Maximum iteration
+steps = 1000      #432000      # Maximum iteration
 
 t_sampling = 0.1     # Sampling time, in second.
 len_interval = 120   # Number of time slots between transmissions for one device.
@@ -41,7 +41,7 @@ seed_value = dt.datetime.now().microsecond      #Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '111'
+log_control = '000'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "New tx_pw"
 log_title = log_title_tag + ', ' + str(dt.datetime.now())[:-7].replace(':', '-')
@@ -57,7 +57,7 @@ user_txpw = 14                                      # Transmitting power, in dBm
 user_dc = 1                                         # Duty cycle in %
 
 # Configure control settings:
-ctrl_policy = '1-2'
+ctrl_policy = '2-3'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:

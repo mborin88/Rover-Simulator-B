@@ -200,77 +200,78 @@ class Radio:
         """
         self._tx_pw = new_txpw
 
-    def get_measurement(self):
-        """
-        Get the measured pose info ready for packet formation.
-        """
-        return self._rover.pos_measurement
+    # def get_measurement(self):
+    #     """
+    #     Get the measured pose info ready for packet formation.
+    #     """
+    #     return self._rover.pos_measurement
     
-    def get_metric(self):
-        """
-        Get the measured pose info ready for packet formation.
-        """
-        return self._rover.metric[self._radio_id-1]
+    # def get_metric(self):
+    #     """
+    #     Get the measured pose info ready for packet formation.
+    #     """
+    #     return self._rover.metric[self._radio_id-1]
 
-    def get_transmission_buffer(self):
+    def get_tx_buffer(self):
         """
         Get the measured pose info ready for packet formation.
         """
         return self._rover.tx_buffer       
 
-    def transmit_metric(self, world):
-        """
-        Place a new transmission into the channel.
-        """
-        metric_data = self.get_metric()
-        self._tx_steps.append(world.tn)
-        payload = [self._radio_id, metric_data[2], metric_data[0], metric_data[1]]
-        packet = Packet(self, payload)
-        self._num_transmitted += 1
-        world.add_packet(packet)
-        self._next_tx = world.tn + self._interval
+    # def transmit_metric(self, world):
+    #     """
+    #     Place a new transmission into the channel.
+    #     """
+    #     metric_data = self.get_metric()
+    #     self._tx_steps.append(world.tn)
+    #     payload = [self._radio_id, metric_data[2], metric_data[0], metric_data[1]]
+    #     packet = Packet(self, payload)
+    #     self._num_transmitted += 1
+    #     world.add_packet(packet)
+    #     self._next_tx = world.tn + self._interval
 
     def transmit(self, world):
         """
         Place a new transmission into the channel.
         """
-        tx_buffer = self.get_transmission_buffer()
+        tx_buffer = self.get_tx_buffer()
         self._tx_steps.append(world.tn)
         payload = [self._radio_id, tx_buffer[2], tx_buffer[0], tx_buffer[1]]
         packet = Packet(self, payload)
         self._num_transmitted += 1
         world.add_packet(packet)
+        self._rover._tx_status = 1          # Transmission always successful
         self._next_tx = world.tn + self._interval
 
-    def receive_metric(self, world):
-        """
-        Receive a packet which can be successfully demodulated from the channel.
-        """
-        threshold = self._sensitivity
-        if len(world.channel) > 0:
-            packet = world.channel[-1]
-            if self.rx_power(packet, world) >= threshold:
-                self._num_received += 1
-                self._receiver_buffer = packet
-                self.update_neighbour_metric_register()
-            else:
-                self._num_discarded += 1
-        else:
-            pass
+    # def receive_metric(self, world):
+    #     """
+    #     Receive a packet which can be successfully demodulated from the channel.
+    #     """
+    #     threshold = self._sensitivity
+    #     if len(world.channel) > 0:
+    #         packet = world.channel[-1]
+    #         if self.rx_power(packet, world) >= threshold:
+    #             self._num_received += 1
+    #             self._receiver_buffer = packet
+    #             self.update_neighbour_metric_register()
+    #         else:
+    #             self._num_discarded += 1
+    #     else:
+    #         pass
 
-    def transmit_pos(self, world):
-        """
-        Place a new transmission into the channel.
-        """
-        tx_time = self._next_tx
-        pose_msred = self.get_measurement()
-        payload = [self._radio_id, tx_time, pose_msred[0], pose_msred[1]]
-        packet = Packet(self, payload)
-        self._num_transmitted += 1
-        world.add_packet(packet)
-        self._next_tx += self._interval
+    # def transmit_pos(self, world):
+    #     """
+    #     Place a new transmission into the channel.
+    #     """
+    #     tx_time = self._next_tx
+    #     pose_msred = self.get_measurement()
+    #     payload = [self._radio_id, tx_time, pose_msred[0], pose_msred[1]]
+    #     packet = Packet(self, payload)
+    #     self._num_transmitted += 1
+    #     world.add_packet(packet)
+    #     self._next_tx += self._interval
 
-    def receive_pos(self, world):
+    def receive(self, world):
         """
         Receive a packet which can be successfully demodulated from the channel.
         """
@@ -298,14 +299,6 @@ class Radio:
     def update_neighbour_register(self):
         """
         Update neighbour register.
-        """
-        packet = self._receiver_buffer
-        tx_id = packet.tx.radio_id
-        self._neighbour_register[tx_id - 1] = packet
-    
-    def update_neighbour_metric_register(self):
-        """
-        Update neighbour metric register.
         """
         packet = self._receiver_buffer
         tx_id = packet.tx.radio_id

@@ -129,7 +129,15 @@ def advanced_simple_passive_cooperation(rov, world, v_max, v_min):
 
     rov.update_speeds(rov._control[0], rov._control[1])
     rov._transmit = True
-    rov._transmission_buffer = [world.tn, controlled_object[0], controlled_object[1]]     
+
+    # if(rov.tx_status == 1):
+    #     print('Previous transmission successful')
+    # elif(rov.tx_status == 0):
+    #     print('Queue transmissions as old one hasnt sent yet')
+    # elif(rov.tx_status == -1):
+    #     print('Resend old transmission as it failed. Or send new packet')
+
+    rov._tx_buffer = [world.tn, controlled_object[0], controlled_object[1]]     
     rov._radio.reset_neighbour_register()
     rov._radio.reset_buffer()
 
@@ -196,6 +204,12 @@ def advanced_passive_cooperation(rov, world, v_max, v_min):
 
     rov.update_speeds(rov._control[0], rov._control[1])
     rov._transmit = True
+    # if(rov.tx_status == 1):
+    #     print('Previous transmission successful')
+    # elif(rov.tx_status == 0):
+    #     print('Queue transmissions as old one hasnt sent yet')
+    # elif(rov.tx_status == -1):
+    #     print('Resend old transmission as it failed. Or send new packet')
     rov._tx_buffer = [world.tn, controlled_object[0], controlled_object[1]]  
     rov._radio.reset_neighbour_register()
     rov._radio.reset_buffer()

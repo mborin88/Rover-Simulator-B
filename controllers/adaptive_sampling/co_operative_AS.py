@@ -167,6 +167,13 @@ def co_op_sampler(rov, world, s_max, s_min):
             update_sample_dist(rov, s_max, s_min)
             rov._transmit = True
             rov.update_tx_buffer(rov.metric[rov.rov_id-1][2], rov.metric[rov.rov_id-1][0], rov.metric[rov.rov_id-1][1])
+            rov._tx_status = 0
+            # if(rov.tx_status == 1):
+            #     print('Previous transmission successful')
+            # elif(rov.tx_status == 0):
+            #     print('Queue transmissions as old one hasnt sent yet')
+            # elif(rov.tx_status == -1):
+            #     print('Resend old transmission as it failed. Or send new packet')
         rov._is_sampling = False
 
     elif(rov.is_sampling):
