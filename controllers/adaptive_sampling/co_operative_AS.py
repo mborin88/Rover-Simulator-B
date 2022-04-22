@@ -166,6 +166,7 @@ def co_op_sampler(rov, world, s_max, s_min):
 
             update_sample_dist(rov, s_max, s_min)
             rov._transmit = True
+            rov.update_tx_buffer(rov.metric[rov.rov_id-1][2], rov.metric[rov.rov_id-1][0], rov.metric[rov.rov_id-1][1])
         rov._is_sampling = False
 
     elif(rov.is_sampling):

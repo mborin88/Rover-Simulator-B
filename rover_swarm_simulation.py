@@ -54,9 +54,10 @@ user_bw = BW[0]                                     # Bandwidth, in kHz.
 user_sf = SF[3]                                     # Spreading factor.
 user_cr = CR[3]                                     # Coding rate.
 user_txpw = 14                                      # Transmitting power, in dBm.
+user_dc = 1                                         # Duty cycle in %
 
 # Configure control settings:
-ctrl_policy = '1-3'
+ctrl_policy = '1-2'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -73,7 +74,7 @@ num_of_waypoints = 10
 # 4 Adaptive Sampling Parameters
 metric_mean = ['L', 'B']                            #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[2, 1], [0, 0.75]]
-K_sampler = [200, 3.25, 0.25]                               # Gains for sampler [0]: is own sampling change [2]: neighbouring samples [1]: natural increase gain # 500 4, [0.2, 3.25, 0.25]
+K_sampler = [200, 3.25, 0.25]                               # dist * K[1]/ (K[0] + 1)Gains for sampler [0]: is own sampling change [2]: neighbouring samples [1]: natural increase gain # 500 4, [0.2, 3.25, 0.25]
 num_r_samples = 20                                          # Determines default sampling distance
 sampling_time = 6000                                        # How long it takes to correctly take a sample
 metric_order = 1                                            # What metric we are measuring
@@ -111,8 +112,6 @@ def main():
     world.config_sample_metric(Sampling_Metric(x_min, x_max, y_min, y_max), metric_mean, metric_covariance)
     world.config_engine(SlopePhysics(world))
 
-    #world.sample_metric.visualise()
-
     init_waypoints = []    
     image, axis_range = render_rgb(map_landcover)
     fig0 = show_rgb_waypoints(image, axis_range, init_waypoints, x_offset, y_offset, \
@@ -131,6 +130,8 @@ def main():
     for starter in world.rovers:
         starter.config_radio(user_f, user_bw, user_sf, user_cr, user_txpw)
         starter.radio.set_swarm_size(N)
+        # airtime = starter.radio.airtime()
+        # starter.set
         if(mission == 'LS' or mission == 'ALS'):
             starter.radio.set_interval(len_interval)
         elif(mission == 'AS'):

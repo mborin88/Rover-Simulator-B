@@ -1,8 +1,4 @@
-from msilib import RadioButtonGroup
 from random import *
-from re import S
-from this import d
-from tkinter.tix import MAX
 import numpy as np
 
 from models.radio import *
@@ -46,7 +42,10 @@ class Rover:
         self._decay_zero_crossing = 1200                                        # How many steps until speed position of neighbour rover ignored.
         self._connectivity = [0] * num_rovers
 
-        self._transmit = False
+        self._transmit = False                                                  # Is rover ready to transmit data
+        self._tx_buffer = None                                            # Data to be transmitted
+        self._tx_status = 0                                           # Was transmission successful 0 = pending, 1 = successful, -1 = Failed
+
         self._avg_sample_dist = 500
         self._sample_dist = 500
 
@@ -139,6 +138,10 @@ class Rover:
     @property
     def connectivity(self):
         return self._connectivity
+
+    @property
+    def tx_buffer(self):
+        return self._tx_buffer
     
     @property
     def transmit(self):
@@ -317,6 +320,9 @@ class Rover:
         self._control[0] = round(vx, 3)         #X direction speed 
         self._control[1] = round(vy, 3)         #Y direction speed
         self._control[2] = round(sqrt(vx ** 2 + vy ** 2), 3)  #Overall speed
+
+    def update_tx_buffer(self, value1, value2, value3):
+        self._tx_buffer = [value1, value2, value3]
     
     def check_invalid_landcover(self, world):
         """
@@ -426,15 +432,15 @@ class Rover:
                 elif world.mission == 'LS' and self._control_policy == 'Goal-driven':
                     move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif world.mission == 'LS' and self._control_policy == 'Passive-cooperative':
-                    passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    passive_cooperation(self, world, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif world.mission == 'LS' and self._control_policy == 'Simple Passive-cooperative':
-                    simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    simple_passive_cooperation(self, world, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif world.mission == 'ALS' and self._control_policy == 'Goal-driven':
                     advanced_move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif world.mission == 'ALS' and self._control_policy == 'Passive-cooperative':
-                    advanced_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    advanced_passive_cooperation(self, world, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif world.mission == 'ALS' and self._control_policy == 'Simple Passive-cooperative':
-                    advanced_simple_passive_cooperation(self, MAXIMUM_SPEED, MINIMUM_SPEED)
+                    advanced_simple_passive_cooperation(self, world, MAXIMUM_SPEED, MINIMUM_SPEED)
                 elif world.mission == 'AS' and self._control_policy == 'Independent Adaptive Sampling':
                     advanced_move2goal(self, MAXIMUM_SPEED, MINIMUM_SPEED)
                     independent_sampler(self, world, MAXIMUM_SAMPLE_DIST, MINIMUM_SAMPLE_DIST)

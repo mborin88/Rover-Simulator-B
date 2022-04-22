@@ -132,18 +132,24 @@ class World:
             if rover.radio is None:
                 pass
             else:
-                if(self._mission[-2:] == 'LS'):
-                    if(rover.control_policy != 'Goal-driven'):
-                        if tn == rover.radio.next_tx:
-                            transmitter = rover
-                            transmitter.radio.transmit_pos(self)
-                elif(self._mission == 'AS'):
-                    if(rover.control_policy != 'Independent Adaptive Sampling'):
-                        if((rover.transmit == True and tn%rover.num_rovers == rover.rov_id-1) or \
-                                    (tn == rover.radio.next_tx) and len(rover.measured_samples)>rover.sample_metric_order):
-                            transmitter = rover
-                            transmitter.radio.transmit_metric(self)   
-                            rover.reset_transmission_flag()
+                if(rover.control_policy != 'Goal-driven' or rover.control_policy != 'Independent Adaptive Sampling'):
+                    if tn == rover.radio.next_tx and rover.transmit == True:
+                        transmitter = rover
+                        transmitter.radio.transmit(self)   
+                        rover.reset_transmission_flag()
+
+                # if(self._mission[-2:] == 'LS'):
+                #     if(rover.control_policy != 'Goal-driven'):
+                #         if tn == rover.radio.next_tx:
+                #             transmitter = rover
+                #             transmitter.radio.transmit_pos(self)
+                # elif(self._mission == 'AS'):
+                #     if(rover.control_policy != 'Independent Adaptive Sampling'):
+                #         if((rover.transmit == True and tn%rover.num_rovers == rover.rov_id-1) or \
+                #                     (tn == rover.radio.next_tx)):
+                #             # transmitter = rover
+                #             # transmitter.radio.transmit_metric(self)   
+                #             # rover.reset_transmission_flag()
 
 
         #Slowing down simulation

@@ -37,7 +37,7 @@ def scale_all_control(rov):
     rov._all_control = rov._all_control * multiplier
 
 
-def passive_cooperation(rov, v_max, v_min):
+def passive_cooperation(rov, world, v_max, v_min):
     """
     Apply passive cooperative control, i.e. only adjust speed when neighbour(s)' info.
     Recieve all info scale old info to be less relevant. At certain time thershold old ignore old info.
@@ -76,7 +76,6 @@ def passive_cooperation(rov, v_max, v_min):
                 if pose is not None:
                     rov._steps_control_not_updated[control_index] = 0
                     rov._speed_controller.set_ref(pose)
-                    controlled_object = rov.pos_measurement
                     rov._all_control[control_index] = rov._speed_controller.execute(controlled_object)
             scale_all_control(rov)
             control_input = weighted_control_calc(rov)
@@ -96,10 +95,12 @@ def passive_cooperation(rov, v_max, v_min):
         rov._control[1] = control_input  # Assume changing linear velocity instantly.    
 
     rov.update_speeds(0, rov._control[1])
+    rov._transmit = True
+    rov._transmission_buffer = [world.tn, controlled_object[0], controlled_object[1]]  
     rov._radio.reset_neighbour_register()
     rov._radio.reset_buffer()
 
-def simple_passive_cooperation(rov, v_max, v_min):
+def simple_passive_cooperation(rov, world, v_max, v_min):
     """
     Apply passive cooperative control, i.e. only adjust speed when neighbour(s)' info is received,
     otherwise do not apply any control effect.
@@ -138,7 +139,6 @@ def simple_passive_cooperation(rov, v_max, v_min):
                 control_index += 1
                 if pose is not None:
                     rov._speed_controller.set_ref(pose)
-                    controlled_object = rov.pos_measurement
                     rov._all_control[control_index] = rov._speed_controller.execute(controlled_object)
                     rov._steps_control_not_updated[control_index] = 0 
             control_input = weighted_control_calc(rov)
@@ -156,5 +156,7 @@ def simple_passive_cooperation(rov, v_max, v_min):
         rov._control[1] = control_input  # Assume changing linear velocity instantly.    
 
     rov.update_speeds(0, rov._control[1])
+    rov._transmit = True
+    rov._tx_buffer = [world.tn, controlled_object[0], controlled_object[1]]  
     rov._radio.reset_neighbour_register()
     rov._radio.reset_buffer()

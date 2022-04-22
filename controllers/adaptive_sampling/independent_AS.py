@@ -69,7 +69,7 @@ def second_derivative(rov):
         rov.update_metric(rov.rov_id, avg_x, avg_y, abs(sample_difference[1] - sample_difference[0]))
 
 def update_sample_dist(rov, max_sample_dist, min_sample_dist):
-    if(len(rov.measured_samples)>= rov.sample_metric_order):
+    if(len(rov.measured_samples) >= rov.sample_metric_order):
         n = 1/(rov.K_sampler[0] * rov.metric[rov.rov_id-1][2] + 1)
         temp_sample_dist = rov.avg_sample_dist * rov.K_sampler[1] * n
 
@@ -97,18 +97,20 @@ def independent_sampler(rov, world, s_max, s_min):
         p = rov.pose.copy()
         p[0], p[1] = round(p[0]), round(p[1])
 
-        metric_measurement = round(world._sample_metric.sample(p[0], p[1]), 5)
+        metric_measurement = round(world.sample_metric.sample(p[0], p[1]), 5)
         rov._sampling_steps_passed = 0
-        rov._measured_samples.append([p[0], p[1], metric_measurement])
+        rov.measured_samples.append([p[0], p[1], metric_measurement])
 
-        if(rov.sample_metric_order==0):
-            absolute_value(rov)
-        elif(rov.sample_metric_order==1):
-            first_derivative(rov)
-        elif(rov.sample_metric_order==2):
-            second_derivative(rov)
+        if(len(rov.measured_samples)> rov.sample_metric_order):
+            if(rov.sample_metric_order==0):
+                absolute_value(rov)
+            elif(rov.sample_metric_order==1):
+                first_derivative(rov)
+            elif(rov.sample_metric_order==2):
+                second_derivative(rov)
 
-        update_sample_dist(rov, s_max, s_min)
+            update_sample_dist(rov, s_max, s_min)
+            rov._transmit = True
         rov._is_sampling = False
 
     elif(rov.is_sampling):

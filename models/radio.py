@@ -210,7 +210,13 @@ class Radio:
         """
         Get the measured pose info ready for packet formation.
         """
-        return self._rover.metric[self._radio_id-1]     
+        return self._rover.metric[self._radio_id-1]
+
+    def get_transmission_buffer(self):
+        """
+        Get the measured pose info ready for packet formation.
+        """
+        return self._rover.tx_buffer       
 
     def transmit_metric(self, world):
         """
@@ -219,6 +225,18 @@ class Radio:
         metric_data = self.get_metric()
         self._tx_steps.append(world.tn)
         payload = [self._radio_id, metric_data[2], metric_data[0], metric_data[1]]
+        packet = Packet(self, payload)
+        self._num_transmitted += 1
+        world.add_packet(packet)
+        self._next_tx = world.tn + self._interval
+
+    def transmit(self, world):
+        """
+        Place a new transmission into the channel.
+        """
+        tx_buffer = self.get_transmission_buffer()
+        self._tx_steps.append(world.tn)
+        payload = [self._radio_id, tx_buffer[2], tx_buffer[0], tx_buffer[1]]
         packet = Packet(self, payload)
         self._num_transmitted += 1
         world.add_packet(packet)
