@@ -74,7 +74,7 @@ def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset,
     y_plt = [y_plt[i:i+num_waypoints] for i in range(0, len(y_plt), num_waypoints)]
 
     for i in range(N):
-        ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=1.8, color='white')
+        ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=4, linewidth=1.8, color='white')
     
     ax0.set_xlabel('Easting (m)')
     ax0.set_ylabel('Northing (m)')
@@ -116,9 +116,9 @@ def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset,
         ax0.set_xlabel('Easting (m)')
         ax0.set_ylabel('Northing (m)')
         for i in range(N):
-            ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=1.8, color='white', zorder=2)
+            ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=4, linewidth=1.8, color='white', zorder=2)
         if(not clicked):
-            ax0.scatter([waypoints[path_info[0]][path_info[1]][0]], [waypoints[path_info[0]][path_info[1]][1]], color='cyan', s=[50], zorder=3)
+            ax0.scatter([waypoints[path_info[0]][path_info[1]][0]], [waypoints[path_info[0]][path_info[1]][1]], color='cyan', s=20, zorder=3)
             clicked = True
         else:
             clicked = False

@@ -11,7 +11,7 @@ from controllers.adaptive_sampling.co_operative_AS import co_op_sampler
 
 STARTING_SPEED = 0.2            # m/s
 MAXIMUM_SPEED = 0.5             # m/s, which CAN be exceeded due to the effect of slope.
-MINIMUM_SPEED = 0.05            # m/s, which depicts the worst scenario and CAN NOT be decreased any more.
+MINIMUM_SPEED = 0.05               # m/s, which depicts the worst scenario and CAN NOT be decreased any more.
 
 MAXIMUM_SAMPLE_DIST = 1000      # m, which comes from the measurements made/received, CAN NOT be exceeded
 MINIMUM_SAMPLE_DIST = 100       # m, which comes from the measurements made/received, CAN NOT be exceeded

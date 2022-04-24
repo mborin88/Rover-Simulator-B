@@ -286,29 +286,13 @@ class Radio:
         """
         return self.airtime() / (self.airtime() + (self._interval * self._t_slot))
 
-    # def actual_silent_time(self, mission):
-    #     """
-    #     Calculate the actual silent time due to use-defined configuration.
-    #     """
-    #     if(mission == 'LS' or mission == 'ALS'):
-    #         return self._interval * self._t_slot
-    #     elif(mission == 'AS'):
-    #         intervals = []
-    #         for i in range(len(self._tx_steps)-1):
-    #             intervals.append(self._tx_steps[i+1] - self._tx_steps[i])
-    #         try:
-    #             mean_interval = sum(intervals)/len(intervals)
-    #         except ZeroDivisionError:
-    #             mean_interval = 0
-    #         return mean_interval * self._t_slot
-
     def config_silent_time(self):
         """
         Configurate the silent time by the duty cycle and airtime
         Rounding up used as interval needs to be an integer, take care if wanting a low duty cycle. 
         As will tend to decrease slightly further if not an integer.
         """
-        silent_time = math.ceil((self.airtime() / self._dc) - self.airtime())
+        silent_time = (self.airtime() / self._dc) - self.airtime()
         self._interval = math.ceil(silent_time / self._t_slot)
 
     def config_de(self):

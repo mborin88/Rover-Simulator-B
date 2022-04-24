@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 8000      #432000      # Maximum iteration
+steps = 250000      #432000      # Maximum iteration
 
 t_sampling = 0.1     # Sampling time, in second.
 
@@ -44,7 +44,7 @@ log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "New tx_pw"
 log_title = log_title_tag + ', ' + str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Tx_pw set to rightful 14'''            #Additional notes to be added to Log file if wished
-log_checkpoint_interval = 18000                           #Log every 30 minutes = 18000 steps
+log_cp_interval = 18000                           #Log every 30 minutes = 18000 steps
 
 # Configure communication settings:
 user_f = 869.525                                    # Carrier center frequency, in MHz.
@@ -303,7 +303,7 @@ def main():
     elif termination_reason == 0:
         termination_note = "Mission Completed"
     elif termination_reason == 1:
-        termination_note = "Rover Entered Water Body"
+        termination_note = "Rover Entered Impassable Land Cover"
     elif termination_reason == 2:
         termination_note = "Set Time Limit Reached"
 
@@ -472,9 +472,9 @@ def main():
         fig0.savefig(directory + 'Path_Planned_Trajectory.png', dpi=100)
 
 
-    terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, log_checkpoint_interval, step, log_control[2], directory)
+    terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, log_cp_interval, step, log_control[2], directory)
     RMSE_plot(world, step, log_step_interval, ee, log_control[2], directory)
-    landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, log_checkpoint_interval, step, log_control[2], directory)
+    landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, log_cp_interval, step, log_control[2], directory)
     y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
     mission_connectivity_plot(world, N, world.rovers[0].radio.interval, step, log_control[2], directory)
     # real_metric_distribution(world, directory, log_control[2])
