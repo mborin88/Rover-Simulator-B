@@ -60,7 +60,7 @@ log_control| STRING | Controls what parts of the mission are logged is any. Trea
 log_step_interval| INTEGER | To reduce data storage size some logs and plots are taken as an average over this interval. (Interval is specified in steps)
 log_title_tag| STRING | User specified custom title for the logs.
 log_notes| STRING | More detailed notes of a mission taken before running, and is where indicates the position of where post mission notes should be added
-log_cp_interval | INTEGER | Checkpoint interval for how often to show visual representation of rovers line formation. (Interval done in steps)
+log_cp_interval | INTEGER | Checkpoint interval for how often to show visual representation of the rovers line formation. (Interval done in steps)
 
 
 ### Communication Parameters
@@ -81,7 +81,7 @@ Variable | Type | Description
 --- | --- | ---
 K_goal| FLOAT (ARRAY) |Gain of goal-driven controller. Array has a length of 2, for easting and northing difference between the rover and the goal. 
 K_neighbour | FLOAT (ARRAY) | Gain for neighbours in passive and simple-passive driven controller. Array has a length of 2, gain for easting and northing difference between rovers.
-decay| INTEGER | Mathematical style of the decay of rovers speed position, over time. Values limited to: 'quad' or 'exp' referencing a quadratic or exponential decay. Only used in the passive controller.
+decay| INTEGER | Mathematical style of the decay of the rovers speed position, over time. Values limited to: 'quad' or 'exp' referencing a quadratic or exponential decay. Only used in the passive controller.
 zero_crossing| INTEGER | Indicates the number of communication cycles where the calculated adjustment speed of a neighbouring rover is valid. Only used in the passive controller.
 
 
