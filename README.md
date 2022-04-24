@@ -48,19 +48,19 @@ Variable | Type | Description
 area| STRING | Simulation area (6 letter code from downloaded list)
 N | INTEGER | Total rover numbers.
 x_offset| INTEGER | Distance from the left boundary which is the location of the first rover. 
-y_offset| INTEGER | Distance from the baseline which is the location of the first rover.
-goal_offset| INTEGER | Distance to the goal below which the goal is assumed reached.
+y_offset| INTEGER | Distance from the baseline which is the starting location of every rover.
+goal_offset| INTEGER | Threshold distance between the rovers and the goal for when the mission is considered as complete.
 rover_sep| INTEGER | Distance between rovers in meters.
 steps| INTEGER | Maximum time steps, for the mission.
 t_sampling| FLOAT | Simulation Sampling period.
-Q| FLOAT ARRAY | The state noise. (Array length of 2 )
-R| FLOAT ARRAY | The measurement noise. (Array length of 2 )
-ctrl_policy| INTEGER | The control policy used (1, 2, 3, 4).
-log_control| STRING | Controls if and what parts of the mission are logged. Treated as a binary string where each bit has control over a different part.
+Q| FLOAT (ARRAY) | State Noise standard deviations, array has a length of 2 for noise in the eastings and northings direction. If not desired set to "None"
+R| FLOAT (ARRAY) | Measurement Noise standard deviations, array has a length of 2 for noise in the eastings and northings direction. If not desired set to "None".
+ctrl_policy| INTEGER | Control Policy specifying the mission and controller used. Format: "missionType-controller". The missionType and controller are both referenced by integers with a hyphen connecting them.
+log_control| STRING | Controls what parts of the mission are logged is any. Treated as a binary string where the left-most, middle and right bit is for raw, summary and graphed data respectively. A ’1’ makes log of that section desired where ’0’ does not make a log. If any of the bits are set to ’1’ then the Parameters log file is automatically logged
 log_step_interval| INTEGER | To reduce data storage size some logs and plots are taken as an average over this interval. (Interval is specified in steps)
 log_title_tag| STRING | User specified custom title for the logs.
-log_notes| STRING | More detailed notes of a mission taken before running, and is where post mission notes can be added.
-log_checkpoint_interval | INTEGER | Interval for how often to see rover line organisation on plots. (Interval done in steps)
+log_notes| STRING | More detailed notes of a mission taken before running, and is where indicates the position of where post mission notes should be added
+log_cp_interval | INTEGER | Checkpoint interval for how often to show visual representation of rovers line formation. (Interval done in steps)
 
 
 ### Communication Parameters
@@ -68,41 +68,40 @@ Parameters needed to be configured for the LoRa Communication
 Variable | Type | Description
 --- | --- | ---
 user_f| FLOAT | Center frequency of carrier.
-user_bw| INTEGER | Bandwidth.
-user_sf| INTEGER | Spreading factor.
-user_cr| FLOAT | Coding rate.
-user_txpw| INTEGER | Transmitting power.
-len_interval| FLOAT | Interval between transmissions. (Only used in Line sweeping missions)
-pulse_interval | INTEGER | Interval between transmission that take too long for Duty Cycle Requirements. (Only used in adaptive sampling missions)
+user_bw| INTEGER | Selected bandwidth in kHz, values limited to: 125, 250 and 500.
+user_sf| INTEGER | Selected spreading factor, values limited to: 6, 7, 8, 9, 10, 11, 12.
+user_cr| FLOAT | Selected coding rate, values limited to : 4/5 , 4/6, 4/7, 4/8.
+user_txpw| INTEGER | Transmitting power of the rover in dBm.
+user_dc| FLOAT | Duty cycle of each rover as a percentage.
 
 
 ### Line Sweep Parameters
 Parameters needed to be configured for a line sweeping mission
 Variable | Type | Description
 --- | --- | ---
-K_goal| FLOAT ARRAY | Gain of controller. 
-K_neighbour | FLOAT ARRAY | Gain of controller.
-decay| INTEGER | Mathematic style of the decay of rovers speed position, over time. (control policy 2)
-zero_crossing| INTEGER | How many time slots the adjustment speed of a neighbouring rover is valid for (control policy 2)
+K_goal| FLOAT (ARRAY) |Gain of goal-driven controller. Array has a length of 2, for easting and northing difference between the rover and the goal. 
+K_neighbour | FLOAT (ARRAY) | Gain for neighbours in passive and simple-passive driven controller. Array has a length of 2, gain for easting and northing difference between rovers.
+decay| INTEGER | Mathematical style of the decay of rovers speed position, over time. Values limited to: 'quad' or 'exp' referencing a quadratic or exponential decay. Only used in the passive controller.
+zero_crossing| INTEGER | Indicates the number of communication cycles where the calculated adjustment speed of a neighbouring rover is valid. Only used in the passive controller.
 
 
 ### Advance Line Sweep Parameters
 These parameters are needed in addition to the ones stated for line sweep.
 Variable | Type | Description
 --- | --- | ---
-num_of_waypoints| INTEGER | Number of waypoints between starting and proposed end position(including) of each rover.
+num_of_waypoints| INTEGER | Number of equally distanced way-points between starting and proposed end position(including) of each rover. Way-points are used in creating the planned path of the rover.
+load_waypoints | BOOLEAN | If true loads the way-points of another mission specified.
+waypoints_file | STRING | Directory and file name of the file that contains the way-points that will be loaded.
 
 
 ### Adaptive Sampling
 Parameters needed to be configured for an Adaptive Sampling Mission.
 Variable | Type | Description
 --- | --- | ---
-metric_mean| STRING ARRAY | Position of where mean of sampling metric will be located. ([0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom)
-metric_covariance|2D FLOAT ARRAY | Covariance matrix for generating sampling metric
-num_r_samples| INTEGER | Number of base samples to be used if using a fixed sampler. (No. samples adjsuted from this point automatically)
-K_sampler[0] | FLOAT | Gain for the rovers own sampling metric measure
-K_sampler[1] | FLOAT | Gain for the neighbouring rovers sampling metrics. Affects how significant the neighbouring rovers metrics are.
-K_sampler[2] | FLOAT | Gain for natural increase of sampling distance if insignificant metric received. 
+metric_mean| STRING ARRAY | Position of where mean of sampling metric will be located. First values indicates position along the easting, and second value indicates position along the northing. Assigned by the first letter of the position. ([0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom)
+metric_covariance|FLOAT (2D ARRAY) | Covariance matrix for generating sampling metric
+num_r_samples| INTEGER | Number of base samples to be used if using a fixed sampler. Used as the principal component in calculating all the sampling distances
+K_sampler | FLOAT (ARRAY) | Gains for calculating the sampling distance. Array has a length of 3. First value is the gain for the rovers own sampling metric, the second value is the value of the natural increase of the sampling distance and the final value details the gain for the neighbouring values received.
 sampling_time | INTEGER | Number of steps required for successful sample to be taken. (Steps rover will be stationary for)
 metric_order | INTEGER | Whether to take absolute, first order or second order derivative of the metric.
 
