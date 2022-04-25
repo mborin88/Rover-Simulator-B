@@ -57,10 +57,10 @@ Q| FLOAT (ARRAY) | State Noise standard deviations, array has a length of 2 for 
 R| FLOAT (ARRAY) | Measurement Noise standard deviations, array has a length of 2 for noise in the eastings and northings direction. If not desired set to "None".
 ctrl_policy| INTEGER | Control Policy specifying the mission and controller used. Format: "missionType-controller". The missionType and controller are both referenced by integers with a hyphen connecting them.
 log_control| STRING | Controls what parts of the mission are logged is any. Treated as a binary string where the left-most, middle and right bit is for raw, summary and graphed data respectively. A ’1’ makes log of that section desired where ’0’ does not make a log. If any of the bits are set to ’1’ then the Parameters log file is automatically logged
-log_step_interval| INTEGER | To reduce data storage size some logs and plots are taken as an average over this interval. (Interval is specified in steps)
+log_step_interval| INTEGER | To reduce data storage size some logs and plots are taken as an average over this interval. (Interval is specified in seconds)
 log_title_tag| STRING | User specified custom title for the logs.
 log_notes| STRING | More detailed notes of a mission taken before running, and is where indicates the position of where post mission notes should be added
-log_cp_interval | INTEGER | Checkpoint interval for how often to show visual representation of the rovers line formation. (Interval done in steps)
+log_cp_interval | INTEGER | Checkpoint interval for how often to show visual representation of the rovers line formation. (Interval done in seconds)
 
 
 ### Communication Parameters
@@ -102,7 +102,7 @@ metric_mean| STRING ARRAY | Position of where mean of sampling metric will be lo
 metric_covariance|FLOAT (2D ARRAY) | Covariance matrix for generating sampling metric
 num_r_samples| INTEGER | Number of base samples to be used if using a fixed sampler. Used as the principal component in calculating all the sampling distances
 K_sampler | FLOAT (ARRAY) | Gains for calculating the sampling distance. Array has a length of 3. First value is the gain for the rovers own sampling metric, the second value is the value of the natural increase of the sampling distance and the final value details the gain for the neighbouring values received.
-sampling_time | INTEGER | Number of steps required for successful sample to be taken. (Steps rover will be stationary for)
+sampling_time | INTEGER | Required waiting time for a successful sample to be taken. (Seconds rover will be stationary for while taking sample)
 metric_order | INTEGER | Whether to take absolute, first order or second order derivative of the metric.
 
 
