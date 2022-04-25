@@ -51,7 +51,7 @@ x_offset| INTEGER | Distance from the left boundary which is the location of the
 y_offset| INTEGER | Distance from the baseline which is the starting location of every rover.
 goal_offset| INTEGER | Threshold distance between the rovers and the goal for when the mission is considered as complete.
 rover_sep| INTEGER | Distance between rovers in meters.
-steps| INTEGER | Maximum time steps, for the mission.
+max_time| INTEGER | Maximum time allowed, for the mission in seconds.
 t_sampling| FLOAT | Simulation Sampling period.
 Q| FLOAT (ARRAY) | State Noise standard deviations, array has a length of 2 for noise in the eastings and northings direction. If not desired set to "None"
 R| FLOAT (ARRAY) | Measurement Noise standard deviations, array has a length of 2 for noise in the eastings and northings direction. If not desired set to "None".
