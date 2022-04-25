@@ -214,7 +214,7 @@ class Radio:
         Place a new transmission into the channel.
         """
         tx_buffer = self.get_tx_buffer()
-        payload = [self._radio_id, tx_buffer[2], tx_buffer[0], tx_buffer[1]]
+        payload = [self._radio_id, tx_buffer[0], tx_buffer[1], tx_buffer[2]]
         packet = Packet(self, payload)
         self._num_transmitted += 1
         world.add_packet(packet)

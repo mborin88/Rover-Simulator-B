@@ -122,7 +122,7 @@ class World:
         """
         dt = self._dt
         tn = self._tn
-        if((dt*tn)%500 == 0):
+        if((dt*tn)%100 == 0):
             print('Time: {} (s)\n'.format(str(round(tn * dt, 1))))
 
         # Logically, this is the beginning of time slot.
@@ -139,7 +139,7 @@ class World:
                             transmitter.radio.transmit(self)   
                             rover.reset_transmission_flag()
                         rover.radio.set_next_tx(self)
-                        
+
         #Slowing down simulation
         #if len(self.channel) > 0:
         #    print('Currently Transmitting: Rover {}\n'.format(self.channel[-1].tx.radio_id))

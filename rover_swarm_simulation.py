@@ -23,27 +23,27 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20NE'     # Area to run simulation.
+area = 'SU20NW'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 100      #432000      # Maximum iteration
+max_time = 43200      #432000      # Maximum time for mission in seconds
 
-t_sampling = 0.15     # Sampling time, in second.
+t_sampling = 0.12     # Sampling time, in second.
 
-Q = None                                      # State noise.
+Q = None                                        # State noise.
 R = None                                        # Measurement noise.
-seed_value = dt.datetime.now().microsecond      #Seed value for noise 
+seed_value = dt.datetime.now().microsecond      # Seed value for noise 
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '111'
 log_step_interval = 60                                  #60 seconds which is 1 minute
-log_title_tag = "Loaded waypoints test"
+log_title_tag = "FINAL Run"
 log_title = log_title_tag + ', ' + str(dt.datetime.now())[:-7].replace(':', '-')
-log_notes = '''Tx_pw set to rightful 14'''            #Additional notes to be added to Log file if wished
+log_notes = '''Tx_pw set to rightful 14'''             #Additional notes to be added to Log file if wished
 log_cp_interval = 1800                                 #Log every 30 minutes = 1800 seconds
 
 # Configure communication settings:
@@ -55,25 +55,25 @@ user_txpw = 14                                      # Transmitting power, in dBm
 user_dc = 1                                         # Duty cycle in %
 
 # Configure control settings:
-ctrl_policy = '2-3'
+ctrl_policy = '1-1'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
-K_goal = [1e-1, 1e-1]                                   # Control gain for goal-driven controller;
+K_goal = [1e-1, 1e-1]                                       # Control gain for goal-driven controller;
 
 # 2/3 - meaning passive-cooperative controller, if used:
-K_neighbour = [0, 1e-1]                                 # Control gain for passive-cooperative controller;
+K_neighbour = [0, 1e-1]                                     # Control gain for passive-cooperative controller;
 decay = 'quad'
-zero_crossing = 20                                      # 20 communication cycles for it to fully decay
+zero_crossing = 20                                          # 20 communication cycles for it to fully decay
 
 # Advance Line Sweeping Parameter
-num_of_waypoints = 10                                   # Number of waypoints
-load_waypoints = True                                   # Do you want to load wapoints from another simulation
-waypoints_file = os.getcwd() + '\\' + 'temp.txt'        # Directory and name of file
+num_of_waypoints = 10                                       # Number of waypoints
+load_waypoints = False                                      # Do you want to load wapoints from another simulation
+waypoints_file = os.getcwd() + '\\' + 'temp.txt'            # Directory and name of file
 
 
 # 4 Adaptive Sampling Parameters
-metric_mean = ['L', 'B']                            #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
+metric_mean = ['L', 'B']                                    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[2, 1], [0, 0.75]]
 K_sampler = [200, 3.25, 0.25]                               # dist * K[1]/ (K[0] + 1)Gains for sampler [0]: is own sampling change [2]: neighbouring samples [1]: natural increase gain # 500 4, [0.2, 3.25, 0.25]
 num_r_samples = 20                                          # Determines default sampling distance
@@ -105,6 +105,7 @@ def main():
     log_cp_inter = math.ceil(log_cp_interval / t_sampling)
     log_step_inter = math.ceil(log_step_interval / t_sampling)
     s_time = math.ceil(sampling_time / t_sampling)
+    max_steps = math.ceil(max_time / t_sampling)
 
     # Load terrain map and land cover map to create the world.
     # Configure world's dynamics engine.
@@ -242,8 +243,8 @@ def main():
         elif invalid_rov_pos:
             termination_reason = 1
             break
-        elif steps is not None:
-            if step == steps:
+        elif max_steps is not None:
+            if step == max_steps:
                 termination_reason = 2
                 break
 
@@ -347,7 +348,7 @@ def main():
         log_parameter_file.write('''\nArea = {}\nRovers(N) = {}\nX Offset = {}\nY Offset = {}\nGoal Offset = {}\nSteps Undergone= {}
         \nMaximum Steps Allowed = {}\nSimpulation Sampling Period = {}\nNoise Seed = {}\nState Noise(Q) = {}\nMeasurement Noise(R) = {}
         \nControl Policy(ctrl_policy) = {}\nDistance between Rovers(dist) = {}'''.format(str(area), str(N), str(x_offset), str(y_offset), str(goal_offset), \
-        str(step), str(steps), str(t_sampling), str(seed_value), str(Q), str(R), str(ctrl_policy), str(rovers_sep)))
+        str(step), str(max_steps), str(t_sampling), str(seed_value), str(Q), str(R), str(ctrl_policy), str(rovers_sep)))
         log_parameter_file.write('\n')
         log_parameter_file.write('=' * 50)
         log_parameter_file.write('''\nLoRa Parameters:\n''')
