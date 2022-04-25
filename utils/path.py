@@ -56,7 +56,7 @@ def get_waypoints(file, loaded_waypoints):
     for i in range(len(data)):
         index = data[i].find('[')
         data[i] = data[i][index:]
-        data[i] = [float(s) for s in re.findall(r'-?\d+\.?\d*', data[i])]
+        data[i] = [int(s) for s in re.findall(r'-?\d+\.?\d*', data[i])]
     
     for i in range(len(data)):
         loaded_waypoints.append([])
@@ -64,27 +64,31 @@ def get_waypoints(file, loaded_waypoints):
             loaded_waypoints[i].append([])
             loaded_waypoints[i][int(j/2)].append(data[i][j])
             loaded_waypoints[i][int(j/2)].append(data[i][j+1])
+            loaded_waypoints[i][int(j/2)].append(0)
 
 
-def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset, r_sep, N, num_waypoints):
+def show_rgb_waypoints(im, ax_range, waypoints, load, x_offset, y_offset, goal_offset, r_sep, N, num_waypoints):
     fig0, ax0 = plt.subplots(figsize=(6, 6))
 
     #using 3D list here however in main program each rover will have its own list so it will
     #reduce to a 2D list
     y_sep = (ax_range[3]- ax_range[2]) / (num_waypoints-1)
-
-    for rover in range(N):
-        waypoints.append([])
-        for w_point in range(num_waypoints): #No. waypoints
-            waypoints[rover].append([])
-            waypoints[rover][w_point].append(round(ax_range[0] + x_offset + (rover*r_sep)))
-            if(w_point==0):
-                waypoints[rover][w_point].append(round(ax_range[2] + y_offset +(w_point*y_sep))) # waypoint difference.
-            elif(w_point == num_waypoints):
-                waypoints[rover][w_point].append(round(ax_range[3] - goal_offset))
-            else:
-                waypoints[rover][w_point].append(round(ax_range[2] +(w_point*y_sep)))
-            waypoints[rover][w_point].append(0) # waypoint difference.
+    
+    if(load == True):
+        pass
+    else:
+        for rover in range(N):
+            waypoints.append([])
+            for w_point in range(num_waypoints): #No. waypoints
+                waypoints[rover].append([])
+                waypoints[rover][w_point].append(round(ax_range[0] + x_offset + (rover*r_sep)))
+                if(w_point==0):
+                    waypoints[rover][w_point].append(round(ax_range[2] + y_offset +(w_point*y_sep))) # waypoint difference.
+                elif(w_point == num_waypoints):
+                    waypoints[rover][w_point].append(round(ax_range[3] - goal_offset))
+                else:
+                    waypoints[rover][w_point].append(round(ax_range[2] +(w_point*y_sep)))
+                waypoints[rover][w_point].append(0) # waypoint difference.
 
     x_plt = [x[0] for r in waypoints for x in r]
     x_plt = [x_plt[i:i+num_waypoints] for i in range(0, len(x_plt), num_waypoints)]

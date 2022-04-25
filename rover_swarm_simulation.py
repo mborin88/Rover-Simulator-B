@@ -41,7 +41,7 @@ rand.seed(seed_value)
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '111'
 log_step_interval = 60                                  #60 seconds which is 1 minute
-log_title_tag = "New tx_pw"
+log_title_tag = "Loaded waypoints test"
 log_title = log_title_tag + ', ' + str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Tx_pw set to rightful 14'''            #Additional notes to be added to Log file if wished
 log_cp_interval = 1800                                 #Log every 30 minutes = 1800 seconds
@@ -59,12 +59,12 @@ ctrl_policy = '2-3'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
-K_goal = [1e-1, 1e-1]                               # Control gain for goal-driven controller;
+K_goal = [1e-1, 1e-1]                                   # Control gain for goal-driven controller;
 
 # 2/3 - meaning passive-cooperative controller, if used:
-K_neighbour = [0, 1e-1]                             # Control gain for passive-cooperative controller;
+K_neighbour = [0, 1e-1]                                 # Control gain for passive-cooperative controller;
 decay = 'quad'
-zero_crossing = 20                   #20 communication cycles for it to fully decay
+zero_crossing = 20                                      # 20 communication cycles for it to fully decay
 
 # Advance Line Sweeping Parameter
 num_of_waypoints = 10                                   # Number of waypoints
@@ -121,14 +121,14 @@ def main():
     init_waypoints = []
     if(load_waypoints):
         get_waypoints(waypoints_file, init_waypoints)
-    else:
-        image, axis_range = render_rgb(map_landcover)
-        fig0 = show_rgb_waypoints(image, axis_range, init_waypoints, x_offset, y_offset, \
-            goal_offset, rovers_sep, N, num_of_waypoints)
 
-        for i in range(len(init_waypoints)):
-            for j in range(len(init_waypoints[i])):
-                init_waypoints[i][j] = init_waypoints[i][j][:2]
+    image, axis_range = render_rgb(map_landcover)
+    fig0 = show_rgb_waypoints(image, axis_range, init_waypoints, load_waypoints, x_offset, y_offset, \
+        goal_offset, rovers_sep, N, num_of_waypoints)
+
+    for i in range(len(init_waypoints)):
+        for j in range(len(init_waypoints[i])):
+            init_waypoints[i][j] = init_waypoints[i][j][:2]
 
     s_dist = round((y_max-y_min) / (num_r_samples-1), 3)
     # Add rovers to the world.
