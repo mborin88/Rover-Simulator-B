@@ -1,14 +1,11 @@
-from glob import glob
-from tkinter.messagebox import YES
-from matplotlib import offsetbox
 import numpy as np
 import os
 import sys
 import math
 import matplotlib.pyplot as plt
-from matplotlib.colors import LightSource
 import matplotlib.image as mpimg
 from PIL import Image
+import re
 
 sys.path.append(str(os.getcwd()) + '\\models')
 from landcover_spec import LCM2015_COLORMAP
@@ -47,6 +44,27 @@ def render_rgb(landcover_map, cmap=LCM2015_COLORMAP):
     os.remove(temp_im)
 
     return im, ax_range
+
+def get_waypoints(file, loaded_waypoints):
+    """
+    Grabs and formats the waypoints of another simulation misssion.
+    Only missions from the parameters file work.
+    """
+    my_file = open(file, "r")
+    data = my_file.readlines()
+    data = data[43:]
+    for i in range(len(data)):
+        index = data[i].find('[')
+        data[i] = data[i][index:]
+        data[i] = [float(s) for s in re.findall(r'-?\d+\.?\d*', data[i])]
+    
+    for i in range(len(data)):
+        loaded_waypoints.append([])
+        for j in range(0, len(data[i]), 2):
+            loaded_waypoints[i].append([])
+            loaded_waypoints[i][int(j/2)].append(data[i][j])
+            loaded_waypoints[i][int(j/2)].append(data[i][j+1])
+
 
 def show_rgb_waypoints(im, ax_range, waypoints, x_offset, y_offset, goal_offset, r_sep, N, num_waypoints):
     fig0, ax0 = plt.subplots(figsize=(6, 6))
@@ -147,4 +165,4 @@ if __name__ == '__main__':
     g_off = 5  
     num_of_waypoints = 10
     show_rgb_waypoints(image, axis_range, waypoints, x_off, y_off, g_off, rovers_sep, N, num_of_waypoints)
-
+    waypoints = get_waypoints('temp.txt')

@@ -29,7 +29,7 @@ rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-steps = 250000      #432000      # Maximum iteration
+steps = 100      #432000      # Maximum iteration
 
 t_sampling = 0.1     # Sampling time, in second.
 
@@ -39,7 +39,7 @@ seed_value = dt.datetime.now().microsecond      #Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '000'
+log_control = '111'
 log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
 log_title_tag = "New tx_pw"
 log_title = log_title_tag + ', ' + str(dt.datetime.now())[:-7].replace(':', '-')
@@ -67,7 +67,10 @@ decay = 'quad'
 zero_crossing = 20                   #20 communication cycles for it to fully decay
 
 # Advance Line Sweeping Parameter
-num_of_waypoints = 10
+num_of_waypoints = 10                                   # Number of waypoints
+load_waypoints = True                                   # Do you want to load wapoints from another simulation
+waypoints_file = os.getcwd() + '\\' + 'temp.txt'        # Directory and name of file
+
 
 # 4 Adaptive Sampling Parameters
 metric_mean = ['L', 'B']                            #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
@@ -109,14 +112,17 @@ def main():
     world.config_sample_metric(Sampling_Metric(x_min, x_max, y_min, y_max), metric_mean, metric_covariance)
     world.config_engine(SlopePhysics(world))
 
-    init_waypoints = []    
-    image, axis_range = render_rgb(map_landcover)
-    fig0 = show_rgb_waypoints(image, axis_range, init_waypoints, x_offset, y_offset, \
-        goal_offset, rovers_sep, N, num_of_waypoints)
+    init_waypoints = []
+    if(load_waypoints):
+        get_waypoints(waypoints_file, init_waypoints)
+    else:
+        image, axis_range = render_rgb(map_landcover)
+        fig0 = show_rgb_waypoints(image, axis_range, init_waypoints, x_offset, y_offset, \
+            goal_offset, rovers_sep, N, num_of_waypoints)
 
-    for i in range(len(init_waypoints)):
-        for j in range(len(init_waypoints[i])):
-            init_waypoints[i][j] = init_waypoints[i][j][:2]
+        for i in range(len(init_waypoints)):
+            for j in range(len(init_waypoints[i])):
+                init_waypoints[i][j] = init_waypoints[i][j][:2]
 
     s_dist = round((y_max-y_min) / (num_r_samples-1), 3)
     # Add rovers to the world.
