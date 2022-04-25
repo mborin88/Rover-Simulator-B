@@ -31,7 +31,7 @@ y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
 steps = 100      #432000      # Maximum iteration
 
-t_sampling = 0.1     # Sampling time, in second.
+t_sampling = 0.15     # Sampling time, in second.
 
 Q = None                                      # State noise.
 R = None                                        # Measurement noise.
@@ -40,11 +40,11 @@ rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '111'
-log_step_interval = 600         #600 steps is 60 seconds which is 1 minute
+log_step_interval = 60                                  #60 seconds which is 1 minute
 log_title_tag = "New tx_pw"
 log_title = log_title_tag + ', ' + str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Tx_pw set to rightful 14'''            #Additional notes to be added to Log file if wished
-log_cp_interval = 18000                           #Log every 30 minutes = 18000 steps
+log_cp_interval = 1800                                 #Log every 30 minutes = 1800 seconds
 
 # Configure communication settings:
 user_f = 869.525                                    # Carrier center frequency, in MHz.
@@ -77,7 +77,7 @@ metric_mean = ['L', 'B']                            #[0]: (L)eft, (M)iddle, (R)i
 metric_covariance = [[2, 1], [0, 0.75]]
 K_sampler = [200, 3.25, 0.25]                               # dist * K[1]/ (K[0] + 1)Gains for sampler [0]: is own sampling change [2]: neighbouring samples [1]: natural increase gain # 500 4, [0.2, 3.25, 0.25]
 num_r_samples = 20                                          # Determines default sampling distance
-sampling_time = 6000                                        # How long it takes to correctly take a sample
+sampling_time = 600                                         # How long it takes to correctly take a sample in seconds
 metric_order = 1                                            # What metric we are measuring
 
 
@@ -87,6 +87,9 @@ def main():
     """
     print('')
     print('Simulating...')
+
+    start = time.time()
+
     CP = ctrl_policy.split('-')
     CP[0] = int(CP[0])
     CP[1] = int(CP[1])
@@ -96,9 +99,12 @@ def main():
     elif(CP[0] == 2):
         mission = 'ALS'
     elif(CP[0] == 3):
+    
         mission = 'AS'
-
-    start = time.time()
+    
+    log_cp_inter = math.ceil(log_cp_interval / t_sampling)
+    log_step_inter = math.ceil(log_step_interval / t_sampling)
+    s_time = math.ceil(sampling_time / t_sampling)
 
     # Load terrain map and land cover map to create the world.
     # Configure world's dynamics engine.
@@ -185,7 +191,7 @@ def main():
                 starter.config_control_policy(full_mission_name)
                 starter.config_adaptive_sampler_gains(K_sampler)
                 starter.config_sample_dist(s_dist)
-                starter.config_req_sample_steps(sampling_time)
+                starter.config_req_sample_steps(s_time)
                 starter.config_sample_order_metric(metric_order)
             elif CP[1] == 2:
                 speed_controller = PController(None, K_goal)
@@ -197,7 +203,7 @@ def main():
                 starter.config_control_policy(full_mission_name)
                 starter.config_adaptive_sampler_gains(K_sampler)
                 starter.config_sample_dist(s_dist)
-                starter.config_req_sample_steps(sampling_time)
+                starter.config_req_sample_steps(s_time)
                 starter.config_sample_order_metric(metric_order)
             else:
                 print("No valid controller found")
@@ -364,7 +370,7 @@ def main():
         elif(mission == 'AS'):
             log_parameter_file.write('''Metric Distirbution Mean = {}\nMetric Distribution Covariance = {}\nDefault Number of Samples = {}\nDefault Sampling Distance = {}
             \nSampler Gain = {}\nRequired Time for Sampling = {}\nNth Order Derivative Measure = {}'''.format(str(metric_mean), str(metric_covariance), str(num_r_samples), \
-            str(s_dist), str(K_sampler), str(sampling_time), str(metric_order)))
+            str(s_dist), str(K_sampler), str(s_time), str(metric_order)))
 
     #Log Summary Information
     if(int(log_control[1]) == 1):
@@ -451,12 +457,12 @@ def main():
             log_raw_file.write(str(x+1) + 'x\t' + str(x+1) + 'y\t' + str(x+1) + 'v\t')
         log_raw_file.write('RMSE EE')
 
-        for n in range(0, step+1, log_step_interval):   #+1 for velocity to calculate avg speed of the last interval.
+        for n in range(0, step+1, log_step_inter):   #+1 for velocity to calculate avg speed of the last interval.
             log_raw_file.write('\n' + str(round(n*t_sampling/60, 2)) +'\t')        #divide 60 for per minute
             data = ""
             for j in range(N):
-                if(n>=log_step_interval):
-                    avg_velocity = round(np.mean(world.rovers[j].pose_logger.velocity[(n-log_step_interval):n]), 3)
+                if(n>=log_step_inter):
+                    avg_velocity = round(np.mean(world.rovers[j].pose_logger.velocity[(n-log_step_inter):n]), 3)
                 else:
                     avg_velocity = round(world.rovers[j].pose_logger.velocity[n], 3)
 
@@ -466,8 +472,8 @@ def main():
                 data += str(round(world.rovers[j].pose_logger.x_pose[n], 2)) + ',' + str(round(world.rovers[j].pose_logger.y_pose[n], 2)) \
                     + ',' + str(avg_velocity) + '-'
 
-            if(n>=log_step_interval):
-                data += str(round(np.mean(ee[n-log_step_interval:n]), 3))
+            if(n>=log_step_inter):
+                data += str(round(np.mean(ee[n-log_step_inter:n]), 3))
             else:
                 data += str(round(np.mean(ee[n]), 3))
             log_raw_file.write(data)
@@ -478,10 +484,10 @@ def main():
         fig0.savefig(directory + 'Path_Planned_Trajectory.png', dpi=100)
 
 
-    terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, log_cp_interval, step, log_control[2], directory)
-    RMSE_plot(world, step, log_step_interval, ee, log_control[2], directory)
-    landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, log_cp_interval, step, log_control[2], directory)
-    y_position_plot(world, step, log_step_interval, y_min, y_max, N, log_control[2], directory)
+    terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, log_cp_inter, step, log_control[2], directory)
+    RMSE_plot(world, step, log_step_inter, ee, log_control[2], directory)
+    landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, log_cp_inter, step, log_control[2], directory)
+    y_position_plot(world, step, log_step_inter, y_min, y_max, N, log_control[2], directory)
     mission_connectivity_plot(world, N, world.rovers[0].radio.interval, step, log_control[2], directory)
     # real_metric_distribution(world, directory, log_control[2])
 
