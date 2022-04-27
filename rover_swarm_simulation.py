@@ -23,7 +23,7 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU30SW'     # Area to run simulation.
+area = 'TL16NE'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
@@ -55,7 +55,7 @@ user_txpw = 14                                      # Transmitting power, in dBm
 user_dc = 1                                         # Duty cycle in %
 
 # Configure control settings:
-ctrl_policy = '1-1'
+ctrl_policy = '2-3'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -64,11 +64,11 @@ K_goal = [1e-1, 1e-1]                                       # Control gain for g
 # 2/3 - meaning passive-cooperative controller, if used:
 K_neighbour = [0, 1e-1]                                     # Control gain for passive-cooperative controller;
 decay = 'quad'
-zero_crossing = 20                                          # 20 communication cycles for it to fully decay
+zero_crossing = 20                                          # Num of communication cycles for it to fully decay
 
 # Advance Line Sweeping Parameter
 num_of_waypoints = 10                                       # Number of waypoints
-load_waypoints = False                                      # Do you want to load wapoints from another simulation
+load_waypoints = True                                       # Do you want to load wapoints from another simulation
 waypoints_file = os.getcwd() + '\\' + 'temp.txt'            # Directory and name of file
 
 
