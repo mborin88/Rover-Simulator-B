@@ -96,7 +96,7 @@ def show_rgb_waypoints(im, ax_range, waypoints, load, x_offset, y_offset, goal_o
     y_plt = [y_plt[i:i+num_waypoints] for i in range(0, len(y_plt), num_waypoints)]
 
     for i in range(N):
-        ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=4, linewidth=1.8, color='white')
+        ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=2, color='white')
     
     ax0.set_xlabel('Easting (m)')
     ax0.set_ylabel('Northing (m)')
@@ -138,9 +138,9 @@ def show_rgb_waypoints(im, ax_range, waypoints, load, x_offset, y_offset, goal_o
         ax0.set_xlabel('Easting (m)')
         ax0.set_ylabel('Northing (m)')
         for i in range(N):
-            ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=4, linewidth=1.8, color='white', zorder=2)
+            ax0.plot(x_plt[i], y_plt[i], marker='o', markersize=6, linewidth=2, color='white', zorder=2)
         if(not clicked):
-            ax0.scatter([waypoints[path_info[0]][path_info[1]][0]], [waypoints[path_info[0]][path_info[1]][1]], color='cyan', s=20, zorder=3)
+            ax0.scatter([waypoints[path_info[0]][path_info[1]][0]], [waypoints[path_info[0]][path_info[1]][1]], color='cyan', s=25, zorder=3)
             clicked = True
         else:
             clicked = False
@@ -167,6 +167,7 @@ if __name__ == '__main__':
     x_off = 475      # Offset from left boundary in easting direction, in meter.
     y_off = 5  
     g_off = 5  
+    load_points = 0
     num_of_waypoints = 10
-    show_rgb_waypoints(image, axis_range, waypoints, x_off, y_off, g_off, rovers_sep, N, num_of_waypoints)
-    waypoints = get_waypoints('temp.txt')
+    show_rgb_waypoints(image, axis_range, waypoints, load_points, x_off, y_off, g_off, rovers_sep, N, num_of_waypoints)
+    #waypoints = get_waypoints('temp.txt')

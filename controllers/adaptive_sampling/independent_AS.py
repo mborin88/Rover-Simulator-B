@@ -110,7 +110,7 @@ def independent_sampler(rov, world, s_max, s_min):
                 second_derivative(rov)
 
             update_sample_dist(rov, s_max, s_min)
-            rov._transmit = True
+            rov._transmit = False                       #ALways false here as independent
         rov._is_sampling = False
 
     elif(rov.is_sampling):

@@ -86,15 +86,42 @@ class  Sampling_Metric():
 
 
     def visualise(self):
+        pos = np.dstack((self._x_range, self._y_range))
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        contf = ax.contourf(self._x_range, self._y_range, self._multiplier * self.pdf(pos))
+        plt.colorbar(contf, label='Measurement')
+        ax.set_xlabel('Easting (m)')
+        ax.set_ylabel('Northing (m)')
+        ax.set_aspect('equal', 'box')
+        plt.show()
+
+
+    def visualise_overlay(self, terrain_map):
         if(self._mean is not None):
+            x_min, y_min = terrain_map.x_llcorner, terrain_map.y_llcorner
+            x_max, y_max = x_min + terrain_map.resolution * terrain_map.n_cols, \
+                        y_min + terrain_map.resolution * terrain_map.n_rows
+            x, y = np.linspace(x_min, x_max, terrain_map.n_cols), \
+                np.linspace(y_min, y_max, terrain_map.n_rows)
+            xx, yy = np.meshgrid(x, y)
+            z = prep_data(terrain_map)
+            fig, ax = plt.subplots(figsize=(7,7))
+            contf = ax.contourf(xx, yy, z, cmap=plt.get_cmap('gist_earth'))
+            contf.set_clim(0, 150)      #Map with highest elevation is SX27SW, minus elevation capped to 0, as they are water bodies
             pos = np.dstack((self._x_range, self._y_range))
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            contf = ax.contourf(self._x_range, self._y_range, self._multiplier * self.distribution.pdf(pos), cmap='YlOrBr')
-            plt.colorbar(contf, label='Measurement')
+            contf1 = ax.contourf(self._x_range, self._y_range, self._multiplier * self.distribution.pdf(pos), cmap='YlOrBr', alpha=0.4)
+            ax.set_aspect('equal', 'box')
+
+            plt.colorbar(contf1, label='Measurement', shrink=0.85)
+            plt.colorbar(contf, label='Elevation (m)', shrink=0.85)
             ax.set_xlabel('Easting (m)')
             ax.set_ylabel('Northing (m)')
+            fig.set_size_inches(8,6)
+            plt.savefig('temp.png', dpi=300)
             plt.show()
+            
+            plt.tight_layout()
     
 
     def config_mean(self, pseudo_mean):
@@ -132,13 +159,14 @@ class  Sampling_Metric():
 if __name__ == '__main__':
     sys.path.append(str(os.getcwd()))
     from utils.load_map import *
-    area = 'SP46NE'
+    from utils.render import *
+    area = 'SU20NE'
     map_terrain = read_asc(locate_map(area + '_elevation' + '.asc'))
     map_landcover = read_asc(locate_map(area + '_landcover' + '.asc'))
     x_min, x_max = map_terrain.x_llcorner, map_terrain.x_llcorner + map_terrain.x_range
     y_min, y_max = map_terrain.y_llcorner, map_terrain.y_llcorner + map_terrain.y_range
 
-    mean = ['M', 'M']
+    mean = ['L', 'B']
     # [[1,0], [0,1]] Normal Unit
     # [[1, 0], [-1, 2]] --> \
     # [[2, 1], [0, 1]] --> -
@@ -151,4 +179,4 @@ if __name__ == '__main__':
     distribution.config_covariance(covariance)
     distribution.config_distribution()
     #print(distribution.sample(mean[0], mean[1]))
-    distribution.visualise()
+    distribution.visualise_overlay(map_terrain)

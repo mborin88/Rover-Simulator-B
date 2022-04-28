@@ -30,7 +30,7 @@ def terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_int
         x = [data[0] for waypoint in samples for data in waypoint]
         y = [data[1] for waypoint in samples for data in waypoint]
         metric = [data[2] for waypoint in samples for data in waypoint]
-        ax.scatter(x, y, c=metric, cmap='YlOrBr',s=10, zorder=2)
+        ax.scatter(x, y, c=metric, cmap='YlOrBr',s=8, zorder=2)
     elif(world.mission == 'LS' or world.mission == 'ALS'):
         # Waypoint grapher on contour plot
         for k in range(waypoint_interval, step, waypoint_interval):
@@ -47,6 +47,8 @@ def terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_int
     ax.set_xlabel('Easting (m)')
     ax.set_ylabel('Northing (m)')
     ax.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
+    ax.set_aspect('equal', 'box')
+    fig.set_size_inches(8,6)
     if(int(graph_log) == 1):
         plt.savefig(directory + 'Elevation.png')
 
@@ -78,7 +80,7 @@ def velocity_plot(world, N, graph_log, directory):
     """
     Plots magnitude of each rovers velocity as a box plot.
     """
-    fig2, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     labels = []
     velocities = []
     for p in range(N):
@@ -98,7 +100,7 @@ def landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint
     """
     Plots and logs the rover trajectories agaisnt landcover map with line test at every waypoint interval 
     """
-    fig3, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
     image, axis_range = render_rgb(map_landcover) 
     ax.imshow(image, extent=axis_range)
 
@@ -113,7 +115,7 @@ def landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint
         x = [data[0] for waypoint in samples for data in waypoint]
         y = [data[1] for waypoint in samples for data in waypoint]
         metric = [data[2] for waypoint in samples for data in waypoint]
-        ax.scatter(x, y, c=metric, cmap='YlOrBr', s=10, zorder=2)
+        ax.scatter(x, y, c=metric, cmap='YlOrBr', s=8, zorder=2)
     elif(world.mission == 'LS' or world.mission == 'ALS'):
         # Waypoint grapher for landcover map
         for k1 in range(waypoint_interval, step, waypoint_interval):
@@ -130,6 +132,8 @@ def landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint
     ax.set_xlabel('Easting (m)')
     ax.set_ylabel('Northing (m)')
     ax.set_title('Swarm Trajectory (Time Elapse: {} sec)'.format(str(round(world.time, 1))))
+    ax.set_aspect('equal', 'box')
+    fig.set_size_inches(8,6)
     if(int(graph_log) == 1):
         plt.savefig(directory + 'Landcover.png')
 
@@ -245,11 +249,12 @@ def generate_distribution(world, N, x_min, x_max, y_min, y_max, directory, graph
             fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 6))
             cmap = 'viridis'
             contf = ax.tricontourf(x, y, metric, cmap=plt.get_cmap(cmap), zorder=1)
-            ax.scatter(x, y, color='white', s=10, zorder=2)
+            ax.scatter(x, y, color='white', s=8, zorder=2)
             plt.colorbar(contf, label='Measurment')
             plt.xlim([x_min, x_max])                        # Change to using the sampling distribution object from world
             plt.ylim([y_min, y_max])
-            
+            ax.set_aspect('equal', 'box')
+            fig.set_size_inches(8,6)
             if(int(graph_log) == 1):
                 plt.savefig(directory + 'Sampled Measurements.png')
         except RuntimeError:
@@ -274,9 +279,46 @@ def real_metric_distribution(world, directory, graph_log):
         contf = ax.contourf(world._sample_metric._x_range, world._sample_metric._y_range, \
                 world._sample_metric._multiplier * world._sample_metric.distribution.pdf(pos), \
                 cmap=plt.get_cmap(cmap), zorder=1)
-        ax.scatter(x, y, color='black', s=10, zorder=2)
+        ax.scatter(x, y, color='black', s=8, zorder=2)
         plt.colorbar(contf, label='Measurement')
         ax.set_xlabel('Easting (m)')
         ax.set_ylabel('Northing (m)')
+        ax.set_aspect('equal', 'box')
+        fig.set_size_inches(8,6)
         if(int(graph_log) == 1):
             plt.savefig(directory + 'Real Metric Distribution.png')
+
+def real_metric_distribution_overlay(world, terrain_map, directory, graph_log):
+    if(world._sample_metric._mean is not None):
+        samples = []
+        for i in range(len(world.rovers)):
+            samples.append(world.rovers[i]._measured_samples)
+
+        x = [data[0] for waypoint in samples for data in waypoint]
+        y = [data[1] for waypoint in samples for data in waypoint]
+
+        x_min, y_min = terrain_map.x_llcorner, terrain_map.y_llcorner
+        x_max, y_max = x_min + terrain_map.resolution * terrain_map.n_cols, \
+                    y_min + terrain_map.resolution * terrain_map.n_rows
+        x_grid, y_grid = np.linspace(x_min, x_max, terrain_map.n_cols), \
+            np.linspace(y_min, y_max, terrain_map.n_rows)
+        xx, yy = np.meshgrid(x_grid, y_grid)
+        z = prep_data(terrain_map)
+        fig, ax = plt.subplots(figsize=(10, 8))
+        contf0 = ax.contourf(xx, yy, z, cmap=plt.get_cmap('gist_earth'), zorder=1)
+        contf0.set_clim(0, 150) 
+
+        pos = np.dstack((world._sample_metric._x_range, world._sample_metric._y_range))
+        cmap = 'YlOrBr'
+        contf = ax.contourf(world._sample_metric._x_range, world._sample_metric._y_range, \
+                world._sample_metric._multiplier * world._sample_metric.distribution.pdf(pos), \
+                cmap=plt.get_cmap(cmap), zorder=2, alpha=0.4)
+        ax.scatter(x, y, color='red', s=8, zorder=3)
+        plt.colorbar(contf0, label='Elevation (m)', shrink=0.85)
+        plt.colorbar(contf, label='Measurement', shrink=0.85)
+        ax.set_xlabel('Easting (m)')
+        ax.set_ylabel('Northing (m)')
+        ax.set_aspect('equal', 'box')
+        fig.set_size_inches(8,6)
+        if(int(graph_log) == 1):
+            plt.savefig(directory + 'Real Metric Distribution Overlay.png')
