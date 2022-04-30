@@ -23,15 +23,15 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'SU20NE'     # Area to run simulation.
+area = 'SU20SE'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-max_time = 10000    #43200      # Maximum time for mission in seconds
+max_time = 43200    #43200      # Maximum time for mission in seconds
 
-t_sampling = 0.24     # Sampling time, in second. 0.12 FOR LS
+t_sampling = 0.12     # Sampling time, in second. 0.12 FOR LS
 
 Q = None                                        # State noise.
 R = None                                        # Measurement noise.
@@ -41,7 +41,7 @@ rand.seed(seed_value)
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
 log_control = '111'
 log_step_interval = 60                                  #60 seconds which is 1 minute
-log_title_tag = "Test Run"
+log_title_tag = "FINAL Run"
 log_title = log_title_tag + ', ' + str(dt.datetime.now())[:-7].replace(':', '-')
 log_notes = '''Tx_pw set to rightful 14'''             #Additional notes to be added to Log file if wished
 log_cp_interval = 1800                                 #Log every 30 minutes = 1800 seconds
@@ -49,13 +49,13 @@ log_cp_interval = 1800                                 #Log every 30 minutes = 1
 # Configure communication settings:
 user_f = 869.525                                    # Carrier center frequency, in MHz.
 user_bw = BW[0]                                     # Bandwidth, in kHz.
-user_sf = SF[6]                                     # Spreading factor.
+user_sf = SF[3]                                     # Spreading factor.
 user_cr = CR[3]                                     # Coding rate.
 user_txpw = 14                                      # Transmitting power, in dBm.
 user_dc = 1                                         # Duty cycle in %
 
 # Configure control settings:
-ctrl_policy = '3-1'
+ctrl_policy = '3-2'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -69,13 +69,13 @@ zero_crossing = 20                                          # Num of communicati
 # Advance Line Sweeping Parameter
 num_of_waypoints = 10                                       # Number of waypoints
 load_waypoints = False                                       # Do you want to load wapoints from another simulation
-waypoints_file = os.getcwd() + '\\' + 'logs\\TL16NW\\control_policy_2-1\\FINAL Run, 2022-04-27 18-51-19\\SSS Parameters.txt'            # Directory and name of file
+waypoints_file = os.getcwd() + '\\' + 'logs\\TL16NE\\control_policy_2-1\\FINAL Run, 2022-04-26 14-51-46\\SSS Parameters.txt'            # Directory and name of file
 
 
 # 4 Adaptive Sampling Parameters
-metric_mean = ['L', 'B']                                    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
+metric_mean = ['L', 'M']                                    #[0]: (L)eft, (M)iddle, (R)ight, [1]: (T)op, (M)iddle, (B)ottom
 metric_covariance = [[2, 1], [0, 0.75]]
-K_sampler = [0.2, 3.25, 0.25]                               # dist * K[1]/ (K[0] + 1)Gains for sampler [0]: is own sampling change [2]: neighbouring samples [1]: natural increase gain # 500 4, [0.2, 3.25, 0.25][200, 3.25, 0.25] 
+K_sampler = [0.1, 3.25, 0.75]                               # dist * K[1]/ (K[0] + 1)Gains for sampler [0]: is own sampling change [2]: neighbouring samples [1]: natural increase gain # 500 4, [0.2, 3.25, 0.25][200, 3.25, 0.25] 
 num_r_samples = 20                                          # Determines default sampling distance
 sampling_time = 600                                         # How long it takes to correctly take a sample in seconds
 metric_order = 0                                            # What metric we are measuring

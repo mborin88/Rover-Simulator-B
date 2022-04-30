@@ -59,6 +59,7 @@ class Rover:
         self._sampling_steps_passed = 0                                         # How long the rover has been sampling for
         self._sample_metric_order = 0
         self._is_sampling = False                                               # Is rover currently sampling.
+        self._neighbour_metrics = [None]*num_rovers
 
         # The control policy used by the rover.
         self._speed_controller = None
@@ -540,7 +541,7 @@ class Rover:
     
     def get_neighbour_data(self):
         """
-        Get neighbour(s)' pose info.
+        Get neighbour(s)' measurement info.
         """
         neighbour_info = self.get_neighbour_info()
         data = []

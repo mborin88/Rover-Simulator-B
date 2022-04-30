@@ -30,7 +30,9 @@ def terrain_plot(world, map_terrain, x_min, x_max, y_min, y_max, N, waypoint_int
         x = [data[0] for waypoint in samples for data in waypoint]
         y = [data[1] for waypoint in samples for data in waypoint]
         metric = [data[2] for waypoint in samples for data in waypoint]
-        ax.scatter(x, y, c=metric, cmap='YlOrBr',s=8, zorder=2)
+        s = ax.scatter(x, y, c=metric, cmap='YlOrBr',s=8, zorder=2)
+        cb = fig.colorbar(s)
+        cb.set_label('Measurement')
     elif(world.mission == 'LS' or world.mission == 'ALS'):
         # Waypoint grapher on contour plot
         for k in range(waypoint_interval, step, waypoint_interval):
@@ -115,7 +117,9 @@ def landcover_plot(world, map_landcover, x_min, x_max, y_min, y_max, N, waypoint
         x = [data[0] for waypoint in samples for data in waypoint]
         y = [data[1] for waypoint in samples for data in waypoint]
         metric = [data[2] for waypoint in samples for data in waypoint]
-        ax.scatter(x, y, c=metric, cmap='YlOrBr', s=8, zorder=2)
+        s = ax.scatter(x, y, c=metric, cmap='YlOrBr', s=8, zorder=2)
+        cb = fig.colorbar(s)
+        cb.set_label('Measurement')
     elif(world.mission == 'LS' or world.mission == 'ALS'):
         # Waypoint grapher for landcover map
         for k1 in range(waypoint_interval, step, waypoint_interval):

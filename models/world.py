@@ -127,6 +127,7 @@ class World:
 
         # Logically, this is the beginning of time slot.
         transmitter = None
+        test = 0
         for rover in self._rovers:
             rover.step_motion(self, dt)
             if rover.radio is None:
@@ -138,6 +139,9 @@ class World:
                             transmitter = rover
                             transmitter.radio.transmit(self)   
                             rover.reset_transmission_flag()
+                            if(test):
+                                print('hi')
+                            test=1
                         rover.radio.set_next_tx(self)
 
         #Slowing down simulation

@@ -139,9 +139,13 @@ def co_op_sampler(rov, world, s_max, s_min):
             rov._num_samples += 1
             print("Rover {} is taking a sample.".format(str(rov.rov_id)))
 
-    neighbour_metrics = rov.get_neighbour_data()
+    c_detected_neighbours = rov.get_neighbour_data()
+    for i in range(len(c_detected_neighbours)):
+        if(c_detected_neighbours[i] is not None):
+            rov._neighbour_metrics[i] = c_detected_neighbours[i]
+
     rov.connectivity_reset()                       #For mission connectivity.
-    rov.neighbour_connectivity(neighbour_metrics)
+    rov.neighbour_connectivity(c_detected_neighbours)
 
     if(rov.req_sampling_steps == rov.sampling_steps_passed):
         p = rov.pose.copy()
@@ -159,10 +163,10 @@ def co_op_sampler(rov, world, s_max, s_min):
             elif(rov.sample_metric_order==2):
                 second_derivative(rov)
             
-            if(neighbour_metrics.count(None)< len(neighbour_metrics)):
-                for i in range(len(neighbour_metrics)):
-                    if(neighbour_metrics[i] is not None):
-                        rov.update_metric(i+1, neighbour_metrics[i][1], neighbour_metrics[i][2], neighbour_metrics[i][0])
+            if(rov._neighbour_metrics.count(None)< len(rov._neighbour_metrics)):
+                for i in range(len(rov._neighbour_metrics)):
+                    if(rov._neighbour_metrics[i] is not None):
+                        rov.update_metric(i+1, rov._neighbour_metrics[i][1], rov._neighbour_metrics[i][2], rov._neighbour_metrics[i][0])
 
             update_sample_dist(rov, s_max, s_min)
             rov._transmit = True
@@ -178,3 +182,5 @@ def co_op_sampler(rov, world, s_max, s_min):
 
     elif(rov.is_sampling):
         rov._sampling_steps_passed += 1
+    
+    rov._radio.reset_neighbour_register()
