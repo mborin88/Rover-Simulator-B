@@ -118,7 +118,7 @@ class  Sampling_Metric():
             ax.set_xlabel('Easting (m)')
             ax.set_ylabel('Northing (m)')
             fig.set_size_inches(8,6)
-            plt.savefig('temp.png', dpi=300)
+            #plt.savefig('temp.png', dpi=300)
             plt.show()
             
             plt.tight_layout()
@@ -166,14 +166,14 @@ if __name__ == '__main__':
     x_min, x_max = map_terrain.x_llcorner, map_terrain.x_llcorner + map_terrain.x_range
     y_min, y_max = map_terrain.y_llcorner, map_terrain.y_llcorner + map_terrain.y_range
 
-    mean = ['R', 'M']
+    mean = ['L', 'M']
     # [[1,0], [0,1]] Normal Unit
     # [[1, 0], [-1, 2]] --> \
     # [[2, 1], [0, 1]] --> -
     # [[2, 1], [0.5, 2]] --> / [[3, 1], [1, 1]], [[2, 1], [1, 1]]
     # [[1, 1], [0, 2]] --> |
     # covariance has to be a matrix that is positive semi-definite
-    covariance = [[1, 0], [0, 1]]
+    covariance = [[2, 0], [0, 2]]
     distribution = Sampling_Metric(x_min, x_max, y_min, y_max)
     distribution.config_mean(mean)
     distribution.config_covariance(covariance)
