@@ -23,13 +23,13 @@ SF = [6, 7, 8, 9, 10, 11, 12]       # Selectable spreading factor.
 CR = [4 / 5, 4 / 6, 4 / 7, 4 / 8]   # Selectable coding rate.
 
 # Configure basic simulation settings:
-area = 'TL16NW'     # Area to run simulation.
+area = 'SU20NW'     # Area to run simulation.
 N = 10              # Number of rovers.
 rovers_sep = 450          # Distance between rovers, in meter.
 x_offset = 475      # Offset from left boundary in easting direction, in meter.
 y_offset = 5        # Offset from baseline in northing direction, in meter.
 goal_offset = 5     # Of distance to goal is smaller than offset, goal is assumed reached, in meter.
-max_time = 43200    #43200      # Maximum time for mission in seconds
+max_time = 100    #43200      # Maximum time for mission in seconds
 
 t_sampling = 0.12     # Sampling time, in second. 0.12 FOR LS
 
@@ -39,7 +39,7 @@ seed_value = dt.datetime.now().microsecond      # Seed value for noise
 rand.seed(seed_value)
 
 # Log control First bit is raw data, 2nd bit = Summary Data 3rd bit = Graph
-log_control = '111'
+log_control = '000'
 log_step_interval = 60                                  #60 seconds which is 1 minute
 log_title_tag = "Path Planned AS MVG"
 log_title = log_title_tag + ', ' + str(dt.datetime.now())[:-7].replace(':', '-')
@@ -55,7 +55,7 @@ user_txpw = 14                                      # Transmitting power, in dBm
 user_dc = 1                                         # Duty cycle in %
 
 # Configure control settings:
-ctrl_policy = '3-2'
+ctrl_policy = '1-2'
 # Control policy:
 # 0 - meaning no controller.
 # 1 - meaning goal-driven controller, if used:
@@ -68,7 +68,7 @@ zero_crossing = 20                                          # Num of communicati
 
 # Advance Line Sweeping Parameter
 num_of_waypoints = 10                                       # Number of waypoints
-load_waypoints = True                                       # Do you want to load wapoints from another simulation
+load_waypoints = False                                       # Do you want to load wapoints from another simulation
 waypoints_file = os.getcwd() + '\\' + 'logs\\TL16NW\\control_policy_2-1\\FINAL Run, 2022-04-27 18-51-19\\SSS Parameters.txt'            # Directory and name of file
 
 
@@ -124,7 +124,7 @@ def main():
         get_waypoints(waypoints_file, init_waypoints)
 
     image, axis_range = render_rgb(map_landcover)
-    fig0 = show_rgb_waypoints(image, axis_range, init_waypoints, load_waypoints, x_offset, y_offset, \
+    fig0 = show_rgb_waypoints(image, axis_range, init_waypoints, load_waypoints, mission, x_offset, y_offset, \
         goal_offset, rovers_sep, N, num_of_waypoints)
 
     for i in range(len(init_waypoints)):
@@ -481,7 +481,7 @@ def main():
         log_raw_file.close()
     
     #Plot and logging of graphs
-    if(int(log_control[2]) == 1):
+    if(int(log_control[2]) == 1 and mission != 'LS'):
         fig0.savefig(directory + 'Path_Planned_Trajectory.png', dpi=100)
 
 
