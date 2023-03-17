@@ -24,7 +24,9 @@ look into the dissertation written by the author Michael Borinuoluwa, supervised
 
 ## Compiling Rover-Simulator
 ### Requirements
+There is a requirements.txt file where the correct dependeices can be downloaded by installing that file note that this functionality hasn't been tested.
 The simulator requires external libraries which are recommended to be downloaded into a virtual environment such as Anaconda. The installation commands for all these extra packages are for the Anaconda Prompt a section of the Anaconda software.
+
 
 To compile and run the sources of Rover-Simulator from Git, the following are needed:
 
